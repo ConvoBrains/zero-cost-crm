@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Instrument Serif", Georgia, serif;
+  --color-ink: #1c1917;
+  --color-muted: #78716c;
+  --color-canvas: #f7f4ef;
+  --color-panel: #fffcf7;
+  --color-line: #e7e0d6;
+  --color-brand: #0f766e;
+  --color-brand-soft: #ccfbf1;
+  --color-brand-dark: #115e59;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  min-height: 100dvh;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  background:
+    radial-gradient(ellipse 80% 50% at 10% -10%, #d1fae5 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 100% 0%, #fde68a33 0%, transparent 45%),
+    var(--color-canvas);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom scrollbar for kanban */
+.kanban-scroll::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+.kanban-scroll::-webkit-scrollbar-thumb {
+  background: #d6cfc4;
+  border-radius: 999px;
+}
+.kanban-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
