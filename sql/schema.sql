@@ -1,6 +1,6 @@
 -- Convobrains Sales CRM — PostgreSQL schema (idempotent)
--- Local (SSH tunnel): localhost:5433 / brains_crm_int
--- Deployed: RDS brains_crm_int via DB_URL_DEV
+-- Local (SSH tunnel): localhost:5433 / brains_crm
+-- Deployed: RDS brains_crm via DB_URL_DEV
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 

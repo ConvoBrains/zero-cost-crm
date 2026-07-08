@@ -2,9 +2,9 @@
  * Apply sql/schema.sql (and optionally sql/seed_users.sql) using DB_URL_DEV.
  *
  * Expects PostgreSQL URL like:
- *   postgresql+asyncpg://user:pass@localhost:5433/brains_crm_int
+ *   postgresql+asyncpg://user:pass@localhost:5433/brains_crm
  * or standard:
- *   postgresql://user:pass@localhost:5433/brains_crm_int
+ *   postgresql://user:pass@localhost:5433/brains_crm
  *
  * Usage:
  *   npm run db:migrate

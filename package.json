@@ -15,7 +15,8 @@
     "db:seed": "node scripts/db-migrate.mjs --seed",
     "db:clean": "node scripts/db-clean.mjs",
     "db:import": "tsx scripts/import-paste.ts",
-    "db:roles": "node scripts/update-roles.mjs"
+    "db:roles": "node scripts/update-roles.mjs",
+    "start": "NODE_ENV=production tsx server/index.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
