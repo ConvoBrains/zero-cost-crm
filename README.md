@@ -23,9 +23,9 @@ npm run dev                  # Vite + API on :5173 / :3001
 
 ## Database
 
-Postgres `brains_crm_int` on RDS. URL env: `DB_URL_DEV` or `DATABASE_URL` (asyncpg-style OK).
+Postgres `brains_crm` on RDS. URL env: `DB_URL_DEV` or `DATABASE_URL` (asyncpg-style OK).
 
-**Local:** SSH tunnel → `postgresql+asyncpg://postgres:PASSWORD@localhost:5433/brains_crm_int`
+**Local:** SSH tunnel → `postgresql+asyncpg://postgres:PASSWORD@localhost:5433/brains_crm`
 
 ```bash
 npm run db:migrate
@@ -38,12 +38,12 @@ npm run db:roles    # monojoy → sdr, others → admin
 1. Import this repo in [Vercel](https://vercel.com).
 2. **Environment variables** (Production):
 
-   | Name | Value |
-   |------|--------|
-   | `DB_URL_DEV` | `postgresql+asyncpg://postgres:…@main….rds.amazonaws.com/brains_crm_int` |
-   | `JWT_SECRET` | Long random string (not `change-me-in-production`) |
+    | Name         | Value                                                                |
+    | ------------ | -------------------------------------------------------------------- |
+    | `DB_URL_DEV` | `postgresql+asyncpg://postgres:…@main….rds.amazonaws.com/brains_crm` |
+    | `JWT_SECRET` | Long random string (not `change-me-in-production`)                   |
 
-   `DATABASE_URL` works too if you prefer that name.
+    `DATABASE_URL` works too if you prefer that name.
 
 3. Deploy. `vercel.json` serves the Vite build from `dist/` and routes `/api/*` to the Express serverless function.
 
@@ -51,11 +51,11 @@ npm run db:roles    # monojoy → sdr, others → admin
 
 5. After first deploy, run migrations against prod (from a machine that can reach RDS):
 
-   ```bash
-   DB_URL_DEV='postgresql+asyncpg://…' npm run db:migrate
-   DB_URL_DEV='postgresql+asyncpg://…' npm run db:seed
-   DB_URL_DEV='postgresql+asyncpg://…' npm run db:roles
-   ```
+    ```bash
+    DB_URL_DEV='postgresql+asyncpg://…' npm run db:migrate
+    DB_URL_DEV='postgresql+asyncpg://…' npm run db:seed
+    DB_URL_DEV='postgresql+asyncpg://…' npm run db:roles
+    ```
 
 6. Smoke test: `https://your-app.vercel.app/api/health` → `{"ok":true}`
 

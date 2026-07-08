@@ -1,40 +1,35 @@
-# Task: Convobrains Sales CRM
+# Task: Convobrains Sales CRM — Docker deploy
 
 ## Objective
-Sales CRM with RDS-backed auth/data, daily paste-import, kanban pipeline, contacts, dashboard. Deploy on Vercel.
+Self-host CRM on port 4000 with Docker, nginx at crm.convobrains.com, RDS Postgres.
 
 ## Current State
-- Express API (`server/app.ts`) — auth, companies, contacts, import, metrics
-- Vercel serverless entry: `api/index.ts` re-exports Express app
-- `vercel.json`: static `dist/` + `/api/*` rewrite + SPA fallback
-- React frontend calls `/api/*` (Vite proxy in dev, same-origin on Vercel)
-- PostgreSQL `brains_crm_int` on RDS ap-south-1
-- 5 team users; monojoy = sdr, others admin
-- Mobile-responsive UI
+- Express API + React/Vite frontend monorepo
+- `.env` created with RDS `brains_crm` URL, PORT=4000, JWT_SECRET
+- Production: Express serves `dist/` static + `/api/*` when NODE_ENV=production
+- Dockerfile (multi-stage), docker-compose.yml, Makefile, nginx config in `deploy/nginx/`
 
 ## Decisions Made
-- Node `pg` + Express in TS monorepo
-- JWT sessions (7d) in localStorage
-- SSL for pg by default; pool max 2 on Vercel
-- Env: `DATABASE_URL` or `DB_URL_DEV` (asyncpg URL format supported)
-- Never commit prod credentials
+- Port 4000 (default in server, vite proxy, Docker)
+- DB: `postgresql://...@main.c1k808wwgo0a.ap-south-1.rds.amazonaws.com/brains_crm`
+- Nginx on host proxies HTTPS → localhost:4000 (Docker container)
+- `.env.example` is template only; real secrets in `.env` (gitignored)
 
 ## Constraints
-- Local: SSH tunnel + `.env.local`
-- Vercel: set `DB_URL_DEV` + `JWT_SECRET` in project env
-- RDS security group must allow Vercel egress to port 5432
+- RDS security group must allow server IP on 5432
+- Never commit `.env`
+- Certbot for TLS on crm.convobrains.com
 
 ## Progress
-- API + frontend wired to RDS
-- Roles, import, E2E verified locally
-- Vercel deployment config added (api/, vercel.json, dbUrl helpers)
+- Dockerfile + compose + Makefile + nginx config added
+- server/app.ts static serving for production
+- package.json `start` script added
 
 ## Next Steps
-- Push to GitHub and deploy on Vercel with prod env vars
-- Run `db:migrate`, `db:seed`, `db:roles` against prod RDS once
-- Confirm `/api/health` and login on production URL
-- Rotate RDS password if exposed in chat/logs
+- `make docker-build && make docker-up`
+- `make db-migrate db-seed db-roles` (from host with .env)
+- DNS A record → server, `make deploy-nginx`, certbot
+- Verify https://crm.convobrains.com/api/health
 
 ## Notes
-Prod RDS host: `main.c1k808wwgo0a.ap-south-1.rds.amazonaws.com` / `brains_crm_int`
-User sets URL in Vercel dashboard only — not in repo.
+GitNexus: 435 symbols, 9 processes, LOW risk for app static-serving change.

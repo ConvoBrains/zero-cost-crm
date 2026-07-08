@@ -1,6 +1,8 @@
 import express from 'express'
 import cors from 'cors'
 import bcrypt from 'bcrypt'
+import { fileURLToPath } from 'node:url'
+import { dirname, join } from 'node:path'
 import { pool } from './db.js'
 import {
   ALLOWED_EMAIL_DOMAIN,
@@ -513,6 +515,15 @@ app.post('/api/import/prospects', requireAuth, async (req, res) => {
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true })
 })
+
+if (process.env.NODE_ENV === 'production') {
+  const distPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist')
+  app.use(express.static(distPath))
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api')) return next()
+    res.sendFile(join(distPath, 'index.html'))
+  })
+}
 
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err)
