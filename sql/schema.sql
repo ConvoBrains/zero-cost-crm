@@ -70,17 +70,10 @@ CREATE TABLE IF NOT EXISTS contacts (
   phone            TEXT,
   email            TEXT,
   linkedin_profile TEXT,
-  contact_status   TEXT NOT NULL DEFAULT 'Not Contacted'
-    CHECK (contact_status IN (
-      'Not Contacted',
-      'Called',
-      'No Answer',
-      'Interested',
-      'Follow-up Required',
-      'Rejected'
-    )),
+  contact_status   TEXT NOT NULL DEFAULT 'Not Contacted',
   champion         BOOLEAN NOT NULL DEFAULT FALSE,
   last_contacted   DATE,
+  next_follow_up   DATE,
   notes            TEXT,
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -93,6 +86,26 @@ CREATE UNIQUE INDEX IF NOT EXISTS contacts_email_ci
 CREATE INDEX IF NOT EXISTS contacts_company_idx ON contacts (company_id);
 CREATE INDEX IF NOT EXISTS contacts_status_idx ON contacts (contact_status);
 CREATE INDEX IF NOT EXISTS contacts_champion_idx ON contacts (champion) WHERE champion = TRUE;
+
+ALTER TABLE contacts ADD COLUMN IF NOT EXISTS next_follow_up DATE;
+
+CREATE INDEX IF NOT EXISTS contacts_next_follow_up_idx ON contacts (next_follow_up);
+
+ALTER TABLE contacts DROP CONSTRAINT IF EXISTS contacts_contact_status_check;
+ALTER TABLE contacts ADD CONSTRAINT contacts_contact_status_check CHECK (
+  contact_status IN (
+    'Not Contacted',
+    'Didn''t Pick',
+    'Connected - Got Referral',
+    'Connected - Not Right Person',
+    'Connected - Future Follow-up',
+    'Interested',
+    'Called',
+    'No Answer',
+    'Follow-up Required',
+    'Rejected'
+  )
+);
 
 DO $$
 BEGIN

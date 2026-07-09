@@ -267,8 +267,8 @@ app.post('/api/contacts', requireAuth, async (req, res) => {
     `
     INSERT INTO contacts (
       contact_name, company_id, role, phone, email, linkedin_profile,
-      contact_status, champion, last_contacted, notes
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      contact_status, champion, last_contacted, next_follow_up, notes
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
     RETURNING *
     `,
     [
@@ -281,6 +281,7 @@ app.post('/api/contacts', requireAuth, async (req, res) => {
       b.contactStatus ?? 'Not Contacted',
       b.champion ?? false,
       b.lastContacted ?? null,
+      b.nextFollowUp ?? null,
       b.notes ?? '',
     ],
   )
@@ -315,6 +316,7 @@ app.patch('/api/contacts/:id', requireAuth, async (req, res) => {
   if (b.contactStatus !== undefined) set('contact_status', b.contactStatus)
   if (b.champion !== undefined) set('champion', b.champion)
   if (b.lastContacted !== undefined) set('last_contacted', b.lastContacted)
+  if (b.nextFollowUp !== undefined) set('next_follow_up', b.nextFollowUp)
   if (b.notes !== undefined) set('notes', b.notes)
 
   if (fields.length === 0) {

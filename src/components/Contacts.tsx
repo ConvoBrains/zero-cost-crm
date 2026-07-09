@@ -1,7 +1,13 @@
 import { useMemo, useState } from 'react'
 import type { Contact, ContactView } from '../types'
 import type { CrmStore } from '../hooks/useCrmStore'
-import { CONTACT_VIEWS, filterContacts, statusColor } from '../lib/views'
+import {
+  CONTACT_VIEW_GROUPS,
+  CONTACT_VIEW_HINTS,
+  filterContacts,
+  sortContactsForView,
+  statusColor,
+} from '../lib/views'
 import { ContactForm } from './ContactForm'
 import { Modal, btnPrimary } from './ui'
 
@@ -9,15 +15,65 @@ interface ContactsProps {
   store: CrmStore
 }
 
+function ContactRow({
+  contact,
+  companyName,
+  onEdit,
+}: {
+  contact: Contact
+  companyName: string
+  onEdit: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onEdit}
+      className="w-full rounded-2xl border border-[var(--color-line)] bg-[var(--color-panel)] p-4 text-left transition active:bg-teal-50/40"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="font-semibold text-stone-900">{contact.contactName}</p>
+          {contact.email ? (
+            <p className="truncate text-xs text-stone-400">{contact.email}</p>
+          ) : null}
+        </div>
+        {contact.champion ? (
+          <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+            ★
+          </span>
+        ) : null}
+      </div>
+      <div className="mt-2 flex flex-wrap gap-2 text-xs text-stone-600">
+        <span>{companyName}</span>
+        {contact.role ? <span>· {contact.role}</span> : null}
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <span
+          className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${statusColor(contact.contactStatus)}`}
+        >
+          {contact.contactStatus}
+        </span>
+        {contact.phone ? <span className="text-xs text-stone-500">{contact.phone}</span> : null}
+        {contact.nextFollowUp ? (
+          <span className="text-xs text-amber-700">Follow-up {contact.nextFollowUp}</span>
+        ) : null}
+        {contact.lastContacted ? (
+          <span className="text-xs text-stone-400">Last {contact.lastContacted}</span>
+        ) : null}
+      </div>
+    </button>
+  )
+}
+
 export function Contacts({ store }: ContactsProps) {
-  const [view, setView] = useState<ContactView>('All Contacts')
+  const [view, setView] = useState<ContactView>('To Call Today')
   const [editing, setEditing] = useState<Contact | null>(null)
   const [creating, setCreating] = useState(false)
 
-  const filtered = useMemo(
-    () => filterContacts(store.contacts, view),
-    [store.contacts, view],
-  )
+  const filtered = useMemo(() => {
+    const list = filterContacts(store.contacts, view)
+    return sortContactsForView(list, view)
+  }, [store.contacts, view])
 
   return (
     <div className="space-y-4">
@@ -30,8 +86,7 @@ export function Contacts({ store }: ContactsProps) {
             Contacts
           </h1>
           <p className="mt-1 text-sm text-stone-500">
-            Each row is one person. Mark a Champion when someone is interested — they become
-            Primary Contact on the company.
+            Work your call queue. Update status and follow-up date after every dial.
           </p>
         </div>
         <button type="button" className={btnPrimary} onClick={() => setCreating(true)}>
@@ -39,64 +94,54 @@ export function Contacts({ store }: ContactsProps) {
         </button>
       </header>
 
-      <div className="flex gap-1.5 overflow-x-auto pb-1 kanban-scroll">
-        {CONTACT_VIEWS.map((v) => (
-          <button
-            key={v}
-            type="button"
-            onClick={() => setView(v)}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition ${
-              view === v
-                ? 'bg-teal-700 text-white'
-                : 'bg-white text-stone-600 ring-1 ring-[var(--color-line)] hover:bg-stone-50'
-            }`}
-          >
-            {v}
-            <span className="ml-1.5 opacity-70">
-              ({filterContacts(store.contacts, v).length})
-            </span>
-          </button>
+      <div className="space-y-3">
+        {CONTACT_VIEW_GROUPS.map((group) => (
+          <div key={group.label}>
+            <p className="mb-1.5 text-[10px] font-semibold tracking-wide text-stone-400 uppercase">
+              {group.label}
+            </p>
+            <div className="flex gap-1.5 overflow-x-auto pb-1 kanban-scroll">
+              {group.views.map((v) => {
+                const count = filterContacts(store.contacts, v).length
+                return (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setView(v)}
+                    className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                      view === v
+                        ? 'bg-teal-700 text-white'
+                        : 'bg-white text-stone-600 ring-1 ring-[var(--color-line)] hover:bg-stone-50'
+                    }`}
+                  >
+                    {v}
+                    <span className="ml-1.5 opacity-70">({count})</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         ))}
       </div>
 
+      <p className="rounded-xl bg-teal-50/80 px-3 py-2 text-xs text-teal-900/80">
+        <span className="font-semibold">{view}</span>
+        {' — '}
+        {CONTACT_VIEW_HINTS[view]}
+        {filtered.length > 0 ? (
+          <span className="text-teal-700"> · {filtered.length} contact{filtered.length === 1 ? '' : 's'}</span>
+        ) : null}
+      </p>
+
       <div className="space-y-3 md:hidden">
-        {filtered.map((t) => {
-          const company = store.getCompany(t.companyId)
-          return (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setEditing(t)}
-              className="w-full rounded-2xl border border-[var(--color-line)] bg-[var(--color-panel)] p-4 text-left transition active:bg-teal-50/40"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="font-semibold text-stone-900">{t.contactName}</p>
-                  {t.email ? (
-                    <p className="truncate text-xs text-stone-400">{t.email}</p>
-                  ) : null}
-                </div>
-                {t.champion ? (
-                  <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
-                    ★
-                  </span>
-                ) : null}
-              </div>
-              <div className="mt-2 flex flex-wrap gap-2 text-xs text-stone-600">
-                <span>{company?.companyName ?? '—'}</span>
-                {t.role ? <span>· {t.role}</span> : null}
-              </div>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span
-                  className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${statusColor(t.contactStatus)}`}
-                >
-                  {t.contactStatus}
-                </span>
-                {t.phone ? <span className="text-xs text-stone-500">{t.phone}</span> : null}
-              </div>
-            </button>
-          )
-        })}
+        {filtered.map((t) => (
+          <ContactRow
+            key={t.id}
+            contact={t}
+            companyName={store.getCompany(t.companyId)?.companyName ?? '—'}
+            onEdit={() => setEditing(t)}
+          />
+        ))}
         {filtered.length === 0 ? (
           <p className="py-10 text-center text-sm text-stone-400">No contacts in this view.</p>
         ) : null}
@@ -104,7 +149,7 @@ export function Contacts({ store }: ContactsProps) {
 
       <div className="hidden overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-panel)] md:block">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-left text-sm">
+          <table className="w-full min-w-[800px] text-left text-sm">
             <thead>
               <tr className="border-b border-[var(--color-line)] bg-stone-50/80 text-[11px] tracking-wide text-stone-500 uppercase">
                 <th className="px-4 py-3 font-semibold">Contact</th>
@@ -112,6 +157,7 @@ export function Contacts({ store }: ContactsProps) {
                 <th className="px-4 py-3 font-semibold">Role</th>
                 <th className="px-4 py-3 font-semibold">Status</th>
                 <th className="px-4 py-3 font-semibold">Phone</th>
+                <th className="px-4 py-3 font-semibold">Follow-up</th>
                 <th className="px-4 py-3 font-semibold">Last contacted</th>
               </tr>
             </thead>
@@ -149,13 +195,14 @@ export function Contacts({ store }: ContactsProps) {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-stone-600">{t.phone || '—'}</td>
+                    <td className="px-4 py-3 text-stone-500">{t.nextFollowUp || '—'}</td>
                     <td className="px-4 py-3 text-stone-500">{t.lastContacted || '—'}</td>
                   </tr>
                 )
               })}
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-sm text-stone-400">
+                  <td colSpan={7} className="px-4 py-10 text-center text-sm text-stone-400">
                     No contacts in this view.
                   </td>
                 </tr>

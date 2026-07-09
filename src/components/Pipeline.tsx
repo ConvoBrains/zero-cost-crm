@@ -5,7 +5,7 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
-  closestCorners,
+  rectIntersection,
   useDroppable,
   useDraggable,
   type DragEndEvent,
@@ -13,11 +13,11 @@ import {
 } from '@dnd-kit/core'
 import { useMemo, useState } from 'react'
 import type { Company, PipelineView, Stage } from '../types'
+import { STAGES } from '../types'
 import type { CrmStore } from '../hooks/useCrmStore'
 import {
   PIPELINE_VIEWS,
   filterCompanies,
-  stagesForView,
   intentColor,
   stageAccent,
 } from '../lib/views'
@@ -28,17 +28,24 @@ interface PipelineProps {
   store: CrmStore
 }
 
+const ALL_STAGES = [...STAGES]
+
+function resolveDropStage(overId: string | number, companies: Company[]): Stage | null {
+  const id = String(overId)
+  if ((STAGES as readonly string[]).includes(id)) return id as Stage
+  const target = companies.find((c) => c.id === id)
+  return target?.stage ?? null
+}
+
 function CompanyCard({
   company,
   primaryName,
   dragging,
-  dragHandleProps,
   onOpen,
 }: {
   company: Company
   primaryName?: string
   dragging?: boolean
-  dragHandleProps?: Record<string, unknown>
   onOpen?: () => void
 }) {
   return (
@@ -51,6 +58,7 @@ function CompanyCard({
         <button
           type="button"
           onClick={onOpen}
+          onPointerDown={(e) => e.stopPropagation()}
           className="min-w-0 flex-1 text-left"
         >
           <p className="text-sm font-semibold text-stone-900">{company.companyName}</p>
@@ -72,15 +80,12 @@ function CompanyCard({
               {company.intent}
             </span>
           ) : null}
-          <button
-            type="button"
-            className="cursor-grab rounded px-1.5 py-0.5 text-[10px] font-medium text-stone-400 hover:bg-stone-100 hover:text-stone-600 active:cursor-grabbing"
-            title="Drag to move stage"
-            aria-label={`Drag ${company.companyName}`}
-            {...dragHandleProps}
+          <span
+            className="rounded px-1.5 py-0.5 text-[10px] font-medium text-stone-400"
+            title="Drag card to move stage"
           >
             ⠿
-          </button>
+          </span>
         </div>
       </div>
     </div>
@@ -98,7 +103,7 @@ function DraggableCard({
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: company.id,
-    data: { company },
+    data: { type: 'company', company },
   })
 
   const style = transform
@@ -106,13 +111,18 @@ function DraggableCard({
     : undefined
 
   return (
-    <div ref={setNodeRef} style={style}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="touch-manipulation cursor-grab active:cursor-grabbing"
+      {...listeners}
+      {...attributes}
+    >
       <CompanyCard
         company={company}
         primaryName={primaryName}
         dragging={isDragging}
         onOpen={onOpen}
-        dragHandleProps={{ ...listeners, ...attributes }}
       />
     </div>
   )
@@ -129,7 +139,7 @@ function KanbanColumn({
   store: CrmStore
   onOpen: (c: Company) => void
 }) {
-  const { setNodeRef, isOver } = useDroppable({ id: stage })
+  const { setNodeRef, isOver } = useDroppable({ id: stage, data: { type: 'column', stage } })
 
   return (
     <div
@@ -146,7 +156,7 @@ function KanbanColumn({
           {companies.length}
         </span>
       </div>
-      <div className="flex max-h-[min(52dvh,28rem)] flex-col gap-2 overflow-y-auto px-2.5 pb-3 kanban-scroll sm:max-h-[calc(100vh-14rem)]">
+      <div className="flex min-h-[8rem] max-h-[min(52dvh,28rem)] flex-col gap-2 overflow-y-auto px-2.5 pb-3 kanban-scroll sm:max-h-[calc(100vh-14rem)]">
         {companies.map((c) => (
           <DraggableCard
             key={c.id}
@@ -170,25 +180,24 @@ export function Pipeline({ store }: PipelineProps) {
   const [activeId, setActiveId] = useState<string | null>(null)
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 8 } }),
   )
 
   const filtered = useMemo(
     () => filterCompanies(store.companies, view),
     [store.companies, view],
   )
-  const columns = stagesForView(view)
 
   const byStage = useMemo(() => {
     const map = new Map<Stage, Company[]>()
-    for (const s of columns) map.set(s, [])
+    for (const s of ALL_STAGES) map.set(s, [])
     for (const c of filtered) {
       const list = map.get(c.stage)
       if (list) list.push(c)
     }
     return map
-  }, [filtered, columns])
+  }, [filtered])
 
   const activeCompany = activeId
     ? store.companies.find((c) => c.id === activeId) ?? null
@@ -201,18 +210,12 @@ export function Pipeline({ store }: PipelineProps) {
     const { active, over } = e
     if (!over) return
     const companyId = String(active.id)
-    let stage = String(over.id) as Stage
-
-    // If dropped on another card, find that card's stage
-    if (!columns.includes(stage)) {
-      const target = store.companies.find((c) => c.id === stage)
-      if (target) stage = target.stage
-      else return
-    }
+    const stage = resolveDropStage(over.id, store.companies)
+    if (!stage) return
 
     const company = store.companies.find((c) => c.id === companyId)
     if (company && company.stage !== stage) {
-      store.moveCompanyStage(companyId, stage)
+      void store.moveCompanyStage(companyId, stage)
     }
   }
 
@@ -227,7 +230,7 @@ export function Pipeline({ store }: PipelineProps) {
             Sales Pipeline
           </h1>
           <p className="mt-1 text-sm text-stone-500">
-            Swipe columns on mobile. Drag ⠿ or tap a card to edit.
+            Drag a card to any column to change stage. Tap the company name to edit.
           </p>
         </div>
         <button type="button" className={btnPrimary} onClick={() => setCreating(true)}>
@@ -254,12 +257,12 @@ export function Pipeline({ store }: PipelineProps) {
 
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCorners}
+        collisionDetection={rectIntersection}
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
       >
         <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto pb-2 kanban-scroll">
-          {columns.map((stage) => (
+          {ALL_STAGES.map((stage) => (
             <KanbanColumn
               key={stage}
               stage={stage}

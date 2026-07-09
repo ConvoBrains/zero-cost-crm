@@ -49,6 +49,7 @@ export function mapContact(row: Record<string, unknown>): Contact {
     contactStatus: row.contact_status as Contact['contactStatus'],
     champion: Boolean(row.champion),
     lastContacted: pgDateToIso(row.last_contacted),
+    nextFollowUp: pgDateToIso(row.next_follow_up),
     notes: String(row.notes ?? ''),
     createdAt: pgDateToIso(row.created_at) ?? '',
   }
