@@ -1,4 +1,4 @@
-import type { Company, Contact } from '../src/types.js'
+import type { Company, Contact, Conversation } from '../src/types.js'
 
 function pgDateToIso(val: unknown): string | null {
   if (val == null) return null
@@ -52,5 +52,30 @@ export function mapContact(row: Record<string, unknown>): Contact {
     nextFollowUp: pgDateToIso(row.next_follow_up),
     notes: String(row.notes ?? ''),
     createdAt: pgDateToIso(row.created_at) ?? '',
+  }
+}
+
+function pgTimestampToIso(val: unknown): string | null {
+  if (val == null) return null
+  if (val instanceof Date) return val.toISOString()
+  const s = String(val)
+  if (!s) return null
+  const d = new Date(s)
+  return Number.isNaN(d.getTime()) ? null : d.toISOString()
+}
+
+export function mapConversation(row: Record<string, unknown>): Conversation {
+  return {
+    id: String(row.id),
+    companyId: String(row.company_id),
+    contactId: String(row.contact_id),
+    companyName: String(row.company_name ?? ''),
+    contactName: String(row.contact_name ?? ''),
+    calledBy: String(row.called_by),
+    calledByName: String(row.called_by_name ?? ''),
+    stageAtCall: row.stage_at_call as Conversation['stageAtCall'],
+    calledAt: pgTimestampToIso(row.called_at) ?? '',
+    s3Url: String(row.s3_url ?? ''),
+    notes: String(row.notes ?? ''),
   }
 }

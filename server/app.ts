@@ -12,6 +12,7 @@ import {
   signToken,
 } from './auth.js'
 import { mapCompany, mapContact } from './mappers.js'
+import { registerConversationRoutes } from './conversations.js'
 
 const app = express()
 app.use(cors())
@@ -517,6 +518,8 @@ app.post('/api/import/prospects', requireAuth, async (req, res) => {
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true })
 })
+
+registerConversationRoutes(app, pool)
 
 if (process.env.NODE_ENV === 'production') {
   const distPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist')
