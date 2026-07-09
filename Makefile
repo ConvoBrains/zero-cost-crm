@@ -4,7 +4,7 @@
 .PHONY: help install dev build start lint smoke \
         db-migrate db-seed db-roles db-clean db-check \
         docker-build docker-up docker-down docker-restart docker-logs docker-ps docker-shell \
-        deploy-nginx nginx-test health
+        deploy-ec2 deploy-nginx nginx-test health
 
 COMPOSE := docker compose
 APP_URL := http://localhost:4000
@@ -74,6 +74,8 @@ docker-ps: ## Show container status
 
 docker-shell: ## Shell into running container
 	$(COMPOSE) exec crm sh
+
+deploy-ec2: install build docker-build docker-up ## Full EC2 deploy pipeline
 
 # ─── Nginx (host install) ────────────────────────────────────────────────────
 
