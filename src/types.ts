@@ -34,9 +34,13 @@ export type Industry = (typeof INDUSTRIES)[number]
 
 export const CONTACT_STATUSES = [
   'Not Contacted',
+  "Didn't Pick",
+  'Connected - Got Referral',
+  'Connected - Not Right Person',
+  'Connected - Future Follow-up',
+  'Interested',
   'Called',
   'No Answer',
-  'Interested',
   'Follow-up Required',
   'Rejected',
 ] as const
@@ -74,6 +78,7 @@ export interface Contact {
   contactStatus: ContactStatus
   champion: boolean
   lastContacted: string | null
+  nextFollowUp: string | null
   notes: string
   createdAt: string
 }
@@ -96,9 +101,18 @@ export type PipelineView =
 
 export type ContactView =
   | 'All Contacts'
+  | 'To Call Today'
+  | 'Follow-up Today'
+  | 'Overdue'
+  | "Didn't Pick Yesterday"
+  | 'Not Contacted'
+  | "Didn't Pick"
+  | 'Got Referral'
+  | 'Wrong Person'
+  | 'Interested'
   | 'Champions'
-  | 'Pending Calls'
-  | 'Follow-up Required'
+  | 'Future Follow-up'
+  | 'Rejected'
 
 /** One row from the daily prospect paste (Excel / Sheets / LinkedIn export). */
 export interface ProspectRow {

@@ -27,6 +27,7 @@ export function ContactForm({
     contactStatus: initial?.contactStatus ?? ('Not Contacted' as const),
     champion: initial?.champion ?? false,
     lastContacted: initial?.lastContacted ?? '',
+    nextFollowUp: initial?.nextFollowUp ?? '',
     notes: initial?.notes ?? '',
   })
 
@@ -47,6 +48,7 @@ export function ContactForm({
       contactStatus: form.contactStatus,
       champion: form.champion,
       lastContacted: form.lastContacted || null,
+      nextFollowUp: form.nextFollowUp || null,
       notes: form.notes,
     }
 
@@ -132,6 +134,15 @@ export function ContactForm({
             className={inputClass}
             value={form.lastContacted}
             onChange={(e) => set('lastContacted', e.target.value)}
+          />
+        </Field>
+
+        <Field label="Next Follow-up">
+          <input
+            type="date"
+            className={inputClass}
+            value={form.nextFollowUp}
+            onChange={(e) => set('nextFollowUp', e.target.value)}
           />
         </Field>
 
