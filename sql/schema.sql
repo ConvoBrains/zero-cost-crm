@@ -141,3 +141,30 @@ CREATE TABLE IF NOT EXISTS lead_import_rows (
   industry       TEXT,
   processed      BOOLEAN NOT NULL DEFAULT FALSE
 );
+
+-- ─── Call recordings (conversations) ─────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS conversations (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id      UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  contact_id      UUID NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+  called_by       UUID NOT NULL REFERENCES users(id) ON DELETE SET NULL,
+  stage_at_call   TEXT NOT NULL,
+  called_at       TIMESTAMPTZ,
+  s3_url          TEXT UNIQUE,
+  file_ext        TEXT NOT NULL,
+  upload_status   TEXT NOT NULL DEFAULT 'pending'
+    CHECK (upload_status IN ('pending', 'completed')),
+  notes           TEXT,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS conversations_contact_idx ON conversations (contact_id);
+CREATE INDEX IF NOT EXISTS conversations_company_idx ON conversations (company_id);
+CREATE INDEX IF NOT EXISTS conversations_called_by_idx ON conversations (called_by);
+CREATE INDEX IF NOT EXISTS conversations_called_at_idx ON conversations (called_at);
+
+CREATE UNIQUE INDEX IF NOT EXISTS conversations_call_unique_idx
+  ON conversations (called_by, contact_id, called_at)
+  WHERE called_at IS NOT NULL;

@@ -3,6 +3,7 @@ import type { Contact } from '../types'
 import { CONTACT_STATUSES } from '../types'
 import type { CrmStore } from '../hooks/useCrmStore'
 import { Field, inputClass, btnPrimary, btnGhost } from './ui'
+import { ConversationPanel } from './ConversationPanel'
 
 interface ContactFormProps {
   store: CrmStore
@@ -179,6 +180,18 @@ export function ContactForm({
           </span>
         </label>
       </div>
+
+      {initial ? (
+        <ConversationPanel
+          store={store}
+          contactId={initial.id}
+          companyId={form.companyId || initial.companyId}
+        />
+      ) : (
+        <p className="rounded-xl border border-dashed border-stone-300 px-3 py-2 text-xs text-stone-500">
+          Save this contact first to upload call recordings.
+        </p>
+      )}
 
       <div className="flex items-center justify-between gap-3 border-t border-[var(--color-line)] pt-4">
         {initial && store.canDelete ? (

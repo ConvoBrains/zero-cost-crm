@@ -143,3 +143,17 @@ export interface AuthUser {
 export function canDeleteRecords(role?: string): boolean {
   return role === 'admin' || role === 'founder'
 }
+
+export interface Conversation {
+  id: string
+  companyId: string
+  contactId: string
+  companyName: string
+  contactName: string
+  calledBy: string
+  calledByName: string
+  stageAtCall: Stage
+  calledAt: string
+  s3Url: string
+  notes: string
+}
