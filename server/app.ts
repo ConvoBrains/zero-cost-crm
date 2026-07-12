@@ -7,9 +7,11 @@ import { pool } from './db.js'
 import {
   ALLOWED_EMAIL_DOMAIN,
   isConvobrainsEmail,
+  isUserRole,
   requireAuth,
   requireAdmin,
   signToken,
+  USER_ROLES,
 } from './auth.js'
 import { mapCompany, mapContact } from './mappers.js'
 import { registerConversationRoutes } from './conversations.js'
@@ -106,6 +108,85 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
       role: req.user!.role,
     },
   })
+})
+
+// ─── Users (admin / founder) ────────────────────────────────────────────────
+
+app.get('/api/users/roles', requireAuth, requireAdmin, (_req, res) => {
+  res.json({ roles: USER_ROLES })
+})
+
+app.get('/api/users', requireAuth, requireAdmin, async (_req, res) => {
+  const { rows } = await pool.query(
+    `SELECT id, email, name, role, created_at
+     FROM users
+     ORDER BY name ASC`,
+  )
+  res.json({
+    users: rows.map((row) => ({
+      id: row.id,
+      email: row.email,
+      name: row.name,
+      role: row.role,
+      createdAt: row.created_at,
+    })),
+  })
+})
+
+app.post('/api/users', requireAuth, requireAdmin, async (req, res) => {
+  const email = String(req.body.email ?? '')
+    .trim()
+    .toLowerCase()
+  const name = String(req.body.name ?? '').trim()
+  const password = String(req.body.password ?? '')
+  const role = String(req.body.role ?? 'sdr').trim().toLowerCase()
+
+  if (!isConvobrainsEmail(email)) {
+    res.status(400).json({ error: `Only @${ALLOWED_EMAIL_DOMAIN} emails are allowed.` })
+    return
+  }
+  if (!name) {
+    res.status(400).json({ error: 'Name is required.' })
+    return
+  }
+  if (password.length < 8) {
+    res.status(400).json({ error: 'Password must be at least 8 characters.' })
+    return
+  }
+  if (!isUserRole(role)) {
+    res.status(400).json({
+      error: `Invalid role. Allowed: ${USER_ROLES.join(', ')}.`,
+    })
+    return
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10)
+
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO users (email, password_hash, name, role)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, email, name, role, created_at`,
+      [email, passwordHash, name, role],
+    )
+    const row = rows[0]
+    res.status(201).json({
+      user: {
+        id: row.id,
+        email: row.email,
+        name: row.name,
+        role: row.role,
+        createdAt: row.created_at,
+      },
+    })
+  } catch (e) {
+    const err = e as { code?: string }
+    if (err.code === '23505') {
+      res.status(409).json({ error: 'A user with that email already exists.' })
+      return
+    }
+    throw e
+  }
 })
 
 // ─── Bootstrap ──────────────────────────────────────────────────────────────

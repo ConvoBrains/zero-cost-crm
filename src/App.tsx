@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import type { Page } from './types'
+import { canManageUsers } from './types'
 import { useAuth } from './hooks/useAuth'
 import { useCrmStore } from './hooks/useCrmStore'
 import { Sidebar } from './components/Sidebar'
@@ -8,6 +9,7 @@ import { Dashboard } from './components/Dashboard'
 import { Pipeline } from './components/Pipeline'
 import { Contacts } from './components/Contacts'
 import { ImportLeads } from './components/ImportLeads'
+import { Users } from './components/Users'
 import { LoginPage } from './components/LoginPage'
 import { PAGE_TITLE } from './lib/nav'
 
@@ -41,6 +43,8 @@ export default function App() {
       </div>
     )
   }
+
+  const manageUsers = canManageUsers(auth.user.role)
 
   return (
     <div className="flex min-h-[100dvh] flex-col lg:flex-row">
@@ -82,6 +86,7 @@ export default function App() {
               page={page}
               onNavigate={navigate}
               userName={auth.user.name}
+              userRole={auth.user.role}
               onLogout={auth.logout}
               className="h-full w-full"
             />
@@ -94,6 +99,7 @@ export default function App() {
         page={page}
         onNavigate={navigate}
         userName={auth.user.name}
+        userRole={auth.user.role}
         onLogout={auth.logout}
         className="hidden lg:flex"
       />
@@ -105,14 +111,20 @@ export default function App() {
           </p>
         ) : null}
         {page === 'dashboard' ? (
-          <Dashboard store={store} onNavigate={navigate} />
+          <Dashboard store={store} onNavigate={navigate} canManageUsers={manageUsers} />
         ) : null}
         {page === 'import' ? <ImportLeads store={store} /> : null}
         {page === 'pipeline' ? <Pipeline store={store} /> : null}
         {page === 'contacts' ? <Contacts store={store} /> : null}
+        {page === 'users' && manageUsers ? <Users /> : null}
+        {page === 'users' && !manageUsers ? (
+          <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            Admin access required to manage users.
+          </p>
+        ) : null}
       </main>
 
-      <MobileNav page={page} onNavigate={navigate} />
+      <MobileNav page={page} onNavigate={navigate} userRole={auth.user.role} />
     </div>
   )
 }

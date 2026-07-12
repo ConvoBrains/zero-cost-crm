@@ -83,7 +83,7 @@ export interface Contact {
   createdAt: string
 }
 
-export type Page = 'dashboard' | 'pipeline' | 'contacts' | 'import'
+export type Page = 'dashboard' | 'pipeline' | 'contacts' | 'import' | 'users'
 
 export type PipelineView =
   | 'All Companies'
@@ -140,7 +140,22 @@ export interface AuthUser {
   role?: string
 }
 
+export const USER_ROLES = ['founder', 'sdr', 'admin'] as const
+export type UserRole = (typeof USER_ROLES)[number]
+
+export interface CrmUser {
+  id: string
+  email: string
+  name: string
+  role: UserRole | string
+  createdAt: string
+}
+
 export function canDeleteRecords(role?: string): boolean {
+  return role === 'admin' || role === 'founder'
+}
+
+export function canManageUsers(role?: string): boolean {
   return role === 'admin' || role === 'founder'
 }
 
