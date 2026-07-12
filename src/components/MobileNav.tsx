@@ -1,19 +1,22 @@
 import type { Page } from '../types'
-import { NAV_ITEMS } from '../lib/nav'
+import { navItemsForRole } from '../lib/nav'
 
 interface MobileNavProps {
   page: Page
   onNavigate: (page: Page) => void
+  userRole?: string
 }
 
-export function MobileNav({ page, onNavigate }: MobileNavProps) {
+export function MobileNav({ page, onNavigate, userRole }: MobileNavProps) {
+  const items = navItemsForRole(userRole)
+
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-line)] bg-[var(--color-panel)]/95 backdrop-blur-md lg:hidden"
       style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
     >
       <div className="mx-auto flex max-w-lg">
-        {NAV_ITEMS.map((item) => {
+        {items.map((item) => {
           const active = page === item.id
           return (
             <button

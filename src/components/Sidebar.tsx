@@ -1,15 +1,25 @@
 import type { Page } from '../types'
-import { NAV_ITEMS } from '../lib/nav'
+import { navItemsForRole } from '../lib/nav'
 
 interface SidebarProps {
   page: Page
   onNavigate: (page: Page) => void
   onLogout: () => void
   userName: string
+  userRole?: string
   className?: string
 }
 
-export function Sidebar({ page, onNavigate, onLogout, userName, className = '' }: SidebarProps) {
+export function Sidebar({
+  page,
+  onNavigate,
+  onLogout,
+  userName,
+  userRole,
+  className = '',
+}: SidebarProps) {
+  const items = navItemsForRole(userRole)
+
   return (
     <aside
       className={`flex w-56 shrink-0 flex-col border-r border-[var(--color-line)] bg-[var(--color-panel)]/80 backdrop-blur-sm ${className}`}
@@ -31,7 +41,7 @@ export function Sidebar({ page, onNavigate, onLogout, userName, className = '' }
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 p-3">
-        {NAV_ITEMS.map((item) => {
+        {items.map((item) => {
           const active = page === item.id
           return (
             <button

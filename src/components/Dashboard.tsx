@@ -5,9 +5,10 @@ import { btnPrimary, btnGhost } from './ui'
 interface DashboardProps {
   store: CrmStore
   onNavigate: (page: Page) => void
+  canManageUsers?: boolean
 }
 
-export function Dashboard({ store, onNavigate }: DashboardProps) {
+export function Dashboard({ store, onNavigate, canManageUsers }: DashboardProps) {
   const { metrics } = store
   const today = new Date().toISOString().slice(0, 10)
 
@@ -75,7 +76,12 @@ export function Dashboard({ store, onNavigate }: DashboardProps) {
             after every call.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {canManageUsers ? (
+            <button type="button" className={btnGhost} onClick={() => onNavigate('users')}>
+              Add users
+            </button>
+          ) : null}
           <button type="button" className={btnGhost} onClick={() => onNavigate('import')}>
             Import leads
           </button>

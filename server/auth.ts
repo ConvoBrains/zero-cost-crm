@@ -5,6 +5,18 @@ const JWT_SECRET = process.env.JWT_SECRET ?? 'convobrains-crm-dev-secret-change-
 
 export const ALLOWED_EMAIL_DOMAIN = 'convobrains.com'
 
+/** Must match users.role CHECK in sql/schema.sql */
+export const USER_ROLES = ['founder', 'sdr', 'admin'] as const
+export type UserRole = (typeof USER_ROLES)[number]
+
+export function isUserRole(value: string): value is UserRole {
+  return (USER_ROLES as readonly string[]).includes(value)
+}
+
+export function isAdminRole(role?: string): boolean {
+  return role === 'admin' || role === 'founder'
+}
+
 export function isConvobrainsEmail(email: string): boolean {
   const normalized = email.trim().toLowerCase()
   return normalized.endsWith(`@${ALLOWED_EMAIL_DOMAIN}`)
@@ -40,8 +52,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 }
 
 export function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  const role = req.user?.role
-  if (role !== 'admin' && role !== 'founder') {
+  if (!isAdminRole(req.user?.role)) {
     res.status(403).json({ error: 'Admin access required.' })
     return
   }
