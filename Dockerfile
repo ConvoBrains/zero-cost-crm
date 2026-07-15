@@ -1,5 +1,5 @@
-# syntax=docker/dockerfile:1
-
+# No `# syntax=docker/dockerfile:…` — that forces a Docker Hub pull of the
+# BuildKit frontend and fails if the host has stale Hub credentials.
 FROM node:22-alpine AS builder
 
 WORKDIR /app
