@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { AuthUser } from '../types'
 import { api, getStoredToken, setAuthToken } from '../lib/api'
+import { useIdleSession } from './useIdleSession'
 
 const USER_KEY = 'convobrains-crm-user'
 const ALLOWED_DOMAIN = 'convobrains.com'
@@ -33,6 +34,12 @@ export function useAuth() {
   const [error, setError] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
 
+  const clearLocal = useCallback(() => {
+    setAuthToken(null)
+    setUser(null)
+    saveUser(null)
+  }, [])
+
   useEffect(() => {
     const token = getStoredToken()
     if (!token) {
@@ -46,12 +53,10 @@ export function useAuth() {
         saveUser(u)
       })
       .catch(() => {
-        setAuthToken(null)
-        setUser(null)
-        saveUser(null)
+        clearLocal()
       })
       .finally(() => setReady(true))
-  }, [])
+  }, [clearLocal])
 
   const login = useCallback(async (email: string, password: string) => {
     setError(null)
@@ -78,12 +83,31 @@ export function useAuth() {
     }
   }, [])
 
-  const logout = useCallback(() => {
-    setAuthToken(null)
-    setUser(null)
-    saveUser(null)
+  const logout = useCallback(async () => {
+    try {
+      await api('/api/auth/logout', {
+        method: 'POST',
+        body: JSON.stringify({ reason: 'manual' }),
+      })
+    } catch {
+      /* ignore */
+    }
+    clearLocal()
     setError(null)
-  }, [])
+  }, [clearLocal])
 
-  return { user, error, login, logout, ready, clearError: () => setError(null) }
+  const { warnSeconds } = useIdleSession({
+    enabled: !!user,
+    onIdleLogout: clearLocal,
+  })
+
+  return {
+    user,
+    error,
+    login,
+    logout,
+    ready,
+    clearError: () => setError(null),
+    idleWarnSeconds: warnSeconds,
+  }
 }

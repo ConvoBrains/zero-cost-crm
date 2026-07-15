@@ -168,3 +168,56 @@ CREATE INDEX IF NOT EXISTS conversations_called_at_idx ON conversations (called_
 CREATE UNIQUE INDEX IF NOT EXISTS conversations_call_unique_idx
   ON conversations (called_by, contact_id, called_at)
   WHERE called_at IS NOT NULL;
+
+-- ─── SDR activity / sessions ─────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS user_sessions (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  started_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_active_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  ended_at        TIMESTAMPTZ,
+  end_reason      TEXT CHECK (end_reason IS NULL OR end_reason IN ('manual', 'idle', 'expired')),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS user_sessions_user_started_idx
+  ON user_sessions (user_id, started_at DESC);
+
+CREATE UNIQUE INDEX IF NOT EXISTS user_sessions_one_open_idx
+  ON user_sessions (user_id)
+  WHERE ended_at IS NULL;
+
+CREATE TABLE IF NOT EXISTS activity_events (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id      UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  session_id   UUID REFERENCES user_sessions(id) ON DELETE SET NULL,
+  event_type   TEXT NOT NULL,
+  entity_type  TEXT NOT NULL
+               CHECK (entity_type IN ('contact', 'company', 'conversation', 'session', 'system')),
+  entity_id    UUID,
+  summary      TEXT NOT NULL DEFAULT '',
+  payload      JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS activity_events_user_created_idx
+  ON activity_events (user_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS activity_events_entity_idx
+  ON activity_events (entity_type, entity_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS activity_events_type_created_idx
+  ON activity_events (event_type, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS sdr_daily_targets (
+  id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  calls_target       INTEGER NOT NULL DEFAULT 80,
+  follow_ups_target  INTEGER NOT NULL DEFAULT 25,
+  demos_target       INTEGER NOT NULL DEFAULT 4,
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+INSERT INTO sdr_daily_targets (calls_target, follow_ups_target, demos_target)
+SELECT 80, 25, 4
+WHERE NOT EXISTS (SELECT 1 FROM sdr_daily_targets);
