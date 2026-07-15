@@ -1,8 +1,16 @@
+# Build and run on the EC2 host only — no Docker Hub / registry push or pull of app images.
+#
+# Usage:
+#   docker compose build
+#   docker compose up -d
+
 services:
   crm:
     build:
       context: .
       dockerfile: Dockerfile
+    image: convobrains-crm:local
+    pull_policy: build
     container_name: convobrains-crm
     restart: unless-stopped
     env_file:

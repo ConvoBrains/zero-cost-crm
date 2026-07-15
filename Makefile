@@ -54,11 +54,11 @@ db-check: ## Verify DB connectivity
 
 # ─── Docker ──────────────────────────────────────────────────────────────────
 
-docker-build: ## Build Docker image
+docker-build: ## Build Docker image on-host (no registry)
 	$(COMPOSE) build
 
-docker-up: ## Start CRM container (detached)
-	$(COMPOSE) up -d
+docker-up: ## Start CRM container (detached; never pull app image)
+	$(COMPOSE) up -d --pull never
 
 docker-down: ## Stop CRM container
 	$(COMPOSE) down
