@@ -1,0 +1,24 @@
+# Feature-testing Postgres only — never use for production / RDS.
+# Usage: from repo root → make test-up
+
+services:
+  crm-test-db:
+    image: postgres:16
+    container_name: convobrains-crm-test-db
+    restart: unless-stopped
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: crm_test
+      POSTGRES_PASSWORD: crm_test_local_only
+      POSTGRES_DB: brains_crm_test
+    volumes:
+      - crm_test_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crm_test -d brains_crm_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  crm_test_pg_data:
