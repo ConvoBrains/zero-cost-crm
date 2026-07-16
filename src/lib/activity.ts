@@ -42,6 +42,8 @@ export interface ActivityAlert {
 
 export interface ActivityOverview {
   date: string
+  from?: string
+  to?: string
   userId: string
   targets: { calls: number; followUps: number; demos: number }
   session: SessionBlock | null
@@ -93,14 +95,28 @@ export async function fetchSdrs() {
   return api<{ sdrs: ActivitySdr[] }>('/api/activity/sdrs')
 }
 
-export async function fetchOverview(date: string, userId: string) {
-  const q = new URLSearchParams({ date, userId })
+export async function fetchOverview(opts: {
+  from: string
+  to: string
+  userId: string
+  q?: string
+}) {
+  const q = new URLSearchParams({ from: opts.from, to: opts.to, userId: opts.userId })
+  if (opts.q?.trim()) q.set('q', opts.q.trim())
   return api<ActivityOverview>(`/api/activity/overview?${q}`)
 }
 
-export async function fetchTimeline(date: string, userId: string) {
-  const q = new URLSearchParams({ date, userId })
-  return api<{ events: TimelineEvent[] }>(`/api/activity/timeline?${q}`)
+export async function fetchTimeline(opts: {
+  from: string
+  to: string
+  userId: string
+  q?: string
+}) {
+  const q = new URLSearchParams({ from: opts.from, to: opts.to, userId: opts.userId })
+  if (opts.q?.trim()) q.set('q', opts.q.trim())
+  return api<{ events: TimelineEvent[]; from: string; to: string }>(
+    `/api/activity/timeline?${q}`,
+  )
 }
 
 export function logViewEvent(
@@ -112,4 +128,30 @@ export function logViewEvent(
     method: 'POST',
     body: JSON.stringify({ eventType, entityId, name }),
   }).catch(() => {})
+}
+
+export function eventTypeLabel(eventType: string): string {
+  const map: Record<string, string> = {
+    'session.login': 'Login',
+    'session.logout': 'Logout',
+    'session.idle': 'Idle logout',
+    'company.created': 'Company created',
+    'company.deleted': 'Company deleted',
+    'company.stage_changed': 'Stage changed',
+    'company.follow_up_set': 'Company follow-up',
+    'company.note_added': 'Company note',
+    'company.updated': 'Company updated',
+    'company.opened': 'Opened company',
+    'contact.created': 'Contact created',
+    'contact.deleted': 'Contact deleted',
+    'contact.status_changed': 'Status changed',
+    'contact.follow_up_set': 'Contact follow-up',
+    'contact.note_added': 'Contact note',
+    'contact.updated': 'Contact updated',
+    'contact.opened': 'Opened contact',
+    'conversation.uploaded': 'Call uploaded',
+    'conversation.deleted': 'Recording deleted',
+    'leads.imported': 'Leads imported',
+  }
+  return map[eventType] ?? eventType
 }

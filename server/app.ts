@@ -353,7 +353,17 @@ app.post('/api/companies', requireAuth, async (req, res) => {
     ],
   )
   const { rows: full } = await pool.query(`${COMPANY_SELECT} WHERE c.id = $1`, [rows[0].id])
-  res.status(201).json(mapCompany(full[0]))
+  const company = mapCompany(full[0])
+  await logActivity({
+    userId: req.user!.sub,
+    sessionId: req.user!.sid,
+    eventType: 'company.created',
+    entityType: 'company',
+    entityId: company.id,
+    summary: `Created company ${company.companyName}`,
+    payload: { name: company.companyName, stage: company.stage },
+  })
+  res.status(201).json(company)
 })
 
 app.patch('/api/companies/:id', requireAuth, async (req, res) => {
@@ -482,12 +492,27 @@ app.patch('/api/companies/:id', requireAuth, async (req, res) => {
 
 app.delete('/api/companies/:id', requireAuth, requireAdmin, async (req, res) => {
   const { id } = req.params
-  await pool.query('UPDATE contacts SET company_id = NULL WHERE company_id = $1', [id])
-  const r = await pool.query('DELETE FROM companies WHERE id = $1', [id])
-  if (r.rowCount === 0) {
+  const { rows: beforeRows } = await pool.query(
+    'SELECT company_name FROM companies WHERE id = $1',
+    [id],
+  )
+  const before = beforeRows[0]
+  if (!before) {
     res.status(404).json({ error: 'Company not found' })
     return
   }
+  const name = String(before.company_name)
+  await pool.query('UPDATE contacts SET company_id = NULL WHERE company_id = $1', [id])
+  await pool.query('DELETE FROM companies WHERE id = $1', [id])
+  await logActivity({
+    userId: req.user!.sub,
+    sessionId: req.user!.sid,
+    eventType: 'company.deleted',
+    entityType: 'company',
+    entityId: String(id),
+    summary: `Deleted company ${name}`,
+    payload: { name },
+  })
   res.status(204).end()
 })
 
@@ -524,7 +549,21 @@ app.post('/api/contacts', requireAuth, async (req, res) => {
       contact.company_id,
     ])
   }
-  res.status(201).json(mapContact(contact))
+  const mapped = mapContact(contact)
+  await logActivity({
+    userId: req.user!.sub,
+    sessionId: req.user!.sid,
+    eventType: 'contact.created',
+    entityType: 'contact',
+    entityId: mapped.id,
+    summary: `Created contact ${mapped.contactName}`,
+    payload: {
+      name: mapped.contactName,
+      companyId: mapped.companyId,
+      status: mapped.contactStatus,
+    },
+  })
+  res.status(201).json(mapped)
 })
 
 app.patch('/api/contacts/:id', requireAuth, async (req, res) => {
@@ -643,15 +682,30 @@ app.patch('/api/contacts/:id', requireAuth, async (req, res) => {
 
 app.delete('/api/contacts/:id', requireAuth, requireAdmin, async (req, res) => {
   const { id } = req.params
+  const { rows: beforeRows } = await pool.query(
+    'SELECT contact_name FROM contacts WHERE id = $1',
+    [id],
+  )
+  const before = beforeRows[0]
+  if (!before) {
+    res.status(404).json({ error: 'Contact not found' })
+    return
+  }
+  const name = String(before.contact_name)
   await pool.query(
     'UPDATE companies SET primary_contact_id = NULL WHERE primary_contact_id = $1',
     [id],
   )
-  const r = await pool.query('DELETE FROM contacts WHERE id = $1', [id])
-  if (r.rowCount === 0) {
-    res.status(404).json({ error: 'Contact not found' })
-    return
-  }
+  await pool.query('DELETE FROM contacts WHERE id = $1', [id])
+  await logActivity({
+    userId: req.user!.sub,
+    sessionId: req.user!.sid,
+    eventType: 'contact.deleted',
+    entityType: 'contact',
+    entityId: String(id),
+    summary: `Deleted contact ${name}`,
+    payload: { name },
+  })
   res.status(204).end()
 })
 

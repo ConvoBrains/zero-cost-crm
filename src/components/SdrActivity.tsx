@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
+  eventTypeLabel,
   fetchOverview,
   fetchSdrs,
   fetchTimeline,
@@ -18,6 +19,25 @@ function fmtTime(iso: string | null) {
     hour: '2-digit',
     minute: '2-digit',
     hour12: true,
+  }).format(new Date(iso))
+}
+
+function fmtDay(iso: string) {
+  return new Intl.DateTimeFormat('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(iso))
+}
+
+function dayKeyIst(iso: string) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
   }).format(new Date(iso))
 }
 
@@ -47,10 +67,72 @@ function Metric({ label, value }: { label: string; value: string | number }) {
   )
 }
 
+function ActivityFeed({ events, multiDay }: { events: TimelineEvent[]; multiDay: boolean }) {
+  const groups = useMemo(() => {
+    if (!multiDay) return [{ key: 'all', label: null as string | null, events }]
+    const map = new Map<string, TimelineEvent[]>()
+    for (const e of events) {
+      const key = dayKeyIst(e.createdAt)
+      const list = map.get(key) ?? []
+      list.push(e)
+      map.set(key, list)
+    }
+    return [...map.entries()].map(([key, evs]) => ({
+      key,
+      label: fmtDay(`${key}T12:00:00+05:30`),
+      events: evs,
+    }))
+  }, [events, multiDay])
+
+  if (events.length === 0) {
+    return (
+      <p className="rounded-lg border border-dashed border-[var(--color-line)] bg-stone-50 px-4 py-8 text-center text-sm text-stone-500">
+        No activity logged for this user / date range.
+      </p>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {groups.map((g) => (
+        <div key={g.key}>
+          {g.label ? (
+            <h3 className="mb-2 text-xs font-semibold tracking-wide text-stone-500 uppercase">
+              {g.label}
+            </h3>
+          ) : null}
+          <ul className="divide-y divide-[var(--color-line)] overflow-hidden rounded-xl border border-[var(--color-line)] bg-white">
+            {g.events.map((e) => (
+              <li key={e.id} className="flex flex-wrap items-start gap-3 px-3 py-2.5 sm:px-4">
+                <time className="w-20 shrink-0 text-xs font-medium text-stone-500 tabular-nums">
+                  {fmtTime(e.createdAt)}
+                </time>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-md bg-teal-50 px-1.5 py-0.5 text-[11px] font-medium text-teal-800">
+                      {eventTypeLabel(e.eventType)}
+                    </span>
+                    <span className="text-xs text-stone-500">{e.userName}</span>
+                  </div>
+                  <p className="mt-0.5 text-sm text-stone-800">{e.summary || e.eventType}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function SdrActivity() {
   const [sdrs, setSdrs] = useState<ActivitySdr[]>([])
   const [userId, setUserId] = useState('all')
-  const [date, setDate] = useState(todayIstIso)
+  const today = todayIstIso()
+  const [from, setFrom] = useState(today)
+  const [to, setTo] = useState(today)
+  const [search, setSearch] = useState('')
+  const [searchApplied, setSearchApplied] = useState('')
   const [overview, setOverview] = useState<ActivityOverview | null>(null)
   const [events, setEvents] = useState<TimelineEvent[]>([])
   const [loading, setLoading] = useState(true)
@@ -66,7 +148,8 @@ export function SdrActivity() {
     setLoading(true)
     setError(null)
     try {
-      const [ov, tl] = await Promise.all([fetchOverview(date, userId), fetchTimeline(date, userId)])
+      const opts = { from, to, userId, q: searchApplied }
+      const [ov, tl] = await Promise.all([fetchOverview(opts), fetchTimeline(opts)])
       setOverview(ov)
       setEvents(tl.events)
     } catch (e) {
@@ -76,7 +159,7 @@ export function SdrActivity() {
     } finally {
       setLoading(false)
     }
-  }, [date, userId])
+  }, [from, to, userId, searchApplied])
 
   useEffect(() => {
     void load()
@@ -87,6 +170,11 @@ export function SdrActivity() {
   const progress = overview?.progress
   const targets = overview?.targets
   const single = userId !== 'all'
+  const singleDay = from === to
+  const stripEvents = useMemo(
+    () => (singleDay ? [...events].reverse() : []),
+    [events, singleDay],
+  )
 
   return (
     <div className="space-y-6">
@@ -95,6 +183,9 @@ export function SdrActivity() {
           <h1 className="font-[family-name:var(--font-display)] text-3xl text-stone-900 sm:text-4xl">
             SDR Activity
           </h1>
+          <p className="mt-1 text-sm text-stone-500">
+            Every CRM action by agents — filter by user, date range, and search.
+          </p>
         </div>
         <div className="flex flex-wrap items-end gap-2">
           <label className="flex flex-col gap-1 text-xs text-stone-500">
@@ -113,14 +204,52 @@ export function SdrActivity() {
             </select>
           </label>
           <label className="flex flex-col gap-1 text-xs text-stone-500">
-            Date
+            From
             <input
               type="date"
               className={inputClass}
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
+              value={from}
+              onChange={(e) => {
+                const v = e.target.value
+                setFrom(v)
+                if (v > to) setTo(v)
+              }}
             />
           </label>
+          <label className="flex flex-col gap-1 text-xs text-stone-500">
+            To
+            <input
+              type="date"
+              className={inputClass}
+              value={to}
+              onChange={(e) => {
+                const v = e.target.value
+                setTo(v)
+                if (v < from) setFrom(v)
+              }}
+            />
+          </label>
+          <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-stone-500">
+            Search
+            <input
+              type="search"
+              className={inputClass}
+              placeholder="Status, company…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') setSearchApplied(search.trim())
+              }}
+            />
+          </label>
+          <button
+            type="button"
+            className={btnGhost}
+            onClick={() => setSearchApplied(search.trim())}
+            disabled={loading}
+          >
+            Search
+          </button>
           <button type="button" className={btnGhost} onClick={() => void load()} disabled={loading}>
             Refresh
           </button>
@@ -133,6 +262,17 @@ export function SdrActivity() {
       {loading && !overview ? (
         <p className="text-sm text-stone-500">Loading…</p>
       ) : null}
+
+      <section className="space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold text-stone-800">Activity feed</h2>
+          <span className="text-xs text-stone-500">
+            {events.length} event{events.length === 1 ? '' : 's'}
+            {loading ? ' · refreshing…' : ''}
+          </span>
+        </div>
+        <ActivityFeed events={events} multiDay={!singleDay} />
+      </section>
 
       {overview && m && session && progress && targets ? (
         <>
@@ -171,15 +311,17 @@ export function SdrActivity() {
             </div>
           </section>
 
-          <DayActivityStrip
-            dateIso={date}
-            events={events}
-            agents={
-              userId === 'all'
-                ? overview.agents.map((a) => ({ userId: a.userId, name: a.name }))
-                : undefined
-            }
-          />
+          {singleDay ? (
+            <DayActivityStrip
+              dateIso={from}
+              events={stripEvents}
+              agents={
+                userId === 'all'
+                  ? overview.agents.map((a) => ({ userId: a.userId, name: a.name }))
+                  : undefined
+              }
+            />
+          ) : null}
 
           <section className="space-y-3">
             <h2 className="text-sm font-semibold text-stone-800">Calls</h2>
