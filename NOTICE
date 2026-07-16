@@ -1,0 +1,16 @@
+ConvoBrains SDR War Room
+Copyright (c) 2026 ConvoBrains
+
+This product includes software developed for the ConvoBrains open-source
+SDR War Room project, licensed under the MIT License (see LICENSE).
+
+Third-party notices
+-------------------
+
+- React, Express, and other npm dependencies: see each package’s license
+  in package-lock.json / node_modules.
+- exceljs: MIT License.
+- Google Fonts families DM Sans and Instrument Serif are loaded from
+  fonts.googleapis.com under the SIL Open Font License (OFL).
+- ConvoBrains logos and wordmarks in public/ are trademarks of ConvoBrains
+  and are not licensed under MIT for rebranding or endorsement uses.

@@ -82,8 +82,7 @@ export function Users() {
           Users
         </h1>
         <p className="mt-2 max-w-xl text-sm text-stone-500">
-          Add Convobrains teammates with a role from the database ({roles.map(roleLabel).join(', ')}
-          ).
+          Add teammates with a role from the database ({roles.map(roleLabel).join(', ')}).
         </p>
       </header>
 
@@ -92,7 +91,7 @@ export function Users() {
           Add user
         </h2>
         <p className="mt-1 text-sm text-stone-500">
-          Only @convobrains.com emails can sign in.
+          Email domain rules are controlled by ALLOWED_EMAIL_DOMAIN on the server.
         </p>
 
         <form onSubmit={submit} className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -114,7 +113,7 @@ export function Users() {
               onChange={(e) => set('email', e.target.value)}
               required
               autoComplete="off"
-              placeholder="name@convobrains.com"
+              placeholder="name@example.com"
             />
           </Field>
           <Field label="Temporary password">

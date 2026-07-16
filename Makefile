@@ -20,7 +20,7 @@ setup: ## One-command local setup (Docker + demo data)
 	@command -v docker >/dev/null || (echo "Docker is required: https://docs.docker.com/get-docker/" && exit 1)
 	@command -v npm >/dev/null || (echo "Node.js 22+ is required: https://nodejs.org/" && exit 1)
 	@test -f testing/.env.testing || cp testing/.env.testing.example testing/.env.testing
-	npm install
+	@if [ -f package-lock.json ]; then npm ci; else npm install; fi
 	$(MAKE) test-reset
 	@echo ""
 	@echo "SDR War Room is ready"

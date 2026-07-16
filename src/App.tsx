@@ -58,7 +58,14 @@ export default function App() {
   }
 
   if (!auth.user) {
-    return <LoginPage error={auth.error} onLogin={auth.login} />
+    return (
+      <LoginPage
+        error={auth.error}
+        onLogin={auth.login}
+        allowedEmailDomain={auth.allowedEmailDomain}
+        allowAnyEmailDomain={auth.allowAnyEmailDomain}
+      />
+    )
   }
 
   if (store.loading) {

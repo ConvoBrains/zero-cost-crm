@@ -41,7 +41,13 @@ try {
     { name: 'BioLabs', stage: 'Lead Added', industry: 'Research / Biotech', sdr: 'neha.seed@convobrains.com' },
   ]
 
-  const contactNames = ['Rahul Sharma', 'Priya Nair', 'Amit Shah', 'Sneha Patel', 'Vikram Rao']
+  const contactNames = [
+    'Alex Example',
+    'Jordan Sample',
+    'Sam Fixture',
+    'Riley Demo',
+    'Casey Stub',
+  ]
 
   for (const [idx, c] of companies.entries()) {
     const owner = byEmail[c.sdr]

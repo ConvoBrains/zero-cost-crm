@@ -1,7 +1,6 @@
+import { config } from './config.js'
 import app from './app.js'
 
-const PORT = Number(process.env.PORT ?? 4000)
-
-app.listen(PORT, () => {
-  console.log(`API listening on http://localhost:${PORT}`)
+app.listen(config.port, () => {
+  console.log(`API listening on http://localhost:${config.port}`)
 })

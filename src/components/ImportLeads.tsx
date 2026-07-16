@@ -1,5 +1,5 @@
 import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import type { CrmStore } from '../hooks/useCrmStore'
 import type { ProspectRow } from '../types'
 import {
@@ -113,19 +113,39 @@ export function ImportLeads({ store }: ImportLeadsProps) {
     setText('')
     try {
       const buf = await file.arrayBuffer()
-      const wb = XLSX.read(buf, { type: 'array' })
-      const sheet = wb.Sheets[wb.SheetNames[0]]
-      if (!sheet) {
-        setFileRows([])
-        setFileErrors(['No sheet found in file.'])
-        setFileName(file.name)
-        return
+      const name = file.name.toLowerCase()
+      let matrix: unknown[][] = []
+
+      if (name.endsWith('.csv') || name.endsWith('.tsv') || name.endsWith('.txt')) {
+        const text = new TextDecoder('utf-8').decode(buf)
+        matrix = text
+          .replace(/\r\n/g, '\n')
+          .replace(/\r/g, '\n')
+          .split('\n')
+          .filter((line) => line.trim().length > 0)
+          .map((line) =>
+            line.includes('\t') ? line.split('\t') : line.split(',').map((c) => c.trim()),
+          )
+      } else {
+        const wb = new ExcelJS.Workbook()
+        await wb.xlsx.load(buf)
+        const sheet = wb.worksheets[0]
+        if (!sheet) {
+          setFileRows([])
+          setFileErrors(['No sheet found in file.'])
+          setFileName(file.name)
+          return
+        }
+        sheet.eachRow({ includeEmpty: false }, (row) => {
+          const values = row.values
+          // exceljs row.values is 1-indexed
+          const cells = Array.isArray(values)
+            ? values.slice(1).map((v) => (v == null ? '' : String(v)))
+            : []
+          matrix.push(cells)
+        })
       }
-      const matrix = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
-        header: 1,
-        defval: '',
-        raw: false,
-      })
+
       const parsed = parseProspectMatrix(matrix)
       setFileRows(parsed.rows)
       setFileErrors(parsed.errors)

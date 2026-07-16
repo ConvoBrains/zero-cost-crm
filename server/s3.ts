@@ -7,24 +7,37 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { config } from './config.js'
 
 const ALLOWED_EXT = new Set(['mp3', 'm4a', 'wav', 'webm', 'ogg', 'mp4', 'aac'])
 export const MAX_RECORDING_BYTES = 50 * 1024 * 1024
 
 function bucket(): string {
-  return process.env.AWS_S3_BUCKET ?? 'your-recordings-bucket'
+  const b = config.aws.bucket
+  if (!b) {
+    throw new Error(
+      'AWS_S3_BUCKET is required for call recordings. Set it in your environment (see .env.example).',
+    )
+  }
+  return b
 }
 
 function region(): string {
-  return process.env.AWS_REGION ?? 'ap-south-1'
+  const r = config.aws.region
+  if (!r) {
+    throw new Error(
+      'AWS_REGION is required for call recordings. Set it in your environment (see .env.example).',
+    )
+  }
+  return r
 }
 
 let client: S3Client | null = null
 
 function s3(): S3Client {
   if (!client) {
-    const accessKeyId = process.env.AWS_ACCESS_KEY_ID
-    const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY
+    const accessKeyId = config.aws.accessKeyId
+    const secretAccessKey = config.aws.secretAccessKey
     if (!accessKeyId || !secretAccessKey) {
       throw new Error('Missing AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY')
     }

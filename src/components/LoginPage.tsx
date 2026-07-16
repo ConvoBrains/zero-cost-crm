@@ -4,9 +4,16 @@ import { Field, inputClass, btnPrimary } from './ui'
 interface LoginPageProps {
   error: string | null
   onLogin: (email: string, password: string) => Promise<boolean>
+  allowedEmailDomain?: string | null
+  allowAnyEmailDomain?: boolean
 }
 
-export function LoginPage({ error, onLogin }: LoginPageProps) {
+export function LoginPage({
+  error,
+  onLogin,
+  allowedEmailDomain = 'convobrains.com',
+  allowAnyEmailDomain = false,
+}: LoginPageProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -61,7 +68,11 @@ export function LoginPage({ error, onLogin }: LoginPageProps) {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="username"
-                placeholder="name@convobrains.com"
+                placeholder={
+                  allowAnyEmailDomain
+                    ? 'you@example.com'
+                    : `name@${allowedEmailDomain ?? 'example.com'}`
+                }
               />
             </Field>
             <Field label="Password">
@@ -86,8 +97,15 @@ export function LoginPage({ error, onLogin }: LoginPageProps) {
           </button>
 
           <p className="mt-4 text-center text-[11px] leading-relaxed text-stone-400">
-            Only <span className="font-medium text-stone-500">@convobrains.com</span> accounts
-            can sign in.
+            {allowAnyEmailDomain ? (
+              'Sign in with an account created by your War Room admin.'
+            ) : (
+              <>
+                Only{' '}
+                <span className="font-medium text-stone-500">@{allowedEmailDomain}</span> accounts
+                can sign in.
+              </>
+            )}
           </p>
         </form>
       </div>
