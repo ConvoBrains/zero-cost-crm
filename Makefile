@@ -1,10 +1,10 @@
 # Convobrains CRM — common commands
 # Usage: make <target>
 
-.PHONY: help install dev build start lint smoke \
-        db-migrate db-seed db-roles db-clean db-check \
+.PHONY: help setup reset-demo install dev build start lint smoke \
+        db-migrate db-check \
         docker-build docker-up docker-down docker-restart docker-logs docker-ps docker-shell \
-        deploy-ec2 deploy-nginx nginx-test health \
+        health \
         test-up test-down test-migrate test-seed test-seed-activity test-reset test-run
 
 COMPOSE := docker compose
@@ -16,11 +16,28 @@ help: ## Show this help
 
 # ─── Local development ───────────────────────────────────────────────────────
 
+setup: ## One-command local setup (Docker + demo data)
+	@command -v docker >/dev/null || (echo "Docker is required: https://docs.docker.com/get-docker/" && exit 1)
+	@command -v npm >/dev/null || (echo "Node.js 22+ is required: https://nodejs.org/" && exit 1)
+	@test -f testing/.env.testing || cp testing/.env.testing.example testing/.env.testing
+	npm install
+	$(MAKE) test-reset
+	@echo ""
+	@echo "SDR War Room is ready"
+	@echo "  Run:      make dev"
+	@echo "  Open:     http://localhost:5173"
+	@echo "  Email:    founder.seed@convobrains.com"
+	@echo "  Password: TestSeed123!"
+	@echo "  Product:  https://www.convobrains.com"
+
+reset-demo: test-reset ## Reset local demo data
+
 install: ## Install npm dependencies
 	npm install
 
 dev: ## Run Vite + API (port 4000)
-	npm run dev
+	@test -f testing/.env.testing || (echo "Run make setup first" && exit 1)
+	set -a && . ./testing/.env.testing && set +a && npm run dev
 
 build: ## Build frontend for production
 	npm run build
@@ -41,15 +58,6 @@ health: ## Check local /api/health
 
 db-migrate: ## Apply sql/schema.sql
 	npm run db:migrate
-
-db-seed: ## Migrate + seed users
-	npm run db:seed
-
-db-roles: ## Set monojoy→sdr, others→admin
-	npm run db:roles
-
-db-clean: ## Wipe data (destructive)
-	npm run db:clean
 
 db-check: ## Verify DB connectivity
 	node scripts/db-check.mjs
@@ -77,19 +85,6 @@ docker-ps: ## Show container status
 docker-shell: ## Shell into running container
 	$(COMPOSE) exec crm sh
 
-deploy-ec2: install build docker-build docker-up ## Full EC2 deploy pipeline
-
-# ─── Nginx (host install) ────────────────────────────────────────────────────
-
-deploy-nginx: ## Copy nginx site config (requires sudo)
-	sudo cp deploy/nginx/crm.convobrains.com.conf /etc/nginx/sites-available/crm.convobrains.com
-	sudo ln -sf /etc/nginx/sites-available/crm.convobrains.com /etc/nginx/sites-enabled/crm.convobrains.com
-	@echo "Run: sudo certbot --nginx -d crm.convobrains.com"
-	@echo "Then: make nginx-test && sudo systemctl reload nginx"
-
-nginx-test: ## Validate nginx config
-	sudo nginx -t
-
 # ─── Feature testing (testing/ only — never uses root .env / RDS) ─────────────
 
 test-up: ## Start Docker Postgres for feature tests (port 5434)
@@ -104,7 +99,7 @@ test-down: ## Stop feature-test Postgres
 	$(TEST_COMPOSE) down
 
 test-migrate: ## Apply schema to test DB only
-	node testing/migrate.mjs
+	$(TEST_COMPOSE) exec -T crm-test-db psql -v ON_ERROR_STOP=1 -U crm_test -d brains_crm_test < sql/schema.sql
 
 test-seed: ## Seed test users + CRM fixtures
 	node testing/seed-users.mjs

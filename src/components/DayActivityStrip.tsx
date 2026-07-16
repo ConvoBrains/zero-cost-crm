@@ -89,7 +89,7 @@ export function DayActivityStrip({ dateIso, events, agents }: DayActivityStripPr
   )
 
   return (
-    <div className="space-y-3 rounded-xl border border-[var(--color-line)] bg-white p-4">
+    <div className="space-y-3 rounded-none border border-[var(--color-line)] bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="text-sm font-semibold text-stone-800">Day movement</h2>
@@ -99,13 +99,13 @@ export function DayActivityStrip({ dateIso, events, agents }: DayActivityStripPr
         </div>
         <div className="flex items-center gap-3 text-[11px] text-stone-500">
           <span className="inline-flex items-center gap-1">
-            <span className="h-2.5 w-4 rounded-sm bg-stone-100 ring-1 ring-stone-200" /> Quiet
+            <span className="h-2.5 w-4 rounded-none bg-stone-100 ring-1 ring-stone-200" /> Quiet
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className="h-2.5 w-4 rounded-sm bg-teal-200" /> Light
+            <span className="h-2.5 w-4 rounded-none bg-teal-200" /> Light
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className="h-2.5 w-4 rounded-sm bg-teal-600" /> Busy
+            <span className="h-2.5 w-4 rounded-none bg-teal-600" /> Busy
           </span>
           <span>
             {totalActiveSlots} active / {SLOTS} slots
@@ -136,7 +136,7 @@ export function DayActivityStrip({ dateIso, events, agents }: DayActivityStripPr
                 {row.name}
               </span>
             ) : null}
-            <div className="relative flex h-8 min-w-0 flex-1 overflow-hidden rounded-md ring-1 ring-stone-200">
+            <div className="relative flex h-8 min-w-0 flex-1 overflow-hidden rounded-none ring-1 ring-stone-200">
               {row.slots.map((slot) => (
                 <button
                   key={slot.index}
@@ -167,7 +167,7 @@ export function DayActivityStrip({ dateIso, events, agents }: DayActivityStripPr
       </div>
 
       {hover ? (
-        <div className="rounded-lg bg-stone-50 px-3 py-2 text-xs text-stone-600">
+        <div className="rounded-none bg-stone-50 px-3 py-2 text-xs text-stone-600">
           <p className="font-medium text-stone-800">
             {hover.userName ? `${hover.userName} · ` : null}
             {hover.label}

@@ -28,10 +28,7 @@ body {
   margin: 0;
   font-family: var(--font-sans);
   color: var(--color-ink);
-  background:
-    radial-gradient(ellipse 80% 50% at 10% -10%, #d1fae5 0%, transparent 50%),
-    radial-gradient(ellipse 60% 40% at 100% 0%, #fde68a33 0%, transparent 45%),
-    var(--color-canvas);
+  background: var(--color-canvas);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -42,7 +39,7 @@ body {
 }
 .kanban-scroll::-webkit-scrollbar-thumb {
   background: #d6cfc4;
-  border-radius: 999px;
+  border-radius: 0;
 }
 .kanban-scroll::-webkit-scrollbar-track {
   background: transparent;

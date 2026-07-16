@@ -1,5 +1,5 @@
 /**
- * Apply sql/schema.sql (and optionally sql/seed_users.sql) using DB_URL_DEV.
+ * Apply sql/schema.sql using DATABASE_URL or DB_URL_DEV.
  *
  * Expects PostgreSQL URL like:
  *   postgresql+asyncpg://user:pass@localhost:5433/brains_crm
@@ -8,7 +8,6 @@
  *
  * Usage:
  *   npm run db:migrate
- *   npm run db:seed
  */
 import { readFileSync, existsSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
@@ -69,12 +68,4 @@ function runSql(file) {
 }
 
 runSql('sql/schema.sql')
-if (process.argv.includes('--seed')) {
-  const r = spawnSync('node', ['scripts/seed-users.mjs'], {
-    env,
-    encoding: 'utf8',
-    stdio: 'inherit',
-  })
-  if (r.status !== 0) process.exit(r.status ?? 1)
-}
 console.log('Done.')

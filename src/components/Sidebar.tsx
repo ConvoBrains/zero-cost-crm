@@ -1,5 +1,6 @@
 import type { Page } from '../types'
 import { navItemsForRole } from '../lib/nav'
+import { ConvobrainsBridge } from './ConvobrainsBridge'
 
 interface SidebarProps {
   page: Page
@@ -22,25 +23,20 @@ export function Sidebar({
 
   return (
     <aside
-      className={`flex w-56 shrink-0 flex-col border-r border-[var(--color-line)] bg-[var(--color-panel)]/80 backdrop-blur-sm ${className}`}
+      className={`flex min-h-0 w-56 shrink-0 flex-col overflow-hidden border-r border-[var(--color-line)] bg-[var(--color-panel)] ${className}`}
     >
-      <div className="border-b border-[var(--color-line)] px-5 py-5">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-700 text-sm font-bold text-teal-50">
-            CB
-          </div>
-          <div>
-            <p className="font-[family-name:var(--font-display)] text-xl leading-none text-stone-900">
-              Convobrains
-            </p>
-            <p className="mt-0.5 text-[11px] font-medium tracking-wide text-stone-500 uppercase">
-              Sales CRM
-            </p>
-          </div>
-        </div>
+      <div className="shrink-0 border-b border-[var(--color-line)] px-5 py-4">
+        <img
+          src="/convobrains-logo.png"
+          alt="ConvoBrains SDR War Room"
+          className="h-16 w-full object-contain"
+        />
+        <p className="mt-2 text-center text-[10px] font-semibold tracking-[0.14em] text-stone-500 uppercase">
+          SDR War Room
+        </p>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-1 p-3">
+      <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain p-3">
         {items.map((item) => {
           const active = page === item.id
           return (
@@ -48,9 +44,9 @@ export function Sidebar({
               key={item.id}
               type="button"
               onClick={() => onNavigate(item.id)}
-              className={`rounded-xl px-3 py-2.5 text-left transition ${
+              className={`rounded-none px-3 py-2.5 text-left transition ${
                 active
-                  ? 'bg-teal-700 text-white shadow-sm'
+                  ? 'bg-teal-700 text-white'
                   : 'text-stone-700 hover:bg-stone-100'
               }`}
             >
@@ -65,11 +61,11 @@ export function Sidebar({
         })}
       </nav>
 
-      <div className="space-y-2 border-t border-[var(--color-line)] p-4">
+      <div className="shrink-0 space-y-3 border-t border-[var(--color-line)] p-4">
+        <ConvobrainsBridge />
         <p className="text-[11px] text-stone-500">
           Signed in as <span className="font-medium text-stone-700">{userName}</span>
         </p>
-        <p className="text-[11px] text-stone-400">Connected to PostgreSQL</p>
         <button
           type="button"
           onClick={onLogout}
