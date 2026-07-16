@@ -21,6 +21,7 @@ import {
   intentColor,
   stageAccent,
 } from '../lib/views'
+import { logViewEvent } from '../lib/activity'
 import { CompanyForm } from './CompanyForm'
 import { Modal, btnPrimary } from './ui'
 
@@ -179,6 +180,11 @@ export function Pipeline({ store }: PipelineProps) {
   const [creating, setCreating] = useState(false)
   const [activeId, setActiveId] = useState<string | null>(null)
 
+  const openCompany = (c: Company) => {
+    setEditing(c)
+    logViewEvent('company.opened', c.id, c.companyName)
+  }
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 8 } }),
@@ -268,7 +274,7 @@ export function Pipeline({ store }: PipelineProps) {
               stage={stage}
               companies={byStage.get(stage) ?? []}
               store={store}
-              onOpen={setEditing}
+              onOpen={openCompany}
             />
           ))}
         </div>

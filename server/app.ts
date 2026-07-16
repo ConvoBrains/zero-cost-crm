@@ -15,6 +15,15 @@ import {
 } from './auth.js'
 import { mapCompany, mapContact } from './mappers.js'
 import { registerConversationRoutes } from './conversations.js'
+import { registerActivityRoutes } from './activityRoutes.js'
+import {
+  createSession,
+  endSession,
+  getOpenSession,
+  IDLE_MS,
+  logActivity,
+  touchSession,
+} from './activity.js'
 
 const app = express()
 app.use(cors())
@@ -86,17 +95,83 @@ app.post('/api/auth/login', async (req, res) => {
     return
   }
 
+  const sid = await createSession(String(user.id))
+  await logActivity({
+    userId: String(user.id),
+    sessionId: sid,
+    eventType: 'session.login',
+    entityType: 'session',
+    entityId: sid,
+    summary: 'Login',
+    payload: {},
+  })
+
   const token = signToken({
     sub: user.id,
     email: user.email,
     name: user.name,
     role: user.role,
+    sid,
   })
 
   res.json({
     token,
     user: { id: user.id, email: user.email, name: user.name, role: user.role },
   })
+})
+
+app.post('/api/auth/logout', requireAuth, async (req, res) => {
+  const reasonRaw = String(req.body?.reason ?? 'manual')
+  const reason =
+    reasonRaw === 'idle' || reasonRaw === 'expired' || reasonRaw === 'manual'
+      ? reasonRaw
+      : 'manual'
+  const sid = req.user!.sid
+  if (sid) {
+    const closed = await endSession(sid, req.user!.sub, reason)
+    if (closed) {
+      await logActivity({
+        userId: req.user!.sub,
+        sessionId: sid,
+        eventType: reason === 'idle' ? 'session.idle' : 'session.logout',
+        entityType: 'session',
+        entityId: sid,
+        summary: reason === 'idle' ? 'Idle logout' : 'Logout',
+        payload: { reason },
+      })
+    }
+  }
+  res.status(204).end()
+})
+
+app.post('/api/auth/heartbeat', requireAuth, async (req, res) => {
+  const sid = req.user!.sid
+  if (!sid) {
+    res.status(401).json({ error: 'Session required — please log in again' })
+    return
+  }
+  const session = await getOpenSession(sid, req.user!.sub)
+  if (!session) {
+    res.status(401).json({ error: 'Session ended — please log in again' })
+    return
+  }
+  const last = new Date(String(session.last_active_at)).getTime()
+  if (Date.now() - last >= IDLE_MS) {
+    await endSession(sid, req.user!.sub, 'idle')
+    await logActivity({
+      userId: req.user!.sub,
+      sessionId: sid,
+      eventType: 'session.idle',
+      entityType: 'session',
+      entityId: sid,
+      summary: 'Idle logout',
+      payload: { reason: 'idle' },
+    })
+    res.status(401).json({ error: 'Session idle — please log in again' })
+    return
+  }
+  await touchSession(sid)
+  res.json({ ok: true, lastActiveAt: new Date().toISOString() })
 })
 
 app.get('/api/auth/me', requireAuth, async (req, res) => {
@@ -284,6 +359,13 @@ app.post('/api/companies', requireAuth, async (req, res) => {
 app.patch('/api/companies/:id', requireAuth, async (req, res) => {
   const { id } = req.params
   const b = req.body
+  const { rows: beforeRows } = await pool.query(`${COMPANY_SELECT} WHERE c.id = $1`, [id])
+  const before = beforeRows[0]
+  if (!before) {
+    res.status(404).json({ error: 'Company not found' })
+    return
+  }
+
   const fields: string[] = []
   const values: unknown[] = []
   let i = 1
@@ -327,6 +409,74 @@ app.patch('/api/companies/:id', requireAuth, async (req, res) => {
     res.status(404).json({ error: 'Company not found' })
     return
   }
+
+  const name = String(full[0].company_name)
+  const sid = req.user!.sid
+  const uid = req.user!.sub
+  if (b.stage !== undefined && b.stage !== before.stage) {
+    await logActivity({
+      userId: uid,
+      sessionId: sid,
+      eventType: 'company.stage_changed',
+      entityType: 'company',
+      entityId: String(id),
+      summary: `Stage → ${b.stage} (${name})`,
+      payload: { from: before.stage, to: b.stage, name },
+    })
+  }
+  if (b.nextFollowUp !== undefined && b.nextFollowUp !== before.next_follow_up) {
+    await logActivity({
+      userId: uid,
+      sessionId: sid,
+      eventType: 'company.follow_up_set',
+      entityType: 'company',
+      entityId: String(id),
+      summary: `Follow-up set for ${name}`,
+      payload: { nextFollowUp: b.nextFollowUp, name },
+    })
+  }
+  if (b.notes !== undefined && b.notes !== before.notes) {
+    await logActivity({
+      userId: uid,
+      sessionId: sid,
+      eventType: 'company.note_added',
+      entityType: 'company',
+      entityId: String(id),
+      summary: `Note updated on ${name}`,
+      payload: { name },
+    })
+  }
+  if (
+    b.stage === undefined &&
+    b.nextFollowUp === undefined &&
+    b.notes === undefined
+  ) {
+    await logActivity({
+      userId: uid,
+      sessionId: sid,
+      eventType: 'company.updated',
+      entityType: 'company',
+      entityId: String(id),
+      summary: `Updated ${name}`,
+      payload: { name },
+    })
+  } else if (
+    b.companyName !== undefined ||
+    b.industry !== undefined ||
+    b.location !== undefined ||
+    b.intent !== undefined
+  ) {
+    await logActivity({
+      userId: uid,
+      sessionId: sid,
+      eventType: 'company.updated',
+      entityType: 'company',
+      entityId: String(id),
+      summary: `Updated ${name}`,
+      payload: { name },
+    })
+  }
+
   res.json(mapCompany(full[0]))
 })
 
@@ -380,6 +530,13 @@ app.post('/api/contacts', requireAuth, async (req, res) => {
 app.patch('/api/contacts/:id', requireAuth, async (req, res) => {
   const { id } = req.params
   const b = req.body
+  const { rows: beforeRows } = await pool.query('SELECT * FROM contacts WHERE id = $1', [id])
+  const before = beforeRows[0]
+  if (!before) {
+    res.status(404).json({ error: 'Contact not found' })
+    return
+  }
+
   const fields: string[] = []
   const values: unknown[] = []
   let i = 1
@@ -424,6 +581,61 @@ app.patch('/api/contacts/:id', requireAuth, async (req, res) => {
       contact.id,
       contact.company_id,
     ])
+  }
+
+  const name = String(contact.contact_name)
+  const sid = req.user!.sid
+  const uid = req.user!.sub
+  if (b.contactStatus !== undefined && b.contactStatus !== before.contact_status) {
+    await logActivity({
+      userId: uid,
+      sessionId: sid,
+      eventType: 'contact.status_changed',
+      entityType: 'contact',
+      entityId: String(id),
+      summary: `Changed status → ${b.contactStatus}`,
+      payload: { from: before.contact_status, to: b.contactStatus, name },
+    })
+  }
+  if (b.nextFollowUp !== undefined && b.nextFollowUp !== before.next_follow_up) {
+    await logActivity({
+      userId: uid,
+      sessionId: sid,
+      eventType: 'contact.follow_up_set',
+      entityType: 'contact',
+      entityId: String(id),
+      summary: `Follow-up added for ${name}`,
+      payload: { nextFollowUp: b.nextFollowUp, name },
+    })
+  }
+  if (b.notes !== undefined && b.notes !== before.notes) {
+    await logActivity({
+      userId: uid,
+      sessionId: sid,
+      eventType: 'contact.note_added',
+      entityType: 'contact',
+      entityId: String(id),
+      summary: `Added note on ${name}`,
+      payload: { name },
+    })
+  }
+  if (
+    (b.contactName !== undefined ||
+      b.phone !== undefined ||
+      b.email !== undefined ||
+      b.role !== undefined ||
+      b.companyId !== undefined) &&
+    b.contactStatus === undefined
+  ) {
+    await logActivity({
+      userId: uid,
+      sessionId: sid,
+      eventType: 'contact.updated',
+      entityType: 'contact',
+      entityId: String(id),
+      summary: `Updated ${name}`,
+      payload: { name },
+    })
   }
 
   res.json(mapContact(contact))
@@ -587,6 +799,14 @@ app.post('/api/import/prospects', requireAuth, async (req, res) => {
     }
 
     await client.query('COMMIT')
+    await logActivity({
+      userId: req.user!.sub,
+      sessionId: req.user!.sid,
+      eventType: 'leads.imported',
+      entityType: 'system',
+      summary: `Imported ${result.contactsCreated} contacts / ${result.companiesCreated} companies`,
+      payload: { ...result },
+    })
     res.json(result)
   } catch (e) {
     await client.query('ROLLBACK')
@@ -601,6 +821,7 @@ app.get('/api/health', (_req, res) => {
 })
 
 registerConversationRoutes(app, pool)
+registerActivityRoutes(app)
 
 if (process.env.NODE_ENV === 'production') {
   const distPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist')

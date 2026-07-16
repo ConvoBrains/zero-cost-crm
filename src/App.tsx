@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import type { Page } from './types'
 import { canManageUsers } from './types'
 import { useAuth } from './hooks/useAuth'
@@ -13,16 +13,41 @@ import { Users } from './components/Users'
 import { LoginPage } from './components/LoginPage'
 import { PAGE_TITLE } from './lib/nav'
 
+/** Admin-only — not in the SDR initial bundle. */
+const SdrActivity = lazy(() =>
+  import('./components/SdrActivity').then((m) => ({ default: m.SdrActivity })),
+)
+
+const ADMIN_ONLY_PAGES: Page[] = ['activity', 'users']
+
 export default function App() {
   const auth = useAuth()
   const store = useCrmStore(!!auth.user, auth.user?.role)
   const [page, setPage] = useState<Page>('dashboard')
   const [menuOpen, setMenuOpen] = useState(false)
 
-  const navigate = useCallback((next: Page) => {
-    setPage(next)
-    setMenuOpen(false)
-  }, [])
+  const manageUsers = canManageUsers(auth.user?.role)
+
+  const navigate = useCallback(
+    (next: Page) => {
+      if (ADMIN_ONLY_PAGES.includes(next) && !canManageUsers(auth.user?.role)) {
+        setPage('dashboard')
+        setMenuOpen(false)
+        return
+      }
+      setPage(next)
+      setMenuOpen(false)
+    },
+    [auth.user?.role],
+  )
+
+  // Never leave SDRs on admin-only pages (no Activity UI, no "access denied" messaging).
+  useEffect(() => {
+    if (!auth.user) return
+    if (ADMIN_ONLY_PAGES.includes(page) && !canManageUsers(auth.user.role)) {
+      setPage('dashboard')
+    }
+  }, [auth.user, page])
 
   if (!auth.ready) {
     return (
@@ -44,10 +69,13 @@ export default function App() {
     )
   }
 
-  const manageUsers = canManageUsers(auth.user.role)
-
   return (
     <div className="flex min-h-[100dvh] flex-col lg:flex-row">
+      {auth.idleWarnSeconds != null ? (
+        <div className="fixed inset-x-0 top-0 z-[60] bg-amber-600 px-4 py-2 text-center text-sm font-medium text-white">
+          You will be signed out soon due to inactivity — move the mouse or press a key to stay signed in ({auth.idleWarnSeconds}s)
+        </div>
+      ) : null}
       {/* Mobile top bar */}
       <header
         className="sticky top-0 z-30 flex items-center gap-3 border-b border-[var(--color-line)] bg-[var(--color-panel)]/95 px-4 py-3 backdrop-blur-md lg:hidden"
@@ -87,7 +115,7 @@ export default function App() {
               onNavigate={navigate}
               userName={auth.user.name}
               userRole={auth.user.role}
-              onLogout={auth.logout}
+              onLogout={() => void auth.logout()}
               className="h-full w-full"
             />
           </div>
@@ -100,7 +128,7 @@ export default function App() {
         onNavigate={navigate}
         userName={auth.user.name}
         userRole={auth.user.role}
-        onLogout={auth.logout}
+        onLogout={() => void auth.logout()}
         className="hidden lg:flex"
       />
 
@@ -116,12 +144,12 @@ export default function App() {
         {page === 'import' ? <ImportLeads store={store} /> : null}
         {page === 'pipeline' ? <Pipeline store={store} /> : null}
         {page === 'contacts' ? <Contacts store={store} /> : null}
-        {page === 'users' && manageUsers ? <Users /> : null}
-        {page === 'users' && !manageUsers ? (
-          <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            Admin access required to manage users.
-          </p>
+        {page === 'activity' && manageUsers ? (
+          <Suspense fallback={<p className="text-sm text-stone-500">Loading…</p>}>
+            <SdrActivity />
+          </Suspense>
         ) : null}
+        {page === 'users' && manageUsers ? <Users /> : null}
       </main>
 
       <MobileNav page={page} onNavigate={navigate} userRole={auth.user.role} />

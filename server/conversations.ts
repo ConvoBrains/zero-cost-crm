@@ -17,6 +17,7 @@ import {
   stagingKey,
 } from './s3.js'
 import { STAGES } from '../src/types.js'
+import { logActivity } from './activity.js'
 
 const CONVERSATION_SELECT = `
   SELECT
@@ -143,7 +144,21 @@ export function registerConversationRoutes(app: Express, pool: Pool) {
     }
 
     const { rows: full } = await pool.query(`${CONVERSATION_SELECT} WHERE cv.id = $1`, [id])
-    res.json(mapConversation(full[0]))
+    const mapped = mapConversation(full[0])
+    await logActivity({
+      userId: req.user!.sub,
+      sessionId: req.user!.sid,
+      eventType: 'conversation.uploaded',
+      entityType: 'conversation',
+      entityId: String(id),
+      summary: `Uploaded recording for ${mapped.contactName}`,
+      payload: {
+        contactId: mapped.contactId,
+        companyId: mapped.companyId,
+        name: mapped.contactName,
+      },
+    })
+    res.json(mapped)
   })
 
   app.get('/api/conversations', requireAuth, async (req, res) => {
