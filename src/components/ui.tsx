@@ -15,12 +15,12 @@ export function Modal({ open, title, onClose, children, wide }: ModalProps) {
     <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto sm:items-start sm:p-8">
       <button
         type="button"
-        className="fixed inset-0 z-0 bg-stone-900/40 backdrop-blur-[2px]"
+        className="fixed inset-0 z-0 bg-stone-900/40"
         aria-label="Dismiss dialog"
         onClick={onClose}
       />
       <div
-        className={`relative z-10 my-0 w-full rounded-t-2xl border border-[var(--color-line)] bg-[var(--color-panel)] shadow-2xl shadow-stone-900/10 sm:my-4 sm:rounded-2xl ${
+        className={`relative z-10 my-0 w-full rounded-none border border-[var(--color-line)] bg-[var(--color-panel)] sm:my-4 ${
           wide ? 'max-w-3xl' : 'max-w-xl'
         }`}
       >
@@ -31,7 +31,7 @@ export function Modal({ open, title, onClose, children, wide }: ModalProps) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg px-3 py-2 text-sm text-stone-500 transition hover:bg-stone-100 hover:text-stone-800"
+            className="rounded-none px-3 py-2 text-sm text-stone-500 transition hover:bg-stone-100 hover:text-stone-800"
           >
             Close
           </button>
@@ -58,10 +58,10 @@ export function Field({ label, children, className = '' }: FieldProps) {
 }
 
 export const inputClass =
-  'w-full rounded-lg border border-[var(--color-line)] bg-white px-3 py-2.5 text-base text-stone-900 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15 sm:text-sm'
+  'w-full rounded-none border border-[var(--color-line)] bg-white px-3 py-2.5 text-base text-stone-900 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15 sm:text-sm'
 
 export const btnPrimary =
-  'inline-flex items-center justify-center rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-teal-800 disabled:opacity-50'
+  'inline-flex items-center justify-center rounded-none bg-teal-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-800 disabled:opacity-50'
 
 export const btnGhost =
-  'inline-flex items-center justify-center rounded-lg border border-[var(--color-line)] bg-white px-3 py-2 text-sm font-medium text-stone-700 transition hover:bg-stone-50'
+  'inline-flex items-center justify-center rounded-none border border-[var(--color-line)] bg-white px-3 py-2 text-sm font-medium text-stone-700 transition hover:bg-stone-50'

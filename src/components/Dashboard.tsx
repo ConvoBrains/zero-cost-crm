@@ -1,6 +1,7 @@
 import type { CrmStore } from '../hooks/useCrmStore'
 import type { Page } from '../types'
 import { btnPrimary, btnGhost } from './ui'
+import { ConvobrainsBridge } from './ConvobrainsBridge'
 
 interface DashboardProps {
   store: CrmStore
@@ -54,7 +55,7 @@ export function Dashboard({ store, onNavigate, canManageUsers }: DashboardProps)
     {
       title: 'Closed Lost',
       count: metrics.closedLost,
-      blurb: 'Parked for learning',
+      blurb: 'Where deals died — dig into why next',
       action: () => onNavigate('pipeline'),
     },
   ]
@@ -66,14 +67,14 @@ export function Dashboard({ store, onNavigate, canManageUsers }: DashboardProps)
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-semibold tracking-[0.14em] text-teal-700 uppercase">
-            Morning brief
+            War Room · Morning brief
           </p>
           <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl text-stone-900 sm:text-5xl">
-            Sales Dashboard
+            SDR Dashboard
           </h1>
           <p className="mt-2 max-w-xl text-sm text-stone-500">
-            Start here each day. Check follow-ups, then work the pipeline and update contacts
-            after every call.
+            Start here each day. Clear follow-ups, work the pipeline, update contacts after
+            every call — then coach from the activity board.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -98,7 +99,7 @@ export function Dashboard({ store, onNavigate, canManageUsers }: DashboardProps)
         {summary.map((s) => (
           <div
             key={s.label}
-            className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3"
+            className="rounded-none border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3"
           >
             <p className="text-[11px] font-medium tracking-wide text-stone-500 uppercase">
               {s.label}
@@ -116,7 +117,7 @@ export function Dashboard({ store, onNavigate, canManageUsers }: DashboardProps)
             key={p.title}
             type="button"
             onClick={p.action}
-            className="group rounded-2xl border border-[var(--color-line)] bg-[var(--color-panel)] p-5 text-left transition hover:border-teal-600/40 hover:shadow-md hover:shadow-teal-900/5"
+            className="group rounded-none border border-[var(--color-line)] bg-[var(--color-panel)] p-5 text-left transition hover:border-teal-700"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -131,7 +132,7 @@ export function Dashboard({ store, onNavigate, canManageUsers }: DashboardProps)
         ))}
       </section>
 
-      <section className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-panel)] p-5">
+      <section className="rounded-none border border-[var(--color-line)] bg-[var(--color-panel)] p-5">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-[family-name:var(--font-display)] text-2xl text-stone-900">
             Follow-ups due today
@@ -156,7 +157,7 @@ export function Dashboard({ store, onNavigate, canManageUsers }: DashboardProps)
                   className="text-xs font-medium text-teal-700 hover:underline"
                   onClick={() => onNavigate('pipeline')}
                 >
-                  Open pipeline →
+                  Open pipeline
                 </button>
               </li>
             ))}
@@ -164,18 +165,19 @@ export function Dashboard({ store, onNavigate, canManageUsers }: DashboardProps)
         )}
       </section>
 
-      <section className="rounded-2xl border border-dashed border-teal-700/30 bg-teal-50/50 p-5">
-        <h2 className="text-sm font-semibold text-teal-900">Daily workflow (simple)</h2>
+      <section className="rounded-none border border-dashed border-teal-700/30 bg-teal-50/50 p-5">
+        <h2 className="text-sm font-semibold text-teal-900">Daily War Room ritual</h2>
         <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm text-teal-900/80">
-          <li>Founder imports new companies into Sales Pipeline.</li>
+          <li>Import or assign fresh companies into the pipeline.</li>
           <li>Add 5–10 contacts per company.</li>
-          <li>Call contacts and update each Contact Status.</li>
-          <li>
-            When someone is interested → check Champion, set them as Primary Contact.
-          </li>
-          <li>Move the company card across stages until Closed Won / Lost / Not Interested.</li>
+          <li>Call, update Contact Status, set follow-ups immediately.</li>
+          <li>When interested → mark Champion and Primary Contact.</li>
+          <li>Move the company only when the real stage changed.</li>
+          <li>Managers: review Activity alerts before noon.</li>
         </ol>
       </section>
+
+      {metrics.closedLost > 0 ? <ConvobrainsBridge variant="lost" /> : <ConvobrainsBridge variant="panel" />}
     </div>
   )
 }

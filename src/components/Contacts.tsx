@@ -29,7 +29,7 @@ function ContactRow({
     <button
       type="button"
       onClick={onEdit}
-      className="w-full rounded-2xl border border-[var(--color-line)] bg-[var(--color-panel)] p-4 text-left transition active:bg-teal-50/40"
+      className="w-full rounded-none border border-[var(--color-line)] bg-[var(--color-panel)] p-4 text-left transition active:bg-teal-50/40"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
@@ -39,7 +39,7 @@ function ContactRow({
           ) : null}
         </div>
         {contact.champion ? (
-          <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+          <span className="shrink-0 rounded-none bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
             ★
           </span>
         ) : null}
@@ -50,7 +50,7 @@ function ContactRow({
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <span
-          className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${statusColor(contact.contactStatus)}`}
+          className={`rounded-none px-2 py-0.5 text-[11px] font-medium ${statusColor(contact.contactStatus)}`}
         >
           {contact.contactStatus}
         </span>
@@ -114,7 +114,7 @@ export function Contacts({ store }: ContactsProps) {
                     key={v}
                     type="button"
                     onClick={() => setView(v)}
-                    className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                    className={`shrink-0 rounded-none px-3 py-1.5 text-xs font-medium transition ${
                       view === v
                         ? 'bg-teal-700 text-white'
                         : 'bg-white text-stone-600 ring-1 ring-[var(--color-line)] hover:bg-stone-50'
@@ -130,7 +130,7 @@ export function Contacts({ store }: ContactsProps) {
         ))}
       </div>
 
-      <p className="rounded-xl bg-teal-50/80 px-3 py-2 text-xs text-teal-900/80">
+      <p className="rounded-none bg-teal-50/80 px-3 py-2 text-xs text-teal-900/80">
         <span className="font-semibold">{view}</span>
         {' — '}
         {CONTACT_VIEW_HINTS[view]}
@@ -153,7 +153,7 @@ export function Contacts({ store }: ContactsProps) {
         ) : null}
       </div>
 
-      <div className="hidden overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-panel)] md:block">
+      <div className="hidden overflow-hidden rounded-none border border-[var(--color-line)] bg-[var(--color-panel)] md:block">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[800px] text-left text-sm">
             <thead>
@@ -180,7 +180,7 @@ export function Contacts({ store }: ContactsProps) {
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-stone-900">{t.contactName}</span>
                         {t.champion ? (
-                          <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800">
+                          <span className="rounded-none bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800">
                             ★ Champion
                           </span>
                         ) : null}
@@ -195,7 +195,7 @@ export function Contacts({ store }: ContactsProps) {
                     <td className="px-4 py-3 text-stone-600">{t.role || '—'}</td>
                     <td className="px-4 py-3">
                       <span
-                        className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${statusColor(t.contactStatus)}`}
+                        className={`rounded-none px-2 py-0.5 text-[11px] font-medium ${statusColor(t.contactStatus)}`}
                       >
                         {t.contactStatus}
                       </span>

@@ -51,7 +51,7 @@ function CompanyCard({
 }) {
   return (
     <div
-      className={`rounded-xl border border-[var(--color-line)] bg-white p-3 text-left shadow-sm transition hover:border-teal-600/40 hover:shadow ${
+      className={`rounded-none border border-[var(--color-line)] bg-white p-3 text-left transition hover:border-teal-600/40 ${
         dragging ? 'opacity-40' : ''
       }`}
     >
@@ -76,13 +76,13 @@ function CompanyCard({
         <div className="flex shrink-0 flex-col items-end gap-1">
           {company.intent ? (
             <span
-              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${intentColor(company.intent)}`}
+              className={`rounded-none px-2 py-0.5 text-[10px] font-semibold ${intentColor(company.intent)}`}
             >
               {company.intent}
             </span>
           ) : null}
           <span
-            className="rounded px-1.5 py-0.5 text-[10px] font-medium text-stone-400"
+            className="rounded-none px-1.5 py-0.5 text-[10px] font-medium text-stone-400"
             title="Drag card to move stage"
           >
             ⠿
@@ -145,7 +145,7 @@ function KanbanColumn({
   return (
     <div
       ref={setNodeRef}
-      className={`flex w-[min(72vw,16rem)] shrink-0 flex-col rounded-2xl border border-[var(--color-line)] border-t-4 bg-[var(--color-panel)]/70 sm:w-64 ${stageAccent(stage)} ${
+      className={`flex w-[min(72vw,16rem)] shrink-0 flex-col rounded-none border border-[var(--color-line)] border-t-4 bg-[var(--color-panel)]/70 sm:w-64 ${stageAccent(stage)} ${
         isOver ? 'ring-2 ring-teal-600/30' : ''
       }`}
     >
@@ -153,7 +153,7 @@ function KanbanColumn({
         <h3 className="text-xs font-semibold tracking-wide text-stone-700 uppercase">
           {stage}
         </h3>
-        <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-semibold text-stone-500">
+        <span className="rounded-none bg-stone-100 px-2 py-0.5 text-[10px] font-semibold text-stone-500">
           {companies.length}
         </span>
       </div>
@@ -250,7 +250,7 @@ export function Pipeline({ store }: PipelineProps) {
             key={v}
             type="button"
             onClick={() => setView(v)}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition ${
+            className={`shrink-0 rounded-none px-3 py-1.5 text-xs font-medium transition ${
               view === v
                 ? 'bg-teal-700 text-white'
                 : 'bg-white text-stone-600 ring-1 ring-[var(--color-line)] hover:bg-stone-50'
