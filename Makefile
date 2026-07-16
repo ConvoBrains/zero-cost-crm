@@ -23,7 +23,7 @@ setup: ## One-command local setup (Docker + demo data)
 	@if [ -f package-lock.json ]; then npm ci; else npm install; fi
 	$(MAKE) test-reset
 	@echo ""
-	@echo "SDR War Room is ready"
+	@echo "Zero Cost CRM is ready"
 	@echo "  Run:      make dev"
 	@echo "  Open:     http://localhost:5173"
 	@echo "  Email:    founder.seed@convobrains.com"

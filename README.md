@@ -1,4 +1,4 @@
-# The Open-Source SDR War Room
+# Zero Cost CRM
 
 **We don't need Salesforce. We need to know which SDR is converting and why.**
 
@@ -7,7 +7,7 @@ scattered call recordings, and founder intuition. We built the system we wished 
 
 [Run locally](#run-it-in-3-steps) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · **[Book a demo](https://www.convobrains.com/contact)**
 
-![SDR War Room login](docs/images/login.png)
+![Zero Cost CRM login](docs/images/login.png)
 
 ---
 
@@ -23,11 +23,11 @@ We needed:
 4. **Call recordings** attached to contacts, not buried in Drive folders
 5. Something a founder can stand up in **one command**
 
-This repo is the **War Room**: pipeline operations for founder-led SDR teams.
+This repo is **Zero Cost CRM**: pipeline operations for founder-led sales teams.
 
 [ConvoBrains](https://www.convobrains.com) is the **intelligence layer**: conversation analysis for call quality, pitch effectiveness, and objection handling.
 
-> The War Room tells you **what** happened.
+> Zero Cost CRM tells you **what** happened.
 >
 > ConvoBrains tells you **why** it happened.
 
@@ -92,7 +92,7 @@ Skip it if you need enterprise CPQ, multi-currency ERP integrations, or a full m
 
 ---
 
-## What's in the War Room
+## What's in Zero Cost CRM
 
 | Capability            | What you get                                         |
 | --------------------- | ---------------------------------------------------- |

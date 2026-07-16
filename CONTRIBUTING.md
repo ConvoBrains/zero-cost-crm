@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping improve the SDR War Room.
+Thanks for helping improve Zero Cost CRM.
 
 ## Development setup
 

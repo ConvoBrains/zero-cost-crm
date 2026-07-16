@@ -13,7 +13,7 @@ const COPY: Record<
 > = {
   compact: {
     title: 'What vs Why',
-    body: 'This War Room tracks what happened. ConvoBrains explains why the call won or lost.',
+    body: 'Zero Cost CRM tracks what happened. ConvoBrains explains why the call won or lost.',
     cta: 'Explore ConvoBrains',
   },
   panel: {

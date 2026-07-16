@@ -67,7 +67,7 @@ export function Dashboard({ store, onNavigate, canManageUsers }: DashboardProps)
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-semibold tracking-[0.14em] text-teal-700 uppercase">
-            War Room · Morning brief
+            Zero Cost CRM · Morning brief
           </p>
           <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl text-stone-900 sm:text-5xl">
             SDR Dashboard
@@ -166,7 +166,7 @@ export function Dashboard({ store, onNavigate, canManageUsers }: DashboardProps)
       </section>
 
       <section className="rounded-none border border-dashed border-teal-700/30 bg-teal-50/50 p-5">
-        <h2 className="text-sm font-semibold text-teal-900">Daily War Room ritual</h2>
+        <h2 className="text-sm font-semibold text-teal-900">Daily CRM ritual</h2>
         <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm text-teal-900/80">
           <li>Import or assign fresh companies into the pipeline.</li>
           <li>Add 5–10 contacts per company.</li>

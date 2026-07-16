@@ -1,5 +1,5 @@
 {
-  "name": "convobrains-sdr-war-room",
+  "name": "zero-cost-crm",
   "private": true,
   "version": "1.0.0",
   "license": "MIT",
@@ -50,7 +50,7 @@
     "typescript": "~6.0.2",
     "vite": "^8.1.1"
   },
-  "description": "Open-source SDR pipeline, activity, and call-recording workspace for founder-led sales teams.",
+  "description": "A self-hosted, open-source CRM for small sales teams—pipeline, contacts, follow-ups, activity tracking, lead imports, and optional call recordings.",
   "repository": {
     "type": "git",
     "url": "https://github.com/ConvoBrains/zero-cost-crm.git"

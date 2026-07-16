@@ -28,11 +28,11 @@ export function Sidebar({
       <div className="shrink-0 border-b border-[var(--color-line)] px-5 py-4">
         <img
           src="/convobrains-logo.png"
-          alt="ConvoBrains SDR War Room"
+          alt="Zero Cost CRM"
           className="h-16 w-full object-contain"
         />
         <p className="mt-2 text-center text-[10px] font-semibold tracking-[0.14em] text-stone-500 uppercase">
-          SDR War Room
+          Zero Cost CRM
         </p>
       </div>
 

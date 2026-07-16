@@ -1,4 +1,4 @@
--- ConvoBrains SDR War Room — PostgreSQL schema (idempotent)
+-- Zero Cost CRM — PostgreSQL schema (idempotent)
 -- Apply with: npm run db:migrate  (requires DATABASE_URL)
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";

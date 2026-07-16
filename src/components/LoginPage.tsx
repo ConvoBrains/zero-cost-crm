@@ -37,7 +37,7 @@ export function LoginPage({
             alt="ConvoBrains"
             className="mx-auto mb-3 w-56"
           />
-          <p className="mt-1 text-sm text-stone-500">Open-Source SDR War Room</p>
+          <p className="mt-1 text-sm text-stone-500">Zero Cost CRM</p>
           <p className="mt-2 text-xs text-stone-400">
             Track what happens.{' '}
             <a
@@ -57,7 +57,7 @@ export function LoginPage({
           className="rounded-none border border-[var(--color-line)] bg-[var(--color-panel)] p-6"
         >
           <h2 className="text-lg font-semibold text-stone-800">Welcome back</h2>
-          <p className="mt-1 text-sm text-stone-500">Sign in to your War Room.</p>
+          <p className="mt-1 text-sm text-stone-500">Sign in to Zero Cost CRM.</p>
 
           <div className="mt-5 space-y-4">
             <Field label="Email">
@@ -98,7 +98,7 @@ export function LoginPage({
 
           <p className="mt-4 text-center text-[11px] leading-relaxed text-stone-400">
             {allowAnyEmailDomain ? (
-              'Sign in with an account created by your War Room admin.'
+              'Sign in with an account created by your CRM admin.'
             ) : (
               <>
                 Only{' '}
