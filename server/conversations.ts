@@ -199,7 +199,12 @@ export function registerConversationRoutes(app: Express, pool: Pool) {
   app.delete('/api/conversations/:id', requireAuth, requireAdmin, async (req, res) => {
     const { id } = req.params
     const { rows } = await pool.query(
-      `SELECT s3_url, file_ext, upload_status FROM conversations WHERE id = $1`,
+      `
+      SELECT cv.s3_url, cv.file_ext, cv.upload_status, t.contact_name
+      FROM conversations cv
+      LEFT JOIN contacts t ON t.id = cv.contact_id
+      WHERE cv.id = $1
+      `,
       [id],
     )
     const row = rows[0]
@@ -207,6 +212,7 @@ export function registerConversationRoutes(app: Express, pool: Pool) {
       res.status(404).json({ error: 'Conversation not found' })
       return
     }
+    const contactName = row.contact_name ? String(row.contact_name) : 'contact'
     if (row.upload_status === 'completed' && row.s3_url) {
       try {
         await deleteObject(keyFromUrl(row.s3_url))
@@ -218,6 +224,15 @@ export function registerConversationRoutes(app: Express, pool: Pool) {
       await deleteObject(staging).catch(() => {})
     }
     await pool.query('DELETE FROM conversations WHERE id = $1', [id])
+    await logActivity({
+      userId: req.user!.sub,
+      sessionId: req.user!.sid,
+      eventType: 'conversation.deleted',
+      entityType: 'conversation',
+      entityId: String(id),
+      summary: `Deleted recording for ${contactName}`,
+      payload: { name: contactName },
+    })
     res.status(204).end()
   })
 }

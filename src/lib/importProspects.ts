@@ -91,27 +91,69 @@ export function parseProspectPaste(text: string): { rows: ProspectRow[]; errors:
 
   for (let i = start; i < lines.length; i++) {
     const cells = splitLine(lines[i])
-    if (cells.length < 4) {
-      errors.push(`Line ${i + 1}: too few columns — skipped.`)
+    const parsed = cellsToProspect(cells, i + 1)
+    if (parsed.error) {
+      errors.push(parsed.error)
       continue
     }
+    if (parsed.row) rows.push(parsed.row)
+  }
 
-    // Flexible column order: Company, Prospect Name, Job Title, Email, Phone, Location, Employees, Industry
-    const company = cells[0] ?? ''
-    const prospectName = cells[1] ?? ''
-    const jobTitle = cells[2] ?? ''
-    const email = cleanEmail(cells[3] ?? '')
-    const phone = cleanPhone(cells[4] ?? '')
-    const location = cells[5] ?? ''
-    const employees = parseEmployees(cells[6] ?? '')
-    const industry = cells[7] ?? ''
+  return { rows, errors }
+}
 
-    if (!company.trim() || !prospectName.trim()) {
-      errors.push(`Line ${i + 1}: missing company or prospect name — skipped.`)
+/** Parse a 2D matrix (e.g. from Excel/CSV file) into prospect rows. */
+export function parseProspectMatrix(
+  matrix: unknown[][],
+): { rows: ProspectRow[]; errors: string[] } {
+  const errors: string[] = []
+  const rows: ProspectRow[] = []
+  const lines = matrix
+    .map((row) => row.map((c) => String(c ?? '').trim()))
+    .filter((row) => row.some((c) => c.length > 0))
+
+  if (lines.length === 0) {
+    return { rows, errors: ['File is empty.'] }
+  }
+
+  let start = 0
+  if (isHeaderRow(lines[0])) start = 1
+
+  for (let i = start; i < lines.length; i++) {
+    const parsed = cellsToProspect(lines[i], i + 1)
+    if (parsed.error) {
+      errors.push(parsed.error)
       continue
     }
+    if (parsed.row) rows.push(parsed.row)
+  }
 
-    rows.push({
+  return { rows, errors }
+}
+
+function cellsToProspect(
+  cells: string[],
+  lineNo: number,
+): { row?: ProspectRow; error?: string } {
+  if (cells.length < 4) {
+    return { error: `Line ${lineNo}: too few columns — skipped.` }
+  }
+
+  const company = cells[0] ?? ''
+  const prospectName = cells[1] ?? ''
+  const jobTitle = cells[2] ?? ''
+  const email = cleanEmail(cells[3] ?? '')
+  const phone = cleanPhone(cells[4] ?? '')
+  const location = cells[5] ?? ''
+  const employees = parseEmployees(cells[6] ?? '')
+  const industry = cells[7] ?? ''
+
+  if (!company.trim() || !prospectName.trim()) {
+    return { error: `Line ${lineNo}: missing company or prospect name — skipped.` }
+  }
+
+  return {
+    row: {
       company: company.trim(),
       prospectName: prospectName.trim(),
       jobTitle: jobTitle.trim(),
@@ -120,11 +162,12 @@ export function parseProspectPaste(text: string): { rows: ProspectRow[]; errors:
       location: location.trim(),
       employees,
       industry: industry.trim(),
-    })
+    },
   }
-
-  return { rows, errors }
 }
+
+export const PROSPECT_TEMPLATE_CSV =
+  'Company,Prospect Name,Job Title,Email,Phone,Location,Employees,Industry\n'
 
 export function previewByCompany(rows: ProspectRow[]): { company: string; count: number }[] {
   const map = new Map<string, number>()

@@ -12,10 +12,29 @@ import {
   todayIstIso,
 } from './activity.js'
 
-function parseDate(req: Request): string {
-  const raw = String(req.query.date ?? '')
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw
-  return todayIstIso()
+/** Inclusive IST calendar range. Supports `from`/`to`, or legacy single `date`. */
+function parseDateRange(req: Request): { from: string; to: string; start: Date; end: Date } {
+  const fromRaw = String(req.query.from ?? '')
+  const toRaw = String(req.query.to ?? '')
+  const legacy = String(req.query.date ?? '')
+  let from = /^\d{4}-\d{2}-\d{2}$/.test(fromRaw)
+    ? fromRaw
+    : /^\d{4}-\d{2}-\d{2}$/.test(legacy)
+      ? legacy
+      : todayIstIso()
+  let to = /^\d{4}-\d{2}-\d{2}$/.test(toRaw) ? toRaw : from
+  if (from > to) {
+    const tmp = from
+    from = to
+    to = tmp
+  }
+  const start = istDayRange(from).start
+  const end = istDayRange(to).end
+  return { from, to, start, end }
+}
+
+function parseSearch(req: Request): string {
+  return String(req.query.q ?? '').trim().slice(0, 200)
 }
 
 function parseUserFilter(req: Request): 'all' | string | null {
@@ -57,8 +76,24 @@ async function getTargets() {
   }
 }
 
-async function loadEvents(userIds: string[], start: Date, end: Date) {
+async function loadEvents(
+  userIds: string[],
+  start: Date,
+  end: Date,
+  search = '',
+) {
   if (userIds.length === 0) return []
+  const params: unknown[] = [userIds, start.toISOString(), end.toISOString()]
+  let searchClause = ''
+  if (search) {
+    params.push(`%${search}%`)
+    searchClause = `
+      AND (
+        ae.summary ILIKE $4
+        OR ae.event_type ILIKE $4
+        OR COALESCE(ae.payload->>'name', '') ILIKE $4
+      )`
+  }
   const { rows } = await pool.query(
     `
     SELECT ae.*, u.name AS user_name
@@ -66,9 +101,10 @@ async function loadEvents(userIds: string[], start: Date, end: Date) {
     JOIN users u ON u.id = ae.user_id
     WHERE ae.user_id = ANY($1::uuid[])
       AND ae.created_at >= $2 AND ae.created_at < $3
-    ORDER BY ae.created_at ASC
+      ${searchClause}
+    ORDER BY ae.created_at DESC
     `,
-    [userIds, start.toISOString(), end.toISOString()],
+    params,
   )
   return rows
 }
@@ -254,8 +290,8 @@ export function registerActivityRoutes(app: Express) {
       res.status(400).json({ error: 'userId query required (uuid or all)' })
       return
     }
-    const date = parseDate(req)
-    const { start, end } = istDayRange(date)
+    const { from, to, start, end } = parseDateRange(req)
+    const search = parseSearch(req)
     const targets = await getTargets()
     const allUsers = await listSdrUsers()
     const selected =
@@ -267,8 +303,9 @@ export function registerActivityRoutes(app: Express) {
     }
 
     const userIds = selected.map((u) => u.id)
-    const events = await loadEvents(userIds, start, end)
+    const events = await loadEvents(userIds, start, end, search)
     const sessions = await loadSessions(userIds, start, end)
+    const alertDate = from === to ? from : to
 
     const agents = []
     const allAlerts = []
@@ -280,19 +317,22 @@ export function registerActivityRoutes(app: Express) {
       const stats = metricsForEvents(uEvents)
       const hoursActive = session.activeMs / 3_600_000
       const callsPerHour = hoursActive > 0 ? Math.round((stats.metrics.callsMade / hoursActive) * 10) / 10 : 0
-      const alerts = buildAlerts({
-        userId: user.id,
-        userName: user.name,
-        dateIso: date,
-        firstLogin: session.firstLogin ? new Date(session.firstLogin) : null,
-        lastActivity: session.lastActivity ? new Date(session.lastActivity) : null,
-        metrics: stats.metrics,
-        opens: stats.opens,
-        statusChanges: stats.statusChanges,
-        connectedWithoutFollowUp: stats.connectedWithoutFollowUp,
-        targets,
-        loggedOutIncomplete: session.loggedOutIncomplete,
-      })
+      const alerts =
+        from === to
+          ? buildAlerts({
+              userId: user.id,
+              userName: user.name,
+              dateIso: alertDate,
+              firstLogin: session.firstLogin ? new Date(session.firstLogin) : null,
+              lastActivity: session.lastActivity ? new Date(session.lastActivity) : null,
+              metrics: stats.metrics,
+              opens: stats.opens,
+              statusChanges: stats.statusChanges,
+              connectedWithoutFollowUp: stats.connectedWithoutFollowUp,
+              targets,
+              loggedOutIncomplete: session.loggedOutIncomplete,
+            })
+          : []
       allAlerts.push(...alerts)
       agents.push({
         userId: user.id,
@@ -338,7 +378,9 @@ export function registerActivityRoutes(app: Express) {
     }
 
     res.json({
-      date,
+      date: from,
+      from,
+      to,
       userId: userFilter,
       targets,
       session:
@@ -389,15 +431,17 @@ export function registerActivityRoutes(app: Express) {
       res.status(400).json({ error: 'userId query required (uuid or all)' })
       return
     }
-    const date = parseDate(req)
-    const { start, end } = istDayRange(date)
+    const { from, to, start, end } = parseDateRange(req)
+    const search = parseSearch(req)
     const allUsers = await listSdrUsers()
     const selected =
       userFilter === 'all' ? allUsers.filter((u) => u.role === 'sdr') : allUsers.filter((u) => u.id === userFilter)
     const userIds = selected.map((u) => u.id)
-    const events = await loadEvents(userIds, start, end)
+    const events = await loadEvents(userIds, start, end, search)
     res.json({
-      date,
+      date: from,
+      from,
+      to,
       userId: userFilter,
       events: events.map((e) => ({
         id: String(e.id),
