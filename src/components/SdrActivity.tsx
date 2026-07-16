@@ -51,8 +51,8 @@ function ProgressBar({ value, max, label }: { value: number; max: number; label:
           {value} / {max}
         </span>
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-stone-100">
-        <div className="h-full rounded-full bg-teal-700 transition-all" style={{ width: `${pct}%` }} />
+      <div className="h-2 overflow-hidden rounded-none bg-stone-100">
+        <div className="h-full rounded-none bg-teal-700 transition-all" style={{ width: `${pct}%` }} />
       </div>
     </div>
   )
@@ -60,7 +60,7 @@ function ProgressBar({ value, max, label }: { value: number; max: number; label:
 
 function Metric({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-xl border border-[var(--color-line)] bg-white px-3 py-3">
+    <div className="rounded-none border border-[var(--color-line)] bg-white px-3 py-3">
       <p className="text-[11px] font-semibold tracking-wide text-stone-500 uppercase">{label}</p>
       <p className="mt-1 font-[family-name:var(--font-display)] text-2xl text-stone-900">{value}</p>
     </div>
@@ -86,7 +86,7 @@ function ActivityFeed({ events, multiDay }: { events: TimelineEvent[]; multiDay:
 
   if (events.length === 0) {
     return (
-      <p className="rounded-lg border border-dashed border-[var(--color-line)] bg-stone-50 px-4 py-8 text-center text-sm text-stone-500">
+      <p className="rounded-none border border-dashed border-[var(--color-line)] bg-stone-50 px-4 py-8 text-center text-sm text-stone-500">
         No activity logged for this user / date range.
       </p>
     )
@@ -101,7 +101,7 @@ function ActivityFeed({ events, multiDay }: { events: TimelineEvent[]; multiDay:
               {g.label}
             </h3>
           ) : null}
-          <ul className="divide-y divide-[var(--color-line)] overflow-hidden rounded-xl border border-[var(--color-line)] bg-white">
+          <ul className="divide-y divide-[var(--color-line)] overflow-hidden rounded-none border border-[var(--color-line)] bg-white">
             {g.events.map((e) => (
               <li key={e.id} className="flex flex-wrap items-start gap-3 px-3 py-2.5 sm:px-4">
                 <time className="w-20 shrink-0 text-xs font-medium text-stone-500 tabular-nums">
@@ -109,7 +109,7 @@ function ActivityFeed({ events, multiDay }: { events: TimelineEvent[]; multiDay:
                 </time>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-md bg-teal-50 px-1.5 py-0.5 text-[11px] font-medium text-teal-800">
+                    <span className="rounded-none bg-teal-50 px-1.5 py-0.5 text-[11px] font-medium text-teal-800">
                       {eventTypeLabel(e.eventType)}
                     </span>
                     <span className="text-xs text-stone-500">{e.userName}</span>
@@ -257,22 +257,11 @@ export function SdrActivity() {
       </header>
 
       {error ? (
-        <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
+        <p className="rounded-none bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
       ) : null}
       {loading && !overview ? (
         <p className="text-sm text-stone-500">Loading…</p>
       ) : null}
-
-      <section className="space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold text-stone-800">Activity feed</h2>
-          <span className="text-xs text-stone-500">
-            {events.length} event{events.length === 1 ? '' : 's'}
-            {loading ? ' · refreshing…' : ''}
-          </span>
-        </div>
-        <ActivityFeed events={events} multiDay={!singleDay} />
-      </section>
 
       {overview && m && session && progress && targets ? (
         <>
@@ -283,7 +272,7 @@ export function SdrActivity() {
                 {overview.alerts.map((a, i) => (
                   <li
                     key={`${a.code}-${a.userId}-${i}`}
-                    className={`rounded-lg px-3 py-2 text-sm ${
+                    className={`rounded-none px-3 py-2 text-sm ${
                       a.severity === 'critical'
                         ? 'bg-rose-50 text-rose-800'
                         : 'bg-amber-50 text-amber-900'
@@ -337,7 +326,7 @@ export function SdrActivity() {
 
           <section className="space-y-3">
             <h2 className="text-sm font-semibold text-stone-800">Targets</h2>
-            <div className="space-y-3 rounded-xl border border-[var(--color-line)] bg-white p-4">
+            <div className="space-y-3 rounded-none border border-[var(--color-line)] bg-white p-4">
               <ProgressBar label="Calls" value={progress.calls} max={targets.calls} />
               <ProgressBar label="Follow-ups" value={progress.followUps} max={targets.followUps} />
               <ProgressBar label="Demos" value={progress.demos} max={targets.demos} />
@@ -347,7 +336,7 @@ export function SdrActivity() {
           {userId === 'all' && overview.agents.length > 0 ? (
             <section className="space-y-3">
               <h2 className="text-sm font-semibold text-stone-800">By agent</h2>
-              <div className="overflow-x-auto rounded-xl border border-[var(--color-line)]">
+              <div className="overflow-x-auto rounded-none border border-[var(--color-line)]">
                 <table className="min-w-full text-left text-sm">
                   <thead className="bg-stone-50 text-xs text-stone-500 uppercase">
                     <tr>
@@ -381,6 +370,19 @@ export function SdrActivity() {
           ) : null}
         </>
       ) : null}
+
+      <section className="space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold text-stone-800">Activity log</h2>
+          <span className="text-xs text-stone-500">
+            {events.length} event{events.length === 1 ? '' : 's'}
+            {loading ? ' · refreshing…' : ''}
+          </span>
+        </div>
+        <div className="max-h-[28rem] overflow-y-auto overscroll-contain pr-1">
+          <ActivityFeed events={events} multiDay={!singleDay} />
+        </div>
+      </section>
     </div>
   )
 }

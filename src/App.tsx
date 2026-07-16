@@ -78,13 +78,13 @@ export default function App() {
       ) : null}
       {/* Mobile top bar */}
       <header
-        className="sticky top-0 z-30 flex items-center gap-3 border-b border-[var(--color-line)] bg-[var(--color-panel)]/95 px-4 py-3 backdrop-blur-md lg:hidden"
+        className="sticky top-0 z-30 flex items-center gap-3 border-b border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3 lg:hidden"
         style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
       >
         <button
           type="button"
           onClick={() => setMenuOpen(true)}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[var(--color-line)] bg-white text-stone-700"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none border border-[var(--color-line)] bg-white text-stone-700"
           aria-label="Open menu"
         >
           <span className="text-lg leading-none">☰</span>
@@ -95,9 +95,11 @@ export default function App() {
           </p>
           <p className="truncate text-[11px] text-stone-500">{auth.user.name}</p>
         </div>
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-700 text-xs font-bold text-teal-50">
-          CB
-        </div>
+        <img
+          src="/convobrains-mark.png"
+          alt="ConvoBrains"
+          className="h-9 w-9 shrink-0 rounded-none object-cover"
+        />
       </header>
 
       {/* Mobile drawer */}
@@ -105,11 +107,11 @@ export default function App() {
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
             type="button"
-            className="absolute inset-0 bg-stone-900/40 backdrop-blur-[2px]"
+            className="absolute inset-0 bg-stone-900/40"
             aria-label="Close menu"
             onClick={() => setMenuOpen(false)}
           />
-          <div className="absolute inset-y-0 left-0 w-[min(85vw,14rem)] shadow-2xl">
+          <div className="absolute inset-y-0 left-0 w-[min(85vw,14rem)] overflow-hidden border-r border-[var(--color-line)]">
             <Sidebar
               page={page}
               onNavigate={navigate}
@@ -129,12 +131,12 @@ export default function App() {
         userName={auth.user.name}
         userRole={auth.user.role}
         onLogout={() => void auth.logout()}
-        className="hidden lg:flex"
+        className="sticky top-0 hidden h-[100dvh] lg:flex"
       />
 
       <main className="min-w-0 flex-1 overflow-auto p-4 pb-24 sm:p-6 lg:p-8 lg:pb-8">
         {store.error ? (
-          <p className="mb-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          <p className="mb-4 rounded-none bg-rose-50 px-3 py-2 text-sm text-rose-700">
             {store.error}
           </p>
         ) : null}

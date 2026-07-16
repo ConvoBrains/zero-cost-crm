@@ -170,7 +170,7 @@ export function ContactForm({
             type="checkbox"
             checked={form.champion}
             onChange={(e) => set('champion', e.target.checked)}
-            className="h-4 w-4 rounded border-stone-300 text-teal-700 focus:ring-teal-600"
+            className="h-4 w-4 rounded-none border-stone-300 text-teal-700 focus:ring-teal-600"
           />
           <span className="font-medium text-stone-700">
             Champion{' '}
@@ -188,7 +188,7 @@ export function ContactForm({
           companyId={form.companyId || initial.companyId}
         />
       ) : (
-        <p className="rounded-xl border border-dashed border-stone-300 px-3 py-2 text-xs text-stone-500">
+        <p className="rounded-none border border-dashed border-stone-300 px-3 py-2 text-xs text-stone-500">
           Save this contact first to upload call recordings.
         </p>
       )}

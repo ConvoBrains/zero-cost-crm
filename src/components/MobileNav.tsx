@@ -12,7 +12,7 @@ export function MobileNav({ page, onNavigate, userRole }: MobileNavProps) {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-line)] bg-[var(--color-panel)]/95 backdrop-blur-md lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-line)] bg-[var(--color-panel)] lg:hidden"
       style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
     >
       <div className="mx-auto flex max-w-lg">
@@ -28,7 +28,7 @@ export function MobileNav({ page, onNavigate, userRole }: MobileNavProps) {
               }`}
             >
               <span
-                className={`flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold ${
+                className={`flex h-7 w-7 items-center justify-center rounded-none text-xs font-bold ${
                   active ? 'bg-teal-700 text-white' : 'bg-stone-100 text-stone-600'
                 }`}
               >

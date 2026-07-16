@@ -24,6 +24,7 @@ import {
   logActivity,
   touchSession,
 } from './activity.js'
+import { CONTACT_STATUSES, STAGES } from '../src/types.js'
 
 const app = express()
 app.use(cors())
@@ -37,6 +38,14 @@ const COMPANY_SELECT = `
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10)
+}
+
+function isContactStatus(value: unknown): value is (typeof CONTACT_STATUSES)[number] {
+  return typeof value === 'string' && (CONTACT_STATUSES as readonly string[]).includes(value)
+}
+
+function isStage(value: unknown): value is (typeof STAGES)[number] {
+  return typeof value === 'string' && (STAGES as readonly string[]).includes(value)
 }
 
 function cleanEmail(raw: string): string {
@@ -322,6 +331,13 @@ app.get('/api/metrics', requireAuth, async (_req, res) => {
 
 app.post('/api/companies', requireAuth, async (req, res) => {
   const b = req.body
+  const stage = b.stage ?? 'Lead Added'
+  if (!isStage(stage)) {
+    res.status(400).json({
+      error: `Invalid stage. Allowed: ${STAGES.join(', ')}.`,
+    })
+    return
+  }
   const { rows } = await pool.query(
     `
     INSERT INTO companies (
@@ -335,7 +351,7 @@ app.post('/api/companies', requireAuth, async (req, res) => {
     `,
     [
       b.companyName,
-      b.stage ?? 'Lead Added',
+      stage,
       emptyToNull(b.industry),
       b.location ?? '',
       b.estimatedCallVolume ?? null,
@@ -386,7 +402,15 @@ app.patch('/api/companies/:id', requireAuth, async (req, res) => {
   }
 
   if (b.companyName !== undefined) set('company_name', b.companyName)
-  if (b.stage !== undefined) set('stage', b.stage)
+  if (b.stage !== undefined) {
+    if (!isStage(b.stage)) {
+      res.status(400).json({
+        error: `Invalid stage. Allowed: ${STAGES.join(', ')}.`,
+      })
+      return
+    }
+    set('stage', b.stage)
+  }
   if (b.industry !== undefined) set('industry', emptyToNull(b.industry))
   if (b.location !== undefined) set('location', b.location)
   if (b.estimatedCallVolume !== undefined) set('estimated_call_volume', b.estimatedCallVolume)
@@ -520,6 +544,13 @@ app.delete('/api/companies/:id', requireAuth, requireAdmin, async (req, res) => 
 
 app.post('/api/contacts', requireAuth, async (req, res) => {
   const b = req.body
+  const contactStatus = b.contactStatus ?? 'Not Contacted'
+  if (!isContactStatus(contactStatus)) {
+    res.status(400).json({
+      error: `Invalid contact status. Allowed: ${CONTACT_STATUSES.join(', ')}.`,
+    })
+    return
+  }
   const { rows } = await pool.query(
     `
     INSERT INTO contacts (
@@ -535,7 +566,7 @@ app.post('/api/contacts', requireAuth, async (req, res) => {
       b.phone ?? '',
       b.email ?? '',
       b.linkedInProfile ?? '',
-      b.contactStatus ?? 'Not Contacted',
+      contactStatus,
       b.champion ?? false,
       b.lastContacted ?? null,
       b.nextFollowUp ?? null,
@@ -591,7 +622,15 @@ app.patch('/api/contacts/:id', requireAuth, async (req, res) => {
   if (b.phone !== undefined) set('phone', b.phone)
   if (b.email !== undefined) set('email', b.email)
   if (b.linkedInProfile !== undefined) set('linkedin_profile', b.linkedInProfile)
-  if (b.contactStatus !== undefined) set('contact_status', b.contactStatus)
+  if (b.contactStatus !== undefined) {
+    if (!isContactStatus(b.contactStatus)) {
+      res.status(400).json({
+        error: `Invalid contact status. Allowed: ${CONTACT_STATUSES.join(', ')}.`,
+      })
+      return
+    }
+    set('contact_status', b.contactStatus)
+  }
   if (b.champion !== undefined) set('champion', b.champion)
   if (b.lastContacted !== undefined) set('last_contacted', b.lastContacted)
   if (b.nextFollowUp !== undefined) set('next_follow_up', b.nextFollowUp)

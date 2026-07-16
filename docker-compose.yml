@@ -1,4 +1,4 @@
-# Build and run on the EC2 host only — no Docker Hub / registry push or pull of app images.
+# Build and run the production application locally or on a server.
 #
 # Usage:
 #   docker compose build
