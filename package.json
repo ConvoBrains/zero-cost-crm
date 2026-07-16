@@ -1,7 +1,8 @@
 {
-  "name": "convobrains-sales-crm",
+  "name": "convobrains-sdr-war-room",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "concurrently -n web,api -c cyan,magenta \"vite\" \"tsx watch server/index.ts\"",
@@ -12,10 +13,6 @@
     "preview": "vite preview",
     "smoke": "node scripts/smoke-test.mjs",
     "db:migrate": "node scripts/db-migrate.mjs",
-    "db:seed": "node scripts/db-migrate.mjs --seed",
-    "db:clean": "node scripts/db-clean.mjs",
-    "db:import": "tsx scripts/import-paste.ts",
-    "db:roles": "node scripts/update-roles.mjs",
     "start": "NODE_ENV=production tsx server/index.ts"
   },
   "dependencies": {
@@ -48,5 +45,14 @@
     "tsx": "^4.20.5",
     "typescript": "~6.0.2",
     "vite": "^8.1.1"
+  },
+  "description": "Open-source SDR pipeline, activity, and call-recording workspace for founder-led sales teams.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ConvoBrains/zero-cost-crm.git"
+  },
+  "homepage": "https://www.convobrains.com",
+  "engines": {
+    "node": ">=22"
   }
 }

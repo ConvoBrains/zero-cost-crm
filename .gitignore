@@ -12,12 +12,20 @@ dist
 dist-ssr
 
 # Local secrets
-.env.local
+.env
+.env.*
+!.env.example
 testing/.env.testing
 
 # Test artifacts
 *.mp3
+
+# AI and editor metadata
 .agent/
+.claude/
+.cursor/
+AGENTS.md
+CLAUDE.md
 
 # Editor directories and files
 .vscode/*

@@ -9,6 +9,7 @@ import {
   uploadConversationRecording,
 } from '../lib/conversations'
 import { Field, inputClass, btnGhost, btnPrimary } from './ui'
+import { ConvobrainsBridge } from './ConvobrainsBridge'
 
 interface ConversationPanelProps {
   store: CrmStore
@@ -103,7 +104,7 @@ export function ConversationPanel({ store, contactId, companyId }: ConversationP
   }
 
   return (
-    <div className="space-y-4 rounded-2xl border border-[var(--color-line)] bg-stone-50/50 p-4">
+    <div className="space-y-4 rounded-none border border-[var(--color-line)] bg-stone-50/50 p-4">
       <div>
         <h3 className="text-sm font-semibold text-stone-800">Call recordings</h3>
         <p className="mt-1 text-xs text-stone-500">
@@ -154,7 +155,7 @@ export function ConversationPanel({ store, contactId, companyId }: ConversationP
       </button>
 
       {error ? (
-        <p className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">{error}</p>
+        <p className="rounded-none bg-rose-50 px-3 py-2 text-xs text-rose-700">{error}</p>
       ) : null}
 
       {playUrl ? (
@@ -172,7 +173,7 @@ export function ConversationPanel({ store, contactId, companyId }: ConversationP
         ) : items.length === 0 ? (
           <p className="text-xs text-stone-400">No recordings yet.</p>
         ) : (
-          <ul className="divide-y divide-[var(--color-line)] rounded-xl border border-[var(--color-line)] bg-white">
+          <ul className="divide-y divide-[var(--color-line)] rounded-none border border-[var(--color-line)] bg-white">
             {items.map((c) => (
               <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
                 <div className="min-w-0 text-xs">
@@ -201,6 +202,8 @@ export function ConversationPanel({ store, contactId, companyId }: ConversationP
           </ul>
         )}
       </div>
+
+      <ConvobrainsBridge variant="panel" />
     </div>
   )
 }

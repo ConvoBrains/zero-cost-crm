@@ -6,7 +6,6 @@ import type {
   Company,
   Contact,
 } from '../types'
-import { STAGES } from '../types'
 
 const POC_STAGES: Stage[] = ['POC Kickoff', 'Client Data Received', 'POC Delivered']
 
@@ -67,8 +66,6 @@ export const CONTACT_VIEW_GROUPS: { label: string; views: ContactView[] }[] = [
   },
 ]
 
-export const CONTACT_VIEWS: ContactView[] = CONTACT_VIEW_GROUPS.flatMap((g) => g.views)
-
 export const CONTACT_VIEW_HINTS: Record<ContactView, string> = {
   'All Contacts': 'Everyone in the database.',
   'To Call Today':
@@ -114,37 +111,6 @@ export function filterCompanies(companies: Company[], view: PipelineView): Compa
       return companies.filter((c) => c.stage === 'Not Interested')
     default:
       return companies
-  }
-}
-
-export function stagesForView(view: PipelineView): Stage[] {
-  switch (view) {
-    case 'All Companies':
-      return [...STAGES]
-    case 'New Leads':
-      return ['Lead Added']
-    case 'Discovery Calls':
-      return ['Discovery Call Done']
-    case 'Follow-ups':
-      return ['Follow-up']
-    case 'Demo Scheduled':
-      return ['Demo Scheduled']
-    case 'Demo Delivered':
-      return ['Demo Delivered']
-    case 'Commercial Proposal Shared':
-      return ['Commercial Proposal Shared']
-    case 'POC Running':
-      return POC_STAGES
-    case 'Final Negotiation':
-      return ['Final Negotiation']
-    case 'Closed Won':
-      return ['Closed Won']
-    case 'Closed Lost':
-      return ['Closed Lost']
-    case 'Not Interested':
-      return ['Not Interested']
-    default:
-      return [...STAGES]
   }
 }
 

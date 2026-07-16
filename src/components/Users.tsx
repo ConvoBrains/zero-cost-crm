@@ -87,7 +87,7 @@ export function Users() {
         </p>
       </header>
 
-      <section className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-panel)] p-5">
+      <section className="rounded-none border border-[var(--color-line)] bg-[var(--color-panel)] p-5">
         <h2 className="font-[family-name:var(--font-display)] text-2xl text-stone-900">
           Add user
         </h2>
@@ -162,14 +162,14 @@ export function Users() {
         </form>
 
         {error ? (
-          <p className="mt-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
+          <p className="mt-4 rounded-none bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
         ) : null}
         {success ? (
-          <p className="mt-4 rounded-lg bg-teal-50 px-3 py-2 text-sm text-teal-800">{success}</p>
+          <p className="mt-4 rounded-none bg-teal-50 px-3 py-2 text-sm text-teal-800">{success}</p>
         ) : null}
       </section>
 
-      <section className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-panel)] p-5">
+      <section className="rounded-none border border-[var(--color-line)] bg-[var(--color-panel)] p-5">
         <div className="mb-3 flex items-center justify-between gap-3">
           <h2 className="font-[family-name:var(--font-display)] text-2xl text-stone-900">
             Team members
@@ -199,7 +199,7 @@ export function Users() {
                     <td className="px-2 py-3 font-medium text-stone-800">{user.name}</td>
                     <td className="px-2 py-3 text-stone-600">{user.email}</td>
                     <td className="px-2 py-3">
-                      <span className="rounded-md bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-700">
+                      <span className="rounded-none bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-700">
                         {roleLabel(user.role)}
                       </span>
                     </td>

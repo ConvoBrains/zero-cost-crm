@@ -1,4 +1,3 @@
-import type { AuthPayload } from './auth.js'
 import { pool } from './db.js'
 
 export const IDLE_MS = 45 * 60 * 1000
@@ -331,5 +330,3 @@ export function buildAlerts(input: {
 
   return alerts
 }
-
-export type AuthUserWithSession = AuthPayload & { sid?: string }

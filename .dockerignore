@@ -14,5 +14,4 @@ dist-ssr
 README.md
 docker-compose*.yml
 Dockerfile
-deploy
 Makefile

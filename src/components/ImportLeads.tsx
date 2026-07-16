@@ -165,12 +165,12 @@ export function ImportLeads({ store }: ImportLeadsProps) {
         </p>
       </header>
 
-      <div className="flex gap-1 rounded-xl border border-[var(--color-line)] bg-stone-50 p-1">
+      <div className="flex gap-1 rounded-none border border-[var(--color-line)] bg-stone-50 p-1">
         <button
           type="button"
-          className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition ${
+          className={`flex-1 rounded-none px-3 py-2 text-sm font-medium transition ${
             mode === 'single'
-              ? 'bg-white text-stone-900 shadow-sm'
+              ? 'bg-white text-stone-900'
               : 'text-stone-500 hover:text-stone-800'
           }`}
           onClick={() => setMode('single')}
@@ -179,9 +179,9 @@ export function ImportLeads({ store }: ImportLeadsProps) {
         </button>
         <button
           type="button"
-          className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition ${
+          className={`flex-1 rounded-none px-3 py-2 text-sm font-medium transition ${
             mode === 'bulk'
-              ? 'bg-white text-stone-900 shadow-sm'
+              ? 'bg-white text-stone-900'
               : 'text-stone-500 hover:text-stone-800'
           }`}
           onClick={() => setMode('bulk')}
@@ -193,7 +193,7 @@ export function ImportLeads({ store }: ImportLeadsProps) {
       {mode === 'single' ? (
         <form
           onSubmit={runSingleImport}
-          className="space-y-4 rounded-2xl border border-[var(--color-line)] bg-[var(--color-panel)] p-5"
+          className="space-y-4 rounded-none border border-[var(--color-line)] bg-[var(--color-panel)] p-5"
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Company *" className="sm:col-span-2">
@@ -262,14 +262,14 @@ export function ImportLeads({ store }: ImportLeadsProps) {
             {busy ? 'Saving…' : 'Add lead'}
           </button>
           {lastResult && mode === 'single' ? (
-            <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+            <p className="rounded-none bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
               {lastResult}
             </p>
           ) : null}
         </form>
       ) : (
         <>
-          <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-panel)] p-5">
+          <div className="rounded-none border border-[var(--color-line)] bg-[var(--color-panel)] p-5">
             <div className="flex flex-wrap items-center gap-2">
               <label className={`${btnGhost} cursor-pointer`}>
                 Upload CSV / Excel
@@ -347,7 +347,7 @@ export function ImportLeads({ store }: ImportLeadsProps) {
             </div>
 
             {bulkErrors.length > 0 ? (
-              <ul className="mt-3 space-y-1 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              <ul className="mt-3 space-y-1 rounded-none bg-amber-50 px-3 py-2 text-xs text-amber-800">
                 {bulkErrors.slice(0, 8).map((err) => (
                   <li key={err}>{err}</li>
                 ))}
@@ -356,14 +356,14 @@ export function ImportLeads({ store }: ImportLeadsProps) {
             ) : null}
 
             {lastResult && mode === 'bulk' ? (
-              <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+              <p className="mt-3 rounded-none bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
                 {lastResult}
               </p>
             ) : null}
           </div>
 
           {byCompany.length > 0 ? (
-            <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-panel)] p-5">
+            <div className="rounded-none border border-[var(--color-line)] bg-[var(--color-panel)] p-5">
               <h2 className="text-sm font-semibold text-stone-800">Preview by company</h2>
               <ul className="mt-3 divide-y divide-[var(--color-line)]">
                 {byCompany.map((c) => (
