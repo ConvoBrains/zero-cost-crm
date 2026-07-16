@@ -1,5 +1,5 @@
 import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import type { CrmStore } from '../hooks/useCrmStore'
 import type { ProspectRow } from '../types'
 import {
@@ -15,8 +15,8 @@ interface ImportLeadsProps {
 }
 
 const EXAMPLE = `Company\tProspect Name\tJob Title\tEmail\tPhone\tLocation\tEmployees\tIndustry
-4baseCare\tChristina Joseph\tHead of Operations\tchristina@4basecare.com\t+91 99805 26456\tBengaluru, India\t180\tResearchBiotechnology
-Hexahealth\tAnkur Gigras\tCo-Founder & CEO\tankur@hexahealth.com\t+91 90047 87187\tNew Delhi, India\t230\tHospital & Health Care`
+Acme Bio Labs\tAlex Example\tHead of Operations\talex@acme-bio.example\t+1 555 010 1001\tAustin, USA\t180\tResearchBiotechnology
+Northwind Health\tJordan Sample\tCo-Founder & CEO\tjordan@northwind-health.example\t+1 555 010 1002\tChicago, USA\t230\tHospital & Health Care`
 
 type Mode = 'single' | 'bulk'
 
@@ -113,19 +113,39 @@ export function ImportLeads({ store }: ImportLeadsProps) {
     setText('')
     try {
       const buf = await file.arrayBuffer()
-      const wb = XLSX.read(buf, { type: 'array' })
-      const sheet = wb.Sheets[wb.SheetNames[0]]
-      if (!sheet) {
-        setFileRows([])
-        setFileErrors(['No sheet found in file.'])
-        setFileName(file.name)
-        return
+      const name = file.name.toLowerCase()
+      let matrix: unknown[][] = []
+
+      if (name.endsWith('.csv') || name.endsWith('.tsv') || name.endsWith('.txt')) {
+        const text = new TextDecoder('utf-8').decode(buf)
+        matrix = text
+          .replace(/\r\n/g, '\n')
+          .replace(/\r/g, '\n')
+          .split('\n')
+          .filter((line) => line.trim().length > 0)
+          .map((line) =>
+            line.includes('\t') ? line.split('\t') : line.split(',').map((c) => c.trim()),
+          )
+      } else {
+        const wb = new ExcelJS.Workbook()
+        await wb.xlsx.load(buf)
+        const sheet = wb.worksheets[0]
+        if (!sheet) {
+          setFileRows([])
+          setFileErrors(['No sheet found in file.'])
+          setFileName(file.name)
+          return
+        }
+        sheet.eachRow({ includeEmpty: false }, (row) => {
+          const values = row.values
+          // exceljs row.values is 1-indexed
+          const cells = Array.isArray(values)
+            ? values.slice(1).map((v) => (v == null ? '' : String(v)))
+            : []
+          matrix.push(cells)
+        })
       }
-      const matrix = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
-        header: 1,
-        defval: '',
-        raw: false,
-      })
+
       const parsed = parseProspectMatrix(matrix)
       setFileRows(parsed.rows)
       setFileErrors(parsed.errors)

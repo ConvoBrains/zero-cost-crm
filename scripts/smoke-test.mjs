@@ -69,14 +69,14 @@ function parseProspectPaste(text) {
 }
 
 const sample = `Company\tProspect Name\tJob Title\tEmail\tPhone\tLocation\tEmployees\tIndustry
-4baseCare\tChristina Joseph\tHead of Ops\tchristina@4basecare.com+1\t+91 99805 26456\tBengaluru, India\t180\tResearchBiotechnology
-4baseCare\tHitesh Goswami\tCEO\thitesh@4basecare.com+1\t+91 78921 38638\tBengaluru, India\t180\tResearchBiotechnology
-Hexahealth\tAnkur Gigras\tCEO\tankur@hexahealth.com+1\t+91 90047 87187\tNew Delhi, India\t230\tHospital & Health Care`
+Acme Bio Labs\tAlex Example\tHead of Ops\talex@acme-bio.example+1\t+1 555 010 1001\tAustin, USA\t180\tResearchBiotechnology
+Acme Bio Labs\tSam Fixture\tCEO\tsam@acme-bio.example+1\t+1 555 010 1003\tAustin, USA\t180\tResearchBiotechnology
+Northwind Health\tJordan Sample\tCEO\tjordan@northwind-health.example+1\t+1 555 010 1002\tChicago, USA\t230\tHospital & Health Care`
 
 const { rows, errors } = parseProspectPaste(sample)
 assert.equal(errors.length, 0)
 assert.equal(rows.length, 3)
-assert.equal(rows[0].email, 'christina@4basecare.com')
+assert.equal(rows[0].email, 'alex@acme-bio.example')
 assert.equal(mapIndustry(rows[0].industry), 'Research / Biotech')
 assert.equal(mapIndustry(rows[2].industry), 'Healthcare')
 assert.equal(rows[0].employees, 180)

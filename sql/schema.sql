@@ -1,6 +1,5 @@
--- Convobrains Sales CRM — PostgreSQL schema (idempotent)
--- Local (SSH tunnel): localhost:5433 / brains_crm
--- Deployed: RDS brains_crm via DB_URL_DEV
+-- ConvoBrains SDR War Room — PostgreSQL schema (idempotent)
+-- Apply with: npm run db:migrate  (requires DATABASE_URL)
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 

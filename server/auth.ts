@@ -1,9 +1,8 @@
 import type { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
+import { allowedEmailError, config, isAllowedEmail } from './config.js'
 
-const JWT_SECRET = process.env.JWT_SECRET ?? 'convobrains-crm-dev-secret-change-in-prod'
-
-export const ALLOWED_EMAIL_DOMAIN = 'convobrains.com'
+export const ALLOWED_EMAIL_DOMAIN = config.primaryEmailDomain ?? '*'
 
 /** Must match users.role CHECK in sql/schema.sql */
 export const USER_ROLES = ['founder', 'sdr', 'admin'] as const
@@ -18,9 +17,10 @@ export function isAdminRole(role?: string): boolean {
 }
 
 export function isConvobrainsEmail(email: string): boolean {
-  const normalized = email.trim().toLowerCase()
-  return normalized.endsWith(`@${ALLOWED_EMAIL_DOMAIN}`)
+  return isAllowedEmail(email)
 }
+
+export { allowedEmailError, isAllowedEmail }
 
 export interface AuthPayload {
   sub: string
@@ -32,11 +32,11 @@ export interface AuthPayload {
 }
 
 export function signToken(payload: AuthPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '12h' })
+  return jwt.sign(payload, config.jwtSecret, { expiresIn: '12h' })
 }
 
 export function verifyToken(token: string): AuthPayload {
-  return jwt.verify(token, JWT_SECRET) as AuthPayload
+  return jwt.verify(token, config.jwtSecret) as AuthPayload
 }
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {

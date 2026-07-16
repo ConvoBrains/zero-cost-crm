@@ -15,10 +15,16 @@ dist-ssr
 .env
 .env.*
 !.env.example
+!testing/.env.testing.example
 testing/.env.testing
 
 # Test artifacts
 *.mp3
+coverage
+uploads
+tmp
+*.pem
+*.key
 
 # AI and editor metadata
 .agent/

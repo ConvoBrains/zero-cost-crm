@@ -1,12 +1,15 @@
 import express from 'express'
 import cors from 'cors'
+import helmet from 'helmet'
+import rateLimit from 'express-rate-limit'
 import bcrypt from 'bcrypt'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { pool } from './db.js'
+import { config, resolveCorsOrigin } from './config.js'
 import {
-  ALLOWED_EMAIL_DOMAIN,
-  isConvobrainsEmail,
+  allowedEmailError,
+  isAllowedEmail,
   isUserRole,
   requireAuth,
   requireAdmin,
@@ -27,8 +30,44 @@ import {
 import { CONTACT_STATUSES, STAGES } from '../src/types.js'
 
 const app = express()
-app.use(cors())
+app.use(
+  helmet({
+    contentSecurityPolicy: config.isProd
+      ? {
+          useDefaults: true,
+          directives: {
+            'default-src': ["'self'"],
+            'script-src': ["'self'"],
+            'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+            'font-src': ["'self'", 'https://fonts.gstatic.com'],
+            'img-src': ["'self'", 'data:', 'blob:'],
+            'media-src': ["'self'", 'blob:', 'https:'],
+            'connect-src': ["'self'", ...config.corsOrigins],
+          },
+        }
+      : false,
+    crossOriginEmbedderPolicy: false,
+  }),
+)
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      const resolved = resolveCorsOrigin(origin)
+      if (resolved === false) cb(null, false)
+      else cb(null, resolved)
+    },
+    credentials: true,
+  }),
+)
 app.use(express.json({ limit: '2mb' }))
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many login attempts. Try again later.' },
+})
 
 const COMPANY_SELECT = `
   SELECT c.*, u.name AS assigned_to_name
@@ -75,16 +114,26 @@ function emptyToNull<T>(v: T | '' | null | undefined): T | null {
   return v
 }
 
+// ─── Public config (no auth) ────────────────────────────────────────────────
+
+app.get('/api/config', (_req, res) => {
+  res.json({
+    allowedEmailDomain: config.primaryEmailDomain,
+    allowedEmailDomains: config.allowedEmailAny ? ['*'] : config.allowedEmailDomains,
+    allowAnyEmailDomain: config.allowedEmailAny,
+  })
+})
+
 // ─── Auth ───────────────────────────────────────────────────────────────────
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', loginLimiter, async (req, res) => {
   const email = String(req.body.email ?? '')
     .trim()
     .toLowerCase()
   const password = String(req.body.password ?? '')
 
-  if (!isConvobrainsEmail(email)) {
-    res.status(400).json({ error: `Only @${ALLOWED_EMAIL_DOMAIN} emails are allowed.` })
+  if (!isAllowedEmail(email)) {
+    res.status(400).json({ error: allowedEmailError() })
     return
   }
 
@@ -225,8 +274,8 @@ app.post('/api/users', requireAuth, requireAdmin, async (req, res) => {
   const password = String(req.body.password ?? '')
   const role = String(req.body.role ?? 'sdr').trim().toLowerCase()
 
-  if (!isConvobrainsEmail(email)) {
-    res.status(400).json({ error: `Only @${ALLOWED_EMAIL_DOMAIN} emails are allowed.` })
+  if (!isAllowedEmail(email)) {
+    res.status(400).json({ error: allowedEmailError() })
     return
   }
   if (!name) {
