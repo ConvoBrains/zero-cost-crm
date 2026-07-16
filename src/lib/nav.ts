@@ -5,6 +5,7 @@ export const NAV_ITEMS: { id: Page; label: string; hint: string; short: string; 
   { id: 'import', label: 'Import Leads', hint: 'Paste daily table', short: 'Import' },
   { id: 'pipeline', label: 'Sales Pipeline', hint: 'Companies · Kanban', short: 'Pipeline' },
   { id: 'contacts', label: 'Contacts', hint: 'People at companies', short: 'Contacts' },
+  { id: 'activity', label: 'SDR Activity', hint: 'Calls · sessions · targets', short: 'Activity', adminOnly: true },
   { id: 'users', label: 'Users', hint: 'Add team accounts', short: 'Users', adminOnly: true },
 ]
 
@@ -13,6 +14,7 @@ export const PAGE_TITLE: Record<Page, string> = {
   import: 'Import Leads',
   pipeline: 'Sales Pipeline',
   contacts: 'Contacts',
+  activity: 'SDR Activity',
   users: 'Users',
 }
 

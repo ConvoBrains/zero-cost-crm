@@ -83,7 +83,7 @@ export interface Contact {
   createdAt: string
 }
 
-export type Page = 'dashboard' | 'pipeline' | 'contacts' | 'import' | 'users'
+export type Page = 'dashboard' | 'pipeline' | 'contacts' | 'import' | 'users' | 'activity'
 
 export type PipelineView =
   | 'All Companies'

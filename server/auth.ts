@@ -27,10 +27,12 @@ export interface AuthPayload {
   email: string
   name: string
   role: string
+  /** user_sessions.id */
+  sid?: string
 }
 
 export function signToken(payload: AuthPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' })
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: '12h' })
 }
 
 export function verifyToken(token: string): AuthPayload {

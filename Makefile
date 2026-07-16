@@ -4,9 +4,11 @@
 .PHONY: help install dev build start lint smoke \
         db-migrate db-seed db-roles db-clean db-check \
         docker-build docker-up docker-down docker-restart docker-logs docker-ps docker-shell \
-        deploy-ec2 deploy-nginx nginx-test health
+        deploy-ec2 deploy-nginx nginx-test health \
+        test-up test-down test-migrate test-seed test-seed-activity test-reset test-run
 
 COMPOSE := docker compose
+TEST_COMPOSE := docker compose -f testing/docker-compose.yml
 APP_URL := http://localhost:4000
 
 help: ## Show this help
@@ -87,3 +89,37 @@ deploy-nginx: ## Copy nginx site config (requires sudo)
 
 nginx-test: ## Validate nginx config
 	sudo nginx -t
+
+# ─── Feature testing (testing/ only — never uses root .env / RDS) ─────────────
+
+test-up: ## Start Docker Postgres for feature tests (port 5434)
+	$(TEST_COMPOSE) up -d
+	@echo "Waiting for crm-test-db…"
+	@for i in 1 2 3 4 5 6 7 8 9 10 11 12; do \
+	  $(TEST_COMPOSE) exec -T crm-test-db pg_isready -U crm_test -d brains_crm_test >/dev/null 2>&1 && break; \
+	  sleep 1; \
+	done
+
+test-down: ## Stop feature-test Postgres
+	$(TEST_COMPOSE) down
+
+test-migrate: ## Apply schema to test DB only
+	node testing/migrate.mjs
+
+test-seed: ## Seed test users + CRM fixtures
+	node testing/seed-users.mjs
+	node testing/seed-crm.mjs
+
+test-seed-activity: ## Regenerate multi-SDR activity fixtures
+	node testing/seed-activity.mjs
+
+test-reset: ## Wipe test DB volume + migrate + seed + activity
+	-$(TEST_COMPOSE) down -v
+	$(MAKE) test-up
+	$(MAKE) test-migrate
+	$(MAKE) test-seed
+	$(MAKE) test-seed-activity
+
+test-run: ## Run app against testing/.env.testing (feature testing)
+	@test -f testing/.env.testing || (echo "Copy testing/.env.testing.example → testing/.env.testing" && exit 1)
+	set -a && . ./testing/.env.testing && set +a && npm run dev

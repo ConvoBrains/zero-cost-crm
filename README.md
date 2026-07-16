@@ -10,6 +10,17 @@ cp .env.example .env.local   # set DB_URL_DEV + JWT_SECRET
 npm run dev                  # Vite + API on :5173 / :3001
 ```
 
+## Feature testing (SDR Activity)
+
+Isolated Docker test DB + fixtures — see **[testing/README.md](testing/README.md)**.
+
+```bash
+make test-reset
+make test-run
+```
+
+Do not run seed-activity against production RDS.
+
 ## Login
 
 `@convobrains.com` only. Team passwords are set via `npm run db:seed`.

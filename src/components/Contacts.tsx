@@ -8,6 +8,7 @@ import {
   sortContactsForView,
   statusColor,
 } from '../lib/views'
+import { logViewEvent } from '../lib/activity'
 import { ContactForm } from './ContactForm'
 import { Modal, btnPrimary } from './ui'
 
@@ -69,6 +70,11 @@ export function Contacts({ store }: ContactsProps) {
   const [view, setView] = useState<ContactView>('To Call Today')
   const [editing, setEditing] = useState<Contact | null>(null)
   const [creating, setCreating] = useState(false)
+
+  const openContact = (c: Contact) => {
+    setEditing(c)
+    logViewEvent('contact.opened', c.id, c.contactName)
+  }
 
   const filtered = useMemo(() => {
     const list = filterContacts(store.contacts, view)
@@ -139,7 +145,7 @@ export function Contacts({ store }: ContactsProps) {
             key={t.id}
             contact={t}
             companyName={store.getCompany(t.companyId)?.companyName ?? '—'}
-            onEdit={() => setEditing(t)}
+            onEdit={() => openContact(t)}
           />
         ))}
         {filtered.length === 0 ? (
@@ -167,7 +173,7 @@ export function Contacts({ store }: ContactsProps) {
                 return (
                   <tr
                     key={t.id}
-                    onClick={() => setEditing(t)}
+                    onClick={() => openContact(t)}
                     className="cursor-pointer border-b border-[var(--color-line)]/70 transition hover:bg-teal-50/40"
                   >
                     <td className="px-4 py-3">
