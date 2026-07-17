@@ -1,5 +1,7 @@
 # Zero Cost CRM
 
+[![Open Source Helpers](https://www.codetriage.com/convobrains/zero-cost-crm/badges/users.svg)](https://www.codetriage.com/convobrains/zero-cost-crm)
+
 **We don't need Salesforce. We need to know which SDR is converting and why.**
 
 Most early-stage B2B teams hire their first SDR and manage them on Google Sheets,
@@ -229,12 +231,21 @@ Google Fonts (DM Sans, Instrument Serif) are loaded from Google’s CDN under th
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+We actively mentor first-time contributors. Start here:
+
+- **[Good first issues](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)** — 10 beginner-friendly tickets (frontend, docs, a11y, testing)
+- **[CodeTriage](https://www.codetriage.com/convobrains/zero-cost-crm)** — get one issue from this repo in your inbox each day
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** — setup, PR checks, coding guidelines
+- **[CONTRIBUTORS.md](CONTRIBUTORS.md)** — who helped (name + LinkedIn)
+
+**Rewards for the first 10 meaningful contributors:** early access to [ConvoBrains](https://www.convobrains.com) QA free, a public shoutout, and a LinkedIn recommendation when the work is solid.
 
 ```bash
 make setup
 npm run ci
 ```
+
+Comment on an issue to claim it — we aim to reply within hours.
 
 ---
 

@@ -1,6 +1,16 @@
 # Contributing
 
-Thanks for helping improve Zero Cost CRM.
+Thanks for helping improve Zero Cost CRM. We mentor first-time contributors and review PRs quickly.
+
+## Pick an issue
+
+Browse **[good first issues](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)** (also labeled `help wanted`, plus `frontend` / `easy` / `medium` so you can self-select).
+
+1. Comment on the issue (“I’d like to take this”)
+2. We’ll assign you — usually within hours
+3. Fork → branch → open a focused PR
+
+**First 10 meaningful contributors** get early access to ConvoBrains QA free, a listing on [CONTRIBUTORS.md](CONTRIBUTORS.md), and a LinkedIn shoutout/recommendation for solid work.
 
 ## Development setup
 
