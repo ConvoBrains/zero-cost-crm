@@ -182,7 +182,7 @@ Schema is applied from [`sql/schema.sql`](sql/schema.sql) (idempotent). See [doc
 
 1. Open **Import Leads**
 2. Paste from Excel, Sheets, or CSV — or upload `.csv` / `.xlsx`
-3. Columns: `Company · Prospect · Job title · Email · Phone · Location · Employees · Industry`
+3. Columns: `Company · Prospect Name · Job Title · Email · Phone · Location · Employees · Industry`
 4. Import — companies create/update; duplicate emails skip
 
 Samples in the UI use synthetic `@*.example` data only.
