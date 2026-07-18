@@ -25,7 +25,6 @@ export function CompanyForm({ store, initial, onDone }: CompanyFormProps) {
     intent: initial?.intent ?? '',
     offeredPrice: initial?.offeredPrice?.toString() ?? '',
     primaryContactId: initial?.primaryContactId ?? '',
-    assignedTo: initial?.assignedTo ?? 'Sales Intern',
     lastContacted: initial?.lastContacted ?? '',
     nextFollowUp: initial?.nextFollowUp ?? '',
     notes: initial?.notes ?? '',
@@ -179,11 +178,15 @@ export function CompanyForm({ store, initial, onDone }: CompanyFormProps) {
         </Field>
 
         <Field label="Assigned To">
-          <input
-            className={inputClass}
-            value={form.assignedTo}
-            onChange={(e) => set('assignedTo', e.target.value)}
-          />
+          {initial ? (
+            <div className={`${inputClass} flex items-center bg-[var(--color-muted,#f4f4f5)] text-[var(--color-fg-muted,#6b7280)] cursor-not-allowed`}>
+              {initial.assignedTo || 'Unassigned'}
+            </div>
+          ) : (
+            <div className={`${inputClass} flex items-center bg-[var(--color-muted,#f4f4f5)] text-[var(--color-fg-muted,#6b7280)] cursor-not-allowed`}>
+              Will be assigned to you
+            </div>
+          )}
         </Field>
 
         <Field label="Last Contacted">
