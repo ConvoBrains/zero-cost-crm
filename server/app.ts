@@ -67,6 +67,7 @@ const loginLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many login attempts. Try again later.' },
+  skip: () => config.nodeEnv === 'test',
 })
 
 const COMPANY_SELECT = `
@@ -112,6 +113,27 @@ function mapIndustry(raw: string): string | null {
 function emptyToNull<T>(v: T | '' | null | undefined): T | null {
   if (v === '' || v === undefined) return null
   return v
+}
+
+/** Accumulates `col = $n` assignments for a partial UPDATE. */
+function sqlUpdateBuilder() {
+  const fields: string[] = []
+  const values: unknown[] = []
+  return {
+    set(col: string, val: unknown) {
+      values.push(val)
+      fields.push(`${col} = $${values.length}`)
+    },
+    get isEmpty() {
+      return fields.length === 0
+    },
+    /** Appends `updated_at = now()` + the id param; returns the SQL fragment. */
+    finalize(id: unknown) {
+      fields.push('updated_at = now()')
+      values.push(id)
+      return { assignments: fields.join(', '), idParam: values.length, values }
+    },
+  }
 }
 
 // ─── Public config (no auth) ────────────────────────────────────────────────
@@ -441,16 +463,9 @@ app.patch('/api/companies/:id', requireAuth, async (req, res) => {
     return
   }
 
-  const fields: string[] = []
-  const values: unknown[] = []
-  let i = 1
+  const update = sqlUpdateBuilder()
 
-  const set = (col: string, val: unknown) => {
-    fields.push(`${col} = $${i++}`)
-    values.push(val)
-  }
-
-  if (b.companyName !== undefined) set('company_name', b.companyName)
+  if (b.companyName !== undefined) update.set('company_name', b.companyName)
   if (b.stage !== undefined) {
     if (!isStage(b.stage)) {
       res.status(400).json({
@@ -458,34 +473,29 @@ app.patch('/api/companies/:id', requireAuth, async (req, res) => {
       })
       return
     }
-    set('stage', b.stage)
+    update.set('stage', b.stage)
   }
-  if (b.industry !== undefined) set('industry', emptyToNull(b.industry))
-  if (b.location !== undefined) set('location', b.location)
-  if (b.estimatedCallVolume !== undefined) set('estimated_call_volume', b.estimatedCallVolume)
-  if (b.employeeCount !== undefined) set('employee_count', b.employeeCount)
-  if (b.intent !== undefined) set('intent', emptyToNull(b.intent))
-  if (b.offeredPrice !== undefined) set('offered_price', b.offeredPrice)
-  if (b.primaryContactId !== undefined) set('primary_contact_id', b.primaryContactId)
-  if (b.lastContacted !== undefined) set('last_contacted', b.lastContacted)
-  if (b.nextFollowUp !== undefined) set('next_follow_up', b.nextFollowUp)
-  if (b.notes !== undefined) set('notes', b.notes)
-  if (b.sourceLink !== undefined) set('source_link', b.sourceLink)
-  if (b.companyWebsite !== undefined) set('company_website', b.companyWebsite)
-  if (b.linkedInCompany !== undefined) set('linkedin_company', b.linkedInCompany)
+  if (b.industry !== undefined) update.set('industry', emptyToNull(b.industry))
+  if (b.location !== undefined) update.set('location', b.location)
+  if (b.estimatedCallVolume !== undefined) update.set('estimated_call_volume', b.estimatedCallVolume)
+  if (b.employeeCount !== undefined) update.set('employee_count', b.employeeCount)
+  if (b.intent !== undefined) update.set('intent', emptyToNull(b.intent))
+  if (b.offeredPrice !== undefined) update.set('offered_price', b.offeredPrice)
+  if (b.primaryContactId !== undefined) update.set('primary_contact_id', b.primaryContactId)
+  if (b.lastContacted !== undefined) update.set('last_contacted', b.lastContacted)
+  if (b.nextFollowUp !== undefined) update.set('next_follow_up', b.nextFollowUp)
+  if (b.notes !== undefined) update.set('notes', b.notes)
+  if (b.sourceLink !== undefined) update.set('source_link', b.sourceLink)
+  if (b.companyWebsite !== undefined) update.set('company_website', b.companyWebsite)
+  if (b.linkedInCompany !== undefined) update.set('linkedin_company', b.linkedInCompany)
 
-  if (fields.length === 0) {
+  if (update.isEmpty) {
     res.status(400).json({ error: 'No fields to update' })
     return
   }
 
-  fields.push('updated_at = now()')
-  values.push(id)
-
-  await pool.query(
-    `UPDATE companies SET ${fields.join(', ')} WHERE id = $${i}`,
-    values,
-  )
+  const { assignments, idParam, values } = update.finalize(id)
+  await pool.query(`UPDATE companies SET ${assignments} WHERE id = $${idParam}`, values)
 
   const { rows: full } = await pool.query(`${COMPANY_SELECT} WHERE c.id = $1`, [id])
   if (!full[0]) {
@@ -656,21 +666,14 @@ app.patch('/api/contacts/:id', requireAuth, async (req, res) => {
     return
   }
 
-  const fields: string[] = []
-  const values: unknown[] = []
-  let i = 1
+  const update = sqlUpdateBuilder()
 
-  const set = (col: string, val: unknown) => {
-    fields.push(`${col} = $${i++}`)
-    values.push(val)
-  }
-
-  if (b.contactName !== undefined) set('contact_name', b.contactName)
-  if (b.companyId !== undefined) set('company_id', b.companyId)
-  if (b.role !== undefined) set('role', b.role)
-  if (b.phone !== undefined) set('phone', b.phone)
-  if (b.email !== undefined) set('email', b.email)
-  if (b.linkedInProfile !== undefined) set('linkedin_profile', b.linkedInProfile)
+  if (b.contactName !== undefined) update.set('contact_name', b.contactName)
+  if (b.companyId !== undefined) update.set('company_id', b.companyId)
+  if (b.role !== undefined) update.set('role', b.role)
+  if (b.phone !== undefined) update.set('phone', b.phone)
+  if (b.email !== undefined) update.set('email', b.email)
+  if (b.linkedInProfile !== undefined) update.set('linkedin_profile', b.linkedInProfile)
   if (b.contactStatus !== undefined) {
     if (!isContactStatus(b.contactStatus)) {
       res.status(400).json({
@@ -678,23 +681,21 @@ app.patch('/api/contacts/:id', requireAuth, async (req, res) => {
       })
       return
     }
-    set('contact_status', b.contactStatus)
+    update.set('contact_status', b.contactStatus)
   }
-  if (b.champion !== undefined) set('champion', b.champion)
-  if (b.lastContacted !== undefined) set('last_contacted', b.lastContacted)
-  if (b.nextFollowUp !== undefined) set('next_follow_up', b.nextFollowUp)
-  if (b.notes !== undefined) set('notes', b.notes)
+  if (b.champion !== undefined) update.set('champion', b.champion)
+  if (b.lastContacted !== undefined) update.set('last_contacted', b.lastContacted)
+  if (b.nextFollowUp !== undefined) update.set('next_follow_up', b.nextFollowUp)
+  if (b.notes !== undefined) update.set('notes', b.notes)
 
-  if (fields.length === 0) {
+  if (update.isEmpty) {
     res.status(400).json({ error: 'No fields to update' })
     return
   }
 
-  fields.push('updated_at = now()')
-  values.push(id)
-
+  const { assignments, idParam, values } = update.finalize(id)
   const { rows } = await pool.query(
-    `UPDATE contacts SET ${fields.join(', ')} WHERE id = $${i} RETURNING *`,
+    `UPDATE contacts SET ${assignments} WHERE id = $${idParam} RETURNING *`,
     values,
   )
   if (!rows[0]) {

@@ -322,7 +322,7 @@ try {
     }
 
     await client.query('COMMIT')
-    console.log(`testing/seed-activity: ${DAYS} days × ${users.length} SDRs`)
+    console.log(`testing/functional/seed-activity: ${DAYS} days × ${users.length} SDRs`)
   } catch (e) {
     await client.query('ROLLBACK')
     throw e
