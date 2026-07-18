@@ -1,14 +1,14 @@
-# Convobrains CRM — common commands
+# Zero Cost CRM — common commands
 # Usage: make <target>
 
-.PHONY: help setup reset-demo install dev build start lint smoke \
+.PHONY: help setup reset-demo install dev build start lint test test-api test-api-prep test-e2e \
         db-migrate db-check \
         docker-build docker-up docker-down docker-restart docker-logs docker-ps docker-shell \
         health \
         test-up test-down test-migrate test-seed test-seed-activity test-reset test-run
 
 COMPOSE := docker compose
-TEST_COMPOSE := docker compose -f testing/docker-compose.yml
+TEST_COMPOSE := docker compose -f testing/functional/docker-compose.yml
 APP_URL := http://localhost:4000
 
 help: ## Show this help
@@ -19,7 +19,7 @@ help: ## Show this help
 setup: ## One-command local setup (Docker + demo data)
 	@command -v docker >/dev/null || (echo "Docker is required: https://docs.docker.com/get-docker/" && exit 1)
 	@command -v npm >/dev/null || (echo "Node.js 22+ is required: https://nodejs.org/" && exit 1)
-	@test -f testing/.env.testing || cp testing/.env.testing.example testing/.env.testing
+	@test -f testing/functional/.env.testing || cp testing/functional/.env.testing.example testing/functional/.env.testing
 	@if [ -f package-lock.json ]; then npm ci; else npm install; fi
 	$(MAKE) test-reset
 	@echo ""
@@ -36,8 +36,8 @@ install: ## Install npm dependencies
 	npm install
 
 dev: ## Run Vite + API (port 4000)
-	@test -f testing/.env.testing || (echo "Run make setup first" && exit 1)
-	set -a && . ./testing/.env.testing && set +a && npm run dev
+	@test -f testing/functional/.env.testing || (echo "Run make setup first" && exit 1)
+	set -a && . ./testing/functional/.env.testing && set +a && npm run dev
 
 build: ## Build frontend for production
 	npm run build
@@ -48,8 +48,19 @@ start: ## Run production server locally (requires build + .env)
 lint: ## Run oxlint
 	npm run lint
 
-smoke: ## Run API smoke test
-	npm run smoke
+test: ## Unit tests
+	npm test
+
+test-api: ## API functional tests (DB must be prepared)
+	npm run test:api
+
+test-api-prep: ## Migrate + seed functional DB
+	npm run test:api:prep
+
+test-e2e: ## UI e2e (Docker Postgres + seed + Playwright)
+	$(MAKE) test-up
+	npm run test:api:prep
+	npm run test:e2e
 
 health: ## Check local /api/health
 	@curl -sf $(APP_URL)/api/health && echo
@@ -85,7 +96,7 @@ docker-ps: ## Show container status
 docker-shell: ## Shell into running container
 	$(COMPOSE) exec crm sh
 
-# ─── Feature testing (testing/ only — never uses root .env / RDS) ─────────────
+# ─── Functional testing (testing/functional — never uses root .env / RDS) ─────
 
 test-up: ## Start Docker Postgres for feature tests (port 5434)
 	$(TEST_COMPOSE) up -d
@@ -102,11 +113,11 @@ test-migrate: ## Apply schema to test DB only
 	$(TEST_COMPOSE) exec -T crm-test-db psql -v ON_ERROR_STOP=1 -U crm_test -d brains_crm_test < sql/schema.sql
 
 test-seed: ## Seed test users + CRM fixtures
-	node testing/seed-users.mjs
-	node testing/seed-crm.mjs
+	node testing/functional/seed-users.mjs
+	node testing/functional/seed-crm.mjs
 
 test-seed-activity: ## Regenerate multi-SDR activity fixtures
-	node testing/seed-activity.mjs
+	node testing/functional/seed-activity.mjs
 
 test-reset: ## Wipe test DB volume + migrate + seed + activity
 	-$(TEST_COMPOSE) down -v
@@ -115,6 +126,6 @@ test-reset: ## Wipe test DB volume + migrate + seed + activity
 	$(MAKE) test-seed
 	$(MAKE) test-seed-activity
 
-test-run: ## Run app against testing/.env.testing (feature testing)
-	@test -f testing/.env.testing || (echo "Copy testing/.env.testing.example → testing/.env.testing" && exit 1)
-	set -a && . ./testing/.env.testing && set +a && npm run dev
+test-run: ## Run app against testing/functional/.env.testing
+	@test -f testing/functional/.env.testing || (echo "Copy testing/functional/.env.testing.example → testing/functional/.env.testing" && exit 1)
+	set -a && . ./testing/functional/.env.testing && set +a && npm run dev

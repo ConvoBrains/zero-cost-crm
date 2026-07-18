@@ -1,16 +1,17 @@
 name: CI
 
+# Runs on every PR (any target branch) and on pushes to main.
 on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
-  build:
+  unit:
+    name: Unit tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
-
     steps:
       - uses: actions/checkout@v4
 
@@ -25,11 +26,102 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Smoke tests
-        run: npm run smoke
+      - name: Unit tests
+        run: npm test
 
       - name: Build
         run: npm run build
         env:
-          # Build does not start the server; keep env explicit for any tooling.
           JWT_SECRET: ci-build-placeholder-not-for-prod
+
+  functional:
+    name: Functional API tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: crm_test
+          POSTGRES_PASSWORD: crm_test_local_only
+          POSTGRES_DB: brains_crm_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U crm_test -d brains_crm_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      CI: 'true'
+      NODE_ENV: test
+      DATABASE_URL: postgresql://crm_test:crm_test_local_only@127.0.0.1:5432/brains_crm_test
+      DB_URL_DEV: postgresql://crm_test:crm_test_local_only@127.0.0.1:5432/brains_crm_test
+      DB_SSL: 'false'
+      ALLOW_ACTIVITY_SEED: '1'
+      JWT_SECRET: ci-functional-jwt-secret-not-for-prod
+      ALLOWED_EMAIL_DOMAIN: convobrains.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Prepare test database
+        run: npm run test:api:prep
+
+      - name: API tests
+        run: npm run test:api
+
+  e2e:
+    name: UI e2e tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: crm_test
+          POSTGRES_PASSWORD: crm_test_local_only
+          POSTGRES_DB: brains_crm_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U crm_test -d brains_crm_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      CI: 'true'
+      NODE_ENV: test
+      DATABASE_URL: postgresql://crm_test:crm_test_local_only@127.0.0.1:5432/brains_crm_test
+      DB_URL_DEV: postgresql://crm_test:crm_test_local_only@127.0.0.1:5432/brains_crm_test
+      DB_SSL: 'false'
+      ALLOW_ACTIVITY_SEED: '1'
+      JWT_SECRET: ci-e2e-jwt-secret-not-for-prod
+      ALLOWED_EMAIL_DOMAIN: convobrains.com
+      CORS_ORIGINS: http://127.0.0.1:5173,http://localhost:5173,http://localhost:4000
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Prepare test database
+        run: npm run test:api:prep
+
+      - name: UI e2e tests
+        run: npm run test:e2e

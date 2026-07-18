@@ -2,8 +2,6 @@ import type { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
 import { allowedEmailError, config, isAllowedEmail } from './config.js'
 
-export const ALLOWED_EMAIL_DOMAIN = config.primaryEmailDomain ?? '*'
-
 /** Must match users.role CHECK in sql/schema.sql */
 export const USER_ROLES = ['founder', 'sdr', 'admin'] as const
 export type UserRole = (typeof USER_ROLES)[number]
@@ -14,10 +12,6 @@ export function isUserRole(value: string): value is UserRole {
 
 export function isAdminRole(role?: string): boolean {
   return role === 'admin' || role === 'founder'
-}
-
-export function isConvobrainsEmail(email: string): boolean {
-  return isAllowedEmail(email)
 }
 
 export { allowedEmailError, isAllowedEmail }

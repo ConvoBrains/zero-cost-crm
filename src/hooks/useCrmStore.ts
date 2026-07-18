@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { api } from '../lib/api'
 import { canDeleteRecords } from '../types'
 import type {
@@ -42,6 +42,10 @@ export function useCrmStore(enabled: boolean, userRole?: string) {
   const [loading, setLoading] = useState(enabled)
   const [error, setError] = useState<string | null>(null)
 
+  const refreshMetrics = useCallback(async () => {
+    setMetrics(await api<Metrics>('/api/metrics'))
+  }, [])
+
   const refresh = useCallback(async () => {
     const [boot, m] = await Promise.all([
       api<{ companies: Company[]; contacts: Contact[] }>('/api/bootstrap'),
@@ -72,37 +76,40 @@ export function useCrmStore(enabled: boolean, userRole?: string) {
         body: JSON.stringify(partial),
       })
       setState((s) => ({ ...s, companies: [company, ...s.companies] }))
-      const m = await api<Metrics>('/api/metrics')
-      setMetrics(m)
+      await refreshMetrics()
       return company
     },
-    [],
+    [refreshMetrics],
   )
 
-  const updateCompany = useCallback(async (id: string, patch: Partial<Company>) => {
-    const company = await api<Company>(`/api/companies/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(patch),
-    })
-    setState((s) => ({
-      ...s,
-      companies: s.companies.map((c) => (c.id === id ? company : c)),
-    }))
-    const m = await api<Metrics>('/api/metrics')
-    setMetrics(m)
-  }, [])
+  const updateCompany = useCallback(
+    async (id: string, patch: Partial<Company>) => {
+      const company = await api<Company>(`/api/companies/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(patch),
+      })
+      setState((s) => ({
+        ...s,
+        companies: s.companies.map((c) => (c.id === id ? company : c)),
+      }))
+      await refreshMetrics()
+    },
+    [refreshMetrics],
+  )
 
-  const deleteCompany = useCallback(async (id: string) => {
-    await api(`/api/companies/${id}`, { method: 'DELETE' })
-    setState((s) => ({
-      companies: s.companies.filter((c) => c.id !== id),
-      contacts: s.contacts.map((t) =>
-        t.companyId === id ? { ...t, companyId: null } : t,
-      ),
-    }))
-    const m = await api<Metrics>('/api/metrics')
-    setMetrics(m)
-  }, [])
+  const deleteCompany = useCallback(
+    async (id: string) => {
+      await api(`/api/companies/${id}`, { method: 'DELETE' })
+      setState((s) => ({
+        companies: s.companies.filter((c) => c.id !== id),
+        contacts: s.contacts.map((t) =>
+          t.companyId === id ? { ...t, companyId: null } : t,
+        ),
+      }))
+      await refreshMetrics()
+    },
+    [refreshMetrics],
+  )
 
   const moveCompanyStage = useCallback(
     async (id: string, stage: Stage) => {
@@ -126,43 +133,46 @@ export function useCrmStore(enabled: boolean, userRole?: string) {
         }
         return { companies, contacts: [contact, ...s.contacts] }
       })
-      const m = await api<Metrics>('/api/metrics')
-      setMetrics(m)
+      await refreshMetrics()
       return contact
     },
-    [],
+    [refreshMetrics],
   )
 
-  const updateContact = useCallback(async (id: string, patch: Partial<Contact>) => {
-    const contact = await api<Contact>(`/api/contacts/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(patch),
-    })
-    setState((s) => {
-      let companies = s.companies
-      const contacts = s.contacts.map((t) => (t.id === id ? contact : t))
-      if (patch.champion === true && contact.companyId) {
-        companies = companies.map((c) =>
-          c.id === contact.companyId ? { ...c, primaryContactId: contact.id } : c,
-        )
-      }
-      return { companies, contacts }
-    })
-    const m = await api<Metrics>('/api/metrics')
-    setMetrics(m)
-  }, [])
+  const updateContact = useCallback(
+    async (id: string, patch: Partial<Contact>) => {
+      const contact = await api<Contact>(`/api/contacts/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(patch),
+      })
+      setState((s) => {
+        let companies = s.companies
+        const contacts = s.contacts.map((t) => (t.id === id ? contact : t))
+        if (patch.champion === true && contact.companyId) {
+          companies = companies.map((c) =>
+            c.id === contact.companyId ? { ...c, primaryContactId: contact.id } : c,
+          )
+        }
+        return { companies, contacts }
+      })
+      await refreshMetrics()
+    },
+    [refreshMetrics],
+  )
 
-  const deleteContact = useCallback(async (id: string) => {
-    await api(`/api/contacts/${id}`, { method: 'DELETE' })
-    setState((s) => ({
-      companies: s.companies.map((c) =>
-        c.primaryContactId === id ? { ...c, primaryContactId: null } : c,
-      ),
-      contacts: s.contacts.filter((t) => t.id !== id),
-    }))
-    const m = await api<Metrics>('/api/metrics')
-    setMetrics(m)
-  }, [])
+  const deleteContact = useCallback(
+    async (id: string) => {
+      await api(`/api/contacts/${id}`, { method: 'DELETE' })
+      setState((s) => ({
+        companies: s.companies.map((c) =>
+          c.primaryContactId === id ? { ...c, primaryContactId: null } : c,
+        ),
+        contacts: s.contacts.filter((t) => t.id !== id),
+      }))
+      await refreshMetrics()
+    },
+    [refreshMetrics],
+  )
 
   const importProspects = useCallback(async (rows: ProspectRow[]): Promise<ImportResult> => {
     const result = await api<ImportResult>('/api/import/prospects', {
@@ -185,13 +195,12 @@ export function useCrmStore(enabled: boolean, userRole?: string) {
     [state.companies],
   )
 
-  const metricsMemo = useMemo(() => metrics, [metrics])
   const canDelete = canDeleteRecords(userRole)
 
   return {
     companies: state.companies,
     contacts: state.contacts,
-    metrics: metricsMemo,
+    metrics,
     loading,
     error,
     canDelete,

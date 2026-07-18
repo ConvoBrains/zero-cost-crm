@@ -31,7 +31,7 @@ function requireJwtSecret(): string {
     return 'testing-jwt-secret-not-for-prod'
   }
   throw new Error(
-    'JWT_SECRET is required. Copy .env.example → .env.local (or testing/.env.testing) and set a long random value.',
+    'JWT_SECRET is required. Copy .env.example → .env.local (or testing/functional/.env.testing) and set a long random value.',
   )
 }
 
