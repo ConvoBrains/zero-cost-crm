@@ -1,14 +1,10 @@
-## Description
+## Summary
+<!-- what & why -->
 
-<!-- What changed and why? -->
-
-## Testing
-
-- [ ] `npm ci && npm run ci`
-- [ ] Manual check (describe):
+## Tests
+- [ ] `npm test` (and `npm run test:api` / `make test-e2e` if API/UI flows changed)
+- [ ] New/updated tests for this change (or docs-only)
 
 ## Checklist
-
-- [ ] No secrets, customer data, or real PII
-- [ ] Schema changes documented (if any)
-- [ ] Docs / CHANGELOG updated when user-facing
+- [ ] No secrets / PII
+- [ ] CI green

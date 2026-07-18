@@ -1,62 +1,15 @@
 # Contributing
 
-Thanks for helping improve Zero Cost CRM. We mentor first-time contributors and review PRs quickly.
-
-## Pick an issue
-
-Browse **[good first issues](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)** (also labeled `help wanted`, plus `frontend` / `easy` / `medium` so you can self-select).
-
-1. Comment on the issue (“I’d like to take this”)
-2. We’ll assign you — usually within hours
-3. Fork → branch → open a focused PR
-
-**First 10 meaningful contributors** get early access to ConvoBrains QA free, a listing on [CONTRIBUTORS.md](CONTRIBUTORS.md), and a LinkedIn shoutout/recommendation for solid work.
-
-## Development setup
-
-Requirements: Node.js 22+, Docker.
-
 ```bash
-git clone https://github.com/ConvoBrains/zero-cost-crm.git
-cd zero-cost-crm
-make setup
-make dev
+make setup && make dev
+npm ci && npm test          # unit (always)
+npm run test:api:prep && npm run test:api   # API tests (needs Docker DB)
+make test-e2e               # UI e2e (Docker up + Playwright)
+# GitHub CI also runs API + e2e — local `npm run ci` is lint+unit+build only
 ```
 
-Open http://localhost:5173 with the demo founder account from the README.
+**Tests:** change behavior → add tests.  
+`src/lib` → `testing/unit/` · API/DB → `testing/functional/api/` · UI flows → `testing/e2e/` · docs-only → note in PR.
 
-## Checks before a PR
-
-```bash
-npm ci
-npm run ci   # lint + smoke + build
-```
-
-## Branching & commits
-
-- Branch from `main`: `feature/…`, `fix/…`, or `docs/…`
-- Prefer focused PRs with a clear description and test notes
-- Do not commit `.env`, credentials, customer data, or real phone numbers/emails
-
-## Coding guidelines
-
-- TypeScript strict; keep API handlers thin where practical
-- Validate request inputs; fail closed on missing secrets in production
-- Schema changes go in [`sql/schema.sql`](sql/schema.sql) (idempotent) and are documented in the PR
-- Demo/seed data must use synthetic `@*.example` identities
-
-## Pull requests
-
-Use the PR template. Include:
-
-1. What changed and why
-2. How you tested (`make setup`, `npm run ci`, manual paths)
-3. Screenshots for UI changes when useful
-
-## Reporting security issues
-
-Do **not** open a public issue for vulnerabilities. See [SECURITY.md](SECURITY.md).
-
-## Code of conduct
-
-Participation is governed by [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+Pick a [good first issue](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22), comment to claim, open a focused PR.  
+No secrets or real PII. Schema changes → `sql/schema.sql`. Security → [SECURITY.md](SECURITY.md).

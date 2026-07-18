@@ -16,7 +16,7 @@ try {
     [SDR_EMAILS],
   )
   if (users.length < 3) {
-    throw new Error('Run testing/seed-users.mjs first')
+    throw new Error('Run testing/functional/seed-users.mjs first')
   }
   const byEmail = Object.fromEntries(users.map((u) => [u.email, u]))
 
@@ -88,7 +88,7 @@ try {
     )
   }
 
-  console.log(`testing/seed-crm: ${companies.length} companies + contacts`)
+  console.log(`testing/functional/seed-crm: ${companies.length} companies + contacts`)
 } finally {
   await pool.end()
 }

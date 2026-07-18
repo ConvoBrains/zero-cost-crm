@@ -66,7 +66,7 @@ make reset-demo   # wipe & reseed local demo data
 
 ```bash
 cp .env.example .env.local          # production-style local API
-cp testing/.env.testing.example testing/.env.testing  # demo path (make setup does this)
+cp testing/functional/.env.testing.example testing/functional/.env.testing  # demo path (make setup does this)
 ```
 
 Important variables (see [`.env.example`](.env.example)):
@@ -173,7 +173,8 @@ Schema is applied from [`sql/schema.sql`](sql/schema.sql) (idempotent). See [doc
 | `make reset-demo` | Rebuild demo fixtures               |
 | `make lint`       | Static checks                       |
 | `make build`      | Production build                    |
-| `make smoke`      | Parser smoke tests                  |
+| `make test`       | Unit tests                          |
+| `make test-api`   | API functional tests (DB prepared)  |
 | `make help`       | All targets                         |
 
 ---
@@ -207,13 +208,13 @@ make docker-up
 make health
 ```
 
-Root `docker-compose.yml` runs the app container; Postgres is external (managed DB or your own). Local demo Postgres is provided by `testing/docker-compose.yml` via `make setup`.
+Root `docker-compose.yml` runs the app container; Postgres is external (managed DB or your own). Local demo Postgres is provided by `testing/functional/docker-compose.yml` via `make setup`.
 
 ---
 
 ## Security
 
-- Do **not** ship demo credentials or `testing/.env.testing` to production.
+- Do **not** ship demo credentials or `testing/functional/.env.testing` to production.
 - Use a strong unique `JWT_SECRET`, verified TLS for Postgres, configured `CORS_ORIGINS`, and private object storage.
 - Report vulnerabilities privately — see [SECURITY.md](SECURITY.md).
 
@@ -231,21 +232,12 @@ Google Fonts (DM Sans, Instrument Serif) are loaded from Google’s CDN under th
 
 ## Contributing
 
-We actively mentor first-time contributors. Start here:
-
-- **[Good first issues](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)** — 10 beginner-friendly tickets (frontend, docs, a11y, testing)
-- **[CodeTriage](https://www.codetriage.com/convobrains/zero-cost-crm)** — get one issue from this repo in your inbox each day
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** — setup, PR checks, coding guidelines
-- **[CONTRIBUTORS.md](CONTRIBUTORS.md)** — who helped (name + LinkedIn)
-
-**Rewards for the first 10 meaningful contributors:** early access to [ConvoBrains](https://www.convobrains.com) QA free, a public shoutout, and a LinkedIn recommendation when the work is solid.
+[Good first issues](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) · [CONTRIBUTING.md](CONTRIBUTING.md) · [CONTRIBUTORS.md](CONTRIBUTORS.md) · [CodeTriage](https://www.codetriage.com/convobrains/zero-cost-crm)
 
 ```bash
-make setup
-npm run ci
+make setup && make dev
+npm test
 ```
-
-Comment on an issue to claim it — we aim to reply within hours.
 
 ---
 

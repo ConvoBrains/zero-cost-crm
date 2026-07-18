@@ -15,7 +15,8 @@ dist-ssr
 .env
 .env.*
 !.env.example
-!testing/.env.testing.example
+!testing/functional/.env.testing.example
+testing/functional/.env.testing
 testing/.env.testing
 
 # Test artifacts
@@ -23,6 +24,9 @@ testing/.env.testing
 coverage
 uploads
 tmp
+test-results
+playwright-report
+blob-report
 *.pem
 *.key
 
