@@ -20,6 +20,11 @@ Northwind Health\tJordan Sample\tCo-Founder & CEO\tjordan@northwind-health.examp
 
 type Mode = 'single' | 'bulk'
 
+type ImportResult = {
+  message: string
+  ok: boolean
+}
+
 const emptySingle = {
   company: '',
   prospectName: '',
@@ -47,7 +52,7 @@ export function ImportLeads({ store }: ImportLeadsProps) {
   const [fileRows, setFileRows] = useState<ProspectRow[]>([])
   const [fileErrors, setFileErrors] = useState<string[]>([])
   const [single, setSingle] = useState(emptySingle)
-  const [lastResult, setLastResult] = useState<string | null>(null)
+  const [lastResult, setLastResult] = useState<ImportResult | null>(null)
   const [busy, setBusy] = useState(false)
 
   const pasted = useMemo(() => {
@@ -61,19 +66,25 @@ export function ImportLeads({ store }: ImportLeadsProps) {
 
   const runBulkImport = async () => {
     if (bulkRows.length === 0) {
-      setLastResult('Nothing to import — paste rows or upload a file first.')
+      setLastResult({
+        message: 'Nothing to import — paste rows or upload a file first.',
+        ok: false,
+      })
       return
     }
     setBusy(true)
     try {
       const result = await store.importProspects(bulkRows)
-      setLastResult(formatResult(result))
+      setLastResult({ message: formatResult(result), ok: true })
       setText('')
       setFileName(null)
       setFileRows([])
       setFileErrors([])
     } catch (e) {
-      setLastResult(e instanceof Error ? e.message : 'Import failed')
+      setLastResult({
+        message: e instanceof Error ? e.message : 'Import failed',
+        ok: false,
+      })
     } finally {
       setBusy(false)
     }
@@ -96,10 +107,13 @@ export function ImportLeads({ store }: ImportLeadsProps) {
         industry: single.industry.trim(),
       }
       const result = await store.importProspects([row])
-      setLastResult(formatResult(result))
+      setLastResult({ message: formatResult(result), ok: true })
       setSingle(emptySingle)
     } catch (err) {
-      setLastResult(err instanceof Error ? err.message : 'Import failed')
+      setLastResult({
+        message: err instanceof Error ? err.message : 'Import failed',
+        ok: false,
+      })
     } finally {
       setBusy(false)
     }
@@ -166,6 +180,11 @@ export function ImportLeads({ store }: ImportLeadsProps) {
     a.click()
     URL.revokeObjectURL(url)
   }
+
+  const resultBannerClass = (ok: boolean) =>
+    ok
+      ? 'bg-emerald-50 text-emerald-800'
+      : 'bg-rose-50 text-rose-800'
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -282,8 +301,8 @@ export function ImportLeads({ store }: ImportLeadsProps) {
             {busy ? 'Saving…' : 'Add lead'}
           </button>
           {lastResult && mode === 'single' ? (
-            <p className="rounded-none bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-              {lastResult}
+            <p className={`rounded-none px-3 py-2 text-sm ${resultBannerClass(lastResult.ok)}`}>
+              {lastResult.message}
             </p>
           ) : null}
         </form>
@@ -376,8 +395,8 @@ export function ImportLeads({ store }: ImportLeadsProps) {
             ) : null}
 
             {lastResult && mode === 'bulk' ? (
-              <p className="mt-3 rounded-none bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-                {lastResult}
+              <p className={`mt-3 rounded-none px-3 py-2 text-sm ${resultBannerClass(lastResult.ok)}`}>
+                {lastResult.message}
               </p>
             ) : null}
           </div>
