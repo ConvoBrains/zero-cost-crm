@@ -1,6 +1,6 @@
 /**
  * Guard: testing scripts may only talk to the Docker test DB.
- * Loads testing/.env.testing only (never root .env).
+ * Loads testing/functional/.env.testing only (never root .env).
  */
 import { readFileSync, existsSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
@@ -11,7 +11,9 @@ const ENV_PATH = resolve(__dirname, '.env.testing')
 
 function loadEnvFile(path) {
   if (!existsSync(path)) {
-    throw new Error(`Missing ${path}. Copy testing/.env.testing.example → testing/.env.testing`)
+    throw new Error(
+      `Missing ${path}. Copy testing/functional/.env.testing.example → testing/functional/.env.testing`,
+    )
   }
   for (const line of readFileSync(path, 'utf8').split('\n')) {
     const t = line.trim()
@@ -34,11 +36,15 @@ export function assertSafeTestingDb() {
   loadEnvFile(ENV_PATH)
 
   if (process.env.ALLOW_ACTIVITY_SEED !== '1') {
-    throw new Error('Refusing to run: ALLOW_ACTIVITY_SEED must be 1 in testing/.env.testing')
+    throw new Error(
+      'Refusing to run: ALLOW_ACTIVITY_SEED must be 1 in testing/functional/.env.testing',
+    )
   }
 
   const raw = process.env.DATABASE_URL || process.env.DB_URL_DEV
-  if (!raw) throw new Error('Refusing to run: DATABASE_URL missing in testing/.env.testing')
+  if (!raw) {
+    throw new Error('Refusing to run: DATABASE_URL missing in testing/functional/.env.testing')
+  }
 
   const url = new URL(raw.replace(/^postgresql\+asyncpg:/, 'postgresql:'))
   const host = url.hostname

@@ -11,9 +11,12 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "smoke": "node scripts/smoke-test.mjs",
-    "test": "npm run smoke",
-    "ci": "npm run lint && npm run smoke && npm run build",
+    "test": "vitest run --config vitest.config.ts",
+    "test:api": "vitest run --config vitest.functional.config.ts",
+    "test:api:prep": "node testing/functional/prepare.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium",
+    "ci": "npm run lint && npm run test && npm run build",
     "db:migrate": "node scripts/db-migrate.mjs",
     "start": "NODE_ENV=production tsx server/index.ts"
   },
@@ -33,6 +36,7 @@
     "react-dom": "^19.2.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/vite": "^4.3.2",
     "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
@@ -48,7 +52,8 @@
     "tailwindcss": "^4.3.2",
     "tsx": "^4.20.5",
     "typescript": "~6.0.2",
-    "vite": "^8.1.1"
+    "vite": "^8.1.1",
+    "vitest": "^3.2.7"
   },
   "description": "A self-hosted, open-source CRM for small sales teams—pipeline, contacts, follow-ups, activity tracking, lead imports, and optional call recordings.",
   "repository": {

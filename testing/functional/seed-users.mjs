@@ -40,7 +40,7 @@ try {
       console.log(`Removed non-seed user ${row.email}`)
     }
   }
-  console.log('testing/seed-users complete. Password: TestSeed123!')
+  console.log('testing/functional/seed-users complete. Password: TestSeed123!')
 } finally {
   await pool.end()
 }

@@ -31,7 +31,9 @@ In production (`NODE_ENV=production`), Express also serves the built SPA from `d
 | `server/conversations.ts` | Recording upload/presign/play |
 | `server/config.ts` | Environment validation |
 | `sql/schema.sql` | Idempotent Postgres schema |
-| `testing/` | Isolated Docker Postgres + seed fixtures |
+| `testing/unit/` | Unit tests |
+| `testing/functional/` | Test DB + API tests |
+| `testing/e2e/` | UI e2e (Playwright) |
 
 ## Data model (ER sketch)
 
@@ -56,7 +58,7 @@ Source of truth: [`sql/schema.sql`](../sql/schema.sql).
 
 ## Demo vs production DBs
 
-- `make setup` / `make test-*` use `testing/docker-compose.yml` only
+- `make setup` / `make test-*` use `testing/functional/docker-compose.yml` only
 - Seed scripts abort unless the DB name contains `_test` and the host is local
 - Never point seed scripts at production
 
