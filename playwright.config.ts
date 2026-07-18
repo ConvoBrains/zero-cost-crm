@@ -17,7 +17,7 @@ const FORCE_FROM_FILE = new Set([
 function loadTestingEnv(): Record<string, string> {
   const env: Record<string, string> = {}
   for (const [k, v] of Object.entries(process.env)) {
-    if (v !== undefined) env[k] = v
+    if (typeof v === 'string') env[k] = v
   }
 
   const path = resolve(process.cwd(), 'testing/functional/.env.testing')
