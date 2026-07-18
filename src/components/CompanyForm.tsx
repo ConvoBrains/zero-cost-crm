@@ -25,7 +25,6 @@ export function CompanyForm({ store, initial, onDone }: CompanyFormProps) {
     intent: initial?.intent ?? '',
     offeredPrice: initial?.offeredPrice?.toString() ?? '',
     primaryContactId: initial?.primaryContactId ?? '',
-    assignedTo: initial?.assignedTo ?? 'Sales Intern',
     lastContacted: initial?.lastContacted ?? '',
     nextFollowUp: initial?.nextFollowUp ?? '',
     notes: initial?.notes ?? '',
@@ -68,6 +67,10 @@ export function CompanyForm({ store, initial, onDone }: CompanyFormProps) {
     }
     onDone()
   }
+
+  const assignedToDisplay = initial
+    ? initial.assignedTo || 'Unassigned'
+    : 'Will be assigned to you'
 
   return (
     <form onSubmit={submit} className="space-y-4">
@@ -180,9 +183,10 @@ export function CompanyForm({ store, initial, onDone }: CompanyFormProps) {
 
         <Field label="Assigned To">
           <input
-            className={inputClass}
-            value={form.assignedTo}
-            onChange={(e) => set('assignedTo', e.target.value)}
+            className={`${inputClass} bg-stone-100 text-stone-500 cursor-not-allowed`}
+            value={assignedToDisplay}
+            readOnly
+            disabled
           />
         </Field>
 
