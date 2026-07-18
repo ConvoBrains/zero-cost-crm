@@ -68,6 +68,10 @@ export function CompanyForm({ store, initial, onDone }: CompanyFormProps) {
     onDone()
   }
 
+  const assignedToDisplay = initial
+    ? initial.assignedTo || 'Unassigned'
+    : 'Will be assigned to you'
+
   return (
     <form onSubmit={submit} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
@@ -178,15 +182,12 @@ export function CompanyForm({ store, initial, onDone }: CompanyFormProps) {
         </Field>
 
         <Field label="Assigned To">
-          {initial ? (
-            <div className={`${inputClass} flex items-center bg-[var(--color-muted,#f4f4f5)] text-[var(--color-fg-muted,#6b7280)] cursor-not-allowed`}>
-              {initial.assignedTo || 'Unassigned'}
-            </div>
-          ) : (
-            <div className={`${inputClass} flex items-center bg-[var(--color-muted,#f4f4f5)] text-[var(--color-fg-muted,#6b7280)] cursor-not-allowed`}>
-              Will be assigned to you
-            </div>
-          )}
+          <input
+            className={`${inputClass} bg-stone-100 text-stone-500 cursor-not-allowed`}
+            value={assignedToDisplay}
+            readOnly
+            disabled
+          />
         </Field>
 
         <Field label="Last Contacted">
