@@ -1,4 +1,4 @@
-# Convobrains CRM — common commands
+# Zero Cost CRM — common commands
 # Usage: make <target>
 
 .PHONY: help setup reset-demo install dev build start lint smoke \
