@@ -12,7 +12,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core'
 import { useMemo, useState } from 'react'
-import type { Company, PipelineView, Stage } from '../types'
+import type { Company, Contact, PipelineView, Stage } from '../types'
 import { STAGES } from '../types'
 import type { CrmStore } from '../hooks/useCrmStore'
 import {
@@ -20,7 +20,9 @@ import {
   filterCompanies,
   intentColor,
   stageAccent,
+  todayIso,
 } from '../lib/views'
+import { buildCardBadges, buildChampionTrail, findChampion } from '../lib/championCard'
 import { logViewEvent } from '../lib/activity'
 import { CompanyForm } from './CompanyForm'
 import { Modal, btnPrimary } from './ui'
@@ -40,17 +42,24 @@ function resolveDropStage(overId: string | number, companies: Company[]): Stage 
 
 function CompanyCard({
   company,
-  primaryName,
+  contacts,
+  today,
   dragging,
   onOpen,
 }: {
   company: Company
-  primaryName?: string
+  contacts: Contact[]
+  today: string
   dragging?: boolean
   onOpen?: () => void
 }) {
+  const badges = buildCardBadges(company, contacts, today)
+  const trail = buildChampionTrail(findChampion(contacts, company.id))
+
   return (
     <div
+      data-testid="company-card"
+      data-company-id={company.id}
       className={`rounded-none border border-[var(--color-line)] bg-white p-3 text-left transition hover:border-teal-600/40 ${
         dragging ? 'opacity-40' : ''
       }`}
@@ -66,8 +75,42 @@ function CompanyCard({
           <p className="mt-1 text-[11px] text-stone-500">
             {[company.industry, company.location].filter(Boolean).join(' · ') || '—'}
           </p>
-          {primaryName ? (
-            <p className="mt-2 text-[11px] font-medium text-teal-800">★ {primaryName}</p>
+          <div
+            data-testid="card-badges"
+            data-company-id={company.id}
+            className="mt-2 flex flex-wrap items-center gap-1"
+          >
+            <span className="rounded-none bg-stone-100 px-1.5 py-0.5 text-[10px] font-semibold text-stone-500">
+              {badges.contactCount} {badges.contactCount === 1 ? 'contact' : 'contacts'}
+            </span>
+            {badges.hasChampion ? (
+              <span
+                className="rounded-none bg-teal-100 px-1.5 py-0.5 text-[10px] font-semibold text-teal-800"
+                title="Has champion"
+              >
+                ★ Champion
+              </span>
+            ) : null}
+            {badges.followUpDueToday ? (
+              <span className="rounded-none bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+                Due today
+              </span>
+            ) : null}
+          </div>
+          {trail ? (
+            <div
+              data-testid="champion-trail"
+              data-company-id={company.id}
+              className="mt-2 space-y-0.5"
+            >
+              <p className="text-[11px] font-medium text-teal-800">{trail.header}</p>
+              {trail.note ? (
+                <p className="text-[10px] text-stone-500">{trail.note}</p>
+              ) : null}
+              {trail.followUp ? (
+                <p className="text-[10px] text-stone-400">{trail.followUp}</p>
+              ) : null}
+            </div>
           ) : null}
           {company.nextFollowUp ? (
             <p className="mt-1.5 text-[10px] text-stone-400">Follow-up {company.nextFollowUp}</p>
@@ -95,11 +138,13 @@ function CompanyCard({
 
 function DraggableCard({
   company,
-  primaryName,
+  contacts,
+  today,
   onOpen,
 }: {
   company: Company
-  primaryName?: string
+  contacts: Contact[]
+  today: string
   onOpen: () => void
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -121,7 +166,8 @@ function DraggableCard({
     >
       <CompanyCard
         company={company}
-        primaryName={primaryName}
+        contacts={contacts}
+        today={today}
         dragging={isDragging}
         onOpen={onOpen}
       />
@@ -133,11 +179,13 @@ function KanbanColumn({
   stage,
   companies,
   store,
+  today,
   onOpen,
 }: {
   stage: Stage
   companies: Company[]
   store: CrmStore
+  today: string
   onOpen: (c: Company) => void
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage, data: { type: 'column', stage } })
@@ -162,7 +210,8 @@ function KanbanColumn({
           <DraggableCard
             key={c.id}
             company={c}
-            primaryName={store.getContact(c.primaryContactId)?.contactName}
+            contacts={store.contacts}
+            today={today}
             onOpen={() => onOpen(c)}
           />
         ))}
@@ -208,6 +257,9 @@ export function Pipeline({ store }: PipelineProps) {
   const activeCompany = activeId
     ? store.companies.find((c) => c.id === activeId) ?? null
     : null
+
+  // Compute once per board render so every card's badges share one reference date.
+  const today = todayIso()
 
   const onDragStart = (e: DragStartEvent) => setActiveId(String(e.active.id))
 
@@ -274,6 +326,7 @@ export function Pipeline({ store }: PipelineProps) {
               stage={stage}
               companies={byStage.get(stage) ?? []}
               store={store}
+              today={today}
               onOpen={openCompany}
             />
           ))}
@@ -283,7 +336,8 @@ export function Pipeline({ store }: PipelineProps) {
             <div className="w-[min(72vw,16rem)] rotate-1 sm:w-64">
               <CompanyCard
                 company={activeCompany}
-                primaryName={store.getContact(activeCompany.primaryContactId)?.contactName}
+                contacts={store.contacts}
+                today={today}
               />
             </div>
           ) : null}

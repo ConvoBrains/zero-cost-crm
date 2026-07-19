@@ -28,6 +28,7 @@ import {
   touchSession,
 } from './activity.js'
 import { CONTACT_STATUSES, STAGES } from '../src/types.js'
+import { resolveAutoMoveStage } from '../src/lib/championSync.js'
 
 const app = express()
 app.use(
@@ -764,6 +765,38 @@ app.patch('/api/contacts/:id', requireAuth, async (req, res) => {
       summary: `Updated ${name}`,
       payload: { name },
     })
+  }
+
+  if (
+    b.contactStatus !== undefined &&
+    b.contactStatus !== before.contact_status &&
+    contact.champion &&
+    contact.company_id
+  ) {
+    const { rows: companyRows } = await pool.query(
+      'SELECT stage, company_name FROM companies WHERE id = $1',
+      [contact.company_id],
+    )
+    const company = companyRows[0]
+    if (company) {
+      const target = resolveAutoMoveStage(company.stage, contact.contact_status)
+      if (target) {
+        await pool.query('UPDATE companies SET stage = $1, updated_at = now() WHERE id = $2', [
+          target,
+          contact.company_id,
+        ])
+        const companyName = String(company.company_name)
+        await logActivity({
+          userId: uid,
+          sessionId: sid,
+          eventType: 'company.stage_changed',
+          entityType: 'company',
+          entityId: String(contact.company_id),
+          summary: `Stage → ${target} (${companyName})`,
+          payload: { from: company.stage, to: target, name: companyName, source: 'champion_contact' },
+        })
+      }
+    }
   }
 
   res.json(mapContact(contact))

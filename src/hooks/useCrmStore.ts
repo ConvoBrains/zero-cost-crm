@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api } from '../lib/api'
+import { resolveAutoMoveStage } from '../lib/championSync'
 import { canDeleteRecords } from '../types'
 import type {
   Company,
@@ -146,12 +147,31 @@ export function useCrmStore(enabled: boolean, userRole?: string) {
         body: JSON.stringify(patch),
       })
       setState((s) => {
+        const prev = s.contacts.find((t) => t.id === id)
         let companies = s.companies
         const contacts = s.contacts.map((t) => (t.id === id ? contact : t))
         if (patch.champion === true && contact.companyId) {
           companies = companies.map((c) =>
             c.id === contact.companyId ? { ...c, primaryContactId: contact.id } : c,
           )
+        }
+        // Mirror the server's champion auto-move (issue #29) so the board updates without a refetch.
+        if (
+          patch.contactStatus !== undefined &&
+          prev &&
+          prev.contactStatus !== contact.contactStatus &&
+          contact.champion &&
+          contact.companyId
+        ) {
+          const company = companies.find((c) => c.id === contact.companyId)
+          if (company) {
+            const nextStage = resolveAutoMoveStage(company.stage, contact.contactStatus)
+            if (nextStage) {
+              companies = companies.map((c) =>
+                c.id === company.id ? { ...c, stage: nextStage } : c,
+              )
+            }
+          }
         }
         return { companies, contacts }
       })

@@ -231,7 +231,7 @@ export function accumulateCallMetrics(
     if (to === 'Rejected') metrics.notInterested += 1
   }
   if (eventType === 'contact.follow_up_set') metrics.followUps += 1
-  if (eventType === 'company.stage_changed') {
+  if (eventType === 'company.stage_changed' && payload.source !== 'champion_contact') {
     const to = String(payload.to ?? '')
     if (to === 'Demo Scheduled') metrics.demo += 1
     if (to === 'Closed Won') metrics.converted += 1
