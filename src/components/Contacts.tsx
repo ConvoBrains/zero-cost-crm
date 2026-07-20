@@ -39,8 +39,11 @@ function ContactRow({
           ) : null}
         </div>
         {contact.champion ? (
-          <span className="shrink-0 rounded-none bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
-            ★
+          <span
+            className="shrink-0 rounded-none bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800"
+            aria-label="Champion"
+          >
+            <span aria-hidden="true">★</span>
           </span>
         ) : null}
       </div>
