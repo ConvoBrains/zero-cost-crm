@@ -278,7 +278,7 @@ export function Pipeline({ store }: PipelineProps) {
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-xs font-semibold tracking-[0.14em] text-teal-700 uppercase">
-            Database 1
+            Pipeline
           </p>
           <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl text-stone-900 sm:text-4xl">
             Sales Pipeline

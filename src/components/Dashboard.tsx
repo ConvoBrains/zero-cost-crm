@@ -70,7 +70,7 @@ export function Dashboard({ store, onNavigate, canManageUsers }: DashboardProps)
             Zero Cost CRM · Morning brief
           </p>
           <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl text-stone-900 sm:text-5xl">
-            SDR Dashboard
+            Dashboard
           </h1>
           <p className="mt-2 max-w-xl text-sm text-stone-500">
             Start here each day. Clear follow-ups, work the pipeline, update contacts after
