@@ -28,6 +28,7 @@ import {
   touchSession,
 } from './activity.js'
 import { CONTACT_STATUSES, STAGES } from '../src/types.js'
+import { resolveAutoMoveStage } from '../src/lib/championSync.js'
 
 const app = express()
 app.use(
@@ -694,79 +695,148 @@ app.patch('/api/contacts/:id', requireAuth, async (req, res) => {
   }
 
   const { assignments, idParam, values } = update.finalize(id)
-  const { rows } = await pool.query(
-    `UPDATE contacts SET ${assignments} WHERE id = $${idParam} RETURNING *`,
-    values,
-  )
-  if (!rows[0]) {
-    res.status(404).json({ error: 'Contact not found' })
-    return
-  }
 
-  const contact = rows[0]
-  if (b.champion === true && contact.company_id) {
-    await pool.query('UPDATE companies SET primary_contact_id = $1 WHERE id = $2', [
-      contact.id,
-      contact.company_id,
-    ])
-  }
+  // Atomic unit: the contact update, the optional champion→company writes, the
+  // stage auto-move, and every related activity insert must all commit together
+  // or not at all — otherwise a failed stage write leaves the contact advanced
+  // while the board stays stale. Mirror the import handler's transaction shape.
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
 
-  const name = String(contact.contact_name)
-  const sid = req.user!.sid
-  const uid = req.user!.sub
-  if (b.contactStatus !== undefined && b.contactStatus !== before.contact_status) {
-    await logActivity({
-      userId: uid,
-      sessionId: sid,
-      eventType: 'contact.status_changed',
-      entityType: 'contact',
-      entityId: String(id),
-      summary: `Changed status → ${b.contactStatus}`,
-      payload: { from: before.contact_status, to: b.contactStatus, name },
-    })
-  }
-  if (b.nextFollowUp !== undefined && b.nextFollowUp !== before.next_follow_up) {
-    await logActivity({
-      userId: uid,
-      sessionId: sid,
-      eventType: 'contact.follow_up_set',
-      entityType: 'contact',
-      entityId: String(id),
-      summary: `Follow-up added for ${name}`,
-      payload: { nextFollowUp: b.nextFollowUp, name },
-    })
-  }
-  if (b.notes !== undefined && b.notes !== before.notes) {
-    await logActivity({
-      userId: uid,
-      sessionId: sid,
-      eventType: 'contact.note_added',
-      entityType: 'contact',
-      entityId: String(id),
-      summary: `Added note on ${name}`,
-      payload: { name },
-    })
-  }
-  if (
-    (b.contactName !== undefined ||
-      b.phone !== undefined ||
-      b.email !== undefined ||
-      b.role !== undefined ||
-      b.companyId !== undefined) &&
-    b.contactStatus === undefined
-  ) {
-    await logActivity({
-      userId: uid,
-      sessionId: sid,
-      eventType: 'contact.updated',
-      entityType: 'contact',
-      entityId: String(id),
-      summary: `Updated ${name}`,
-      payload: { name },
-    })
-  }
+    const { rows } = await client.query(
+      `UPDATE contacts SET ${assignments} WHERE id = $${idParam} RETURNING *`,
+      values,
+    )
+    if (!rows[0]) {
+      await client.query('ROLLBACK')
+      res.status(404).json({ error: 'Contact not found' })
+      return
+    }
 
-  res.json(mapContact(contact))
+    const contact = rows[0]
+    // Set when a champion status change auto-advances the company; null otherwise.
+    // Consumed by the web client to reconcile the Kanban board — keep this name.
+    let movedCompanyStage: string | null = null
+
+    if (b.champion === true && contact.company_id) {
+      await client.query('UPDATE companies SET primary_contact_id = $1 WHERE id = $2', [
+        contact.id,
+        contact.company_id,
+      ])
+    }
+
+    const name = String(contact.contact_name)
+    const sid = req.user!.sid
+    const uid = req.user!.sub
+    if (b.contactStatus !== undefined && b.contactStatus !== before.contact_status) {
+      await logActivity(
+        {
+          userId: uid,
+          sessionId: sid,
+          eventType: 'contact.status_changed',
+          entityType: 'contact',
+          entityId: String(id),
+          summary: `Changed status → ${b.contactStatus}`,
+          payload: { from: before.contact_status, to: b.contactStatus, name },
+        },
+        client,
+      )
+    }
+    if (b.nextFollowUp !== undefined && b.nextFollowUp !== before.next_follow_up) {
+      await logActivity(
+        {
+          userId: uid,
+          sessionId: sid,
+          eventType: 'contact.follow_up_set',
+          entityType: 'contact',
+          entityId: String(id),
+          summary: `Follow-up added for ${name}`,
+          payload: { nextFollowUp: b.nextFollowUp, name },
+        },
+        client,
+      )
+    }
+    if (b.notes !== undefined && b.notes !== before.notes) {
+      await logActivity(
+        {
+          userId: uid,
+          sessionId: sid,
+          eventType: 'contact.note_added',
+          entityType: 'contact',
+          entityId: String(id),
+          summary: `Added note on ${name}`,
+          payload: { name },
+        },
+        client,
+      )
+    }
+    if (
+      (b.contactName !== undefined ||
+        b.phone !== undefined ||
+        b.email !== undefined ||
+        b.role !== undefined ||
+        b.companyId !== undefined) &&
+      b.contactStatus === undefined
+    ) {
+      await logActivity(
+        {
+          userId: uid,
+          sessionId: sid,
+          eventType: 'contact.updated',
+          entityType: 'contact',
+          entityId: String(id),
+          summary: `Updated ${name}`,
+          payload: { name },
+        },
+        client,
+      )
+    }
+
+    if (
+      b.contactStatus !== undefined &&
+      b.contactStatus !== before.contact_status &&
+      contact.champion &&
+      contact.company_id
+    ) {
+      const { rows: companyRows } = await client.query(
+        'SELECT stage, company_name FROM companies WHERE id = $1',
+        [contact.company_id],
+      )
+      const company = companyRows[0]
+      if (company) {
+        const target = resolveAutoMoveStage(company.stage, contact.contact_status)
+        if (target) {
+          await client.query('UPDATE companies SET stage = $1, updated_at = now() WHERE id = $2', [
+            target,
+            contact.company_id,
+          ])
+          movedCompanyStage = target
+          const companyName = String(company.company_name)
+          await logActivity(
+            {
+              userId: uid,
+              sessionId: sid,
+              eventType: 'company.stage_changed',
+              entityType: 'company',
+              entityId: String(contact.company_id),
+              summary: `Stage → ${target} (${companyName})`,
+              payload: { from: company.stage, to: target, name: companyName, source: 'champion_contact' },
+            },
+            client,
+          )
+        }
+      }
+    }
+
+    await client.query('COMMIT')
+    res.json({ ...mapContact(contact), movedCompanyStage })
+  } catch (e) {
+    await client.query('ROLLBACK')
+    throw e
+  } finally {
+    client.release()
+  }
 })
 
 app.delete('/api/contacts/:id', requireAuth, requireAdmin, async (req, res) => {
