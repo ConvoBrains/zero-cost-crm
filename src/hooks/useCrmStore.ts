@@ -5,6 +5,7 @@ import { canDeleteRecords } from '../types'
 import type {
   Company,
   Contact,
+  ContactStatus,
   ImportResult,
   ProspectRow,
   Stage,
@@ -35,6 +36,66 @@ const emptyMetrics: Metrics = {
   activeOpportunities: 0,
   closedWon: 0,
   closedLost: 0,
+}
+
+/**
+ * Response of `PATCH /api/contacts/:id`: the updated contact plus an optional
+ * champion auto-move annotation (issue #29). `movedCompanyStage` is the stage
+ * the server moved the owning company to, `null` when it applied no move, and
+ * absent on servers that predate the field.
+ */
+type UpdateContactResponse = Contact & { movedCompanyStage?: Stage | null }
+
+interface ChampionMoveInput {
+  contact: Pick<Contact, 'companyId' | 'champion' | 'contactStatus'>
+  prevContactStatus: ContactStatus | undefined
+  statusPatched: boolean
+  movedCompanyStage: Stage | null | undefined
+}
+
+/**
+ * Reconcile a company's Kanban stage after a champion's contact status changes
+ * (issue #29), returning the next `companies` array.
+ *
+ * The server is the source of truth: when the PATCH response carries a non-null
+ * `movedCompanyStage`, the owning company is moved to exactly that stage; when
+ * it is `null`, the server applied no move and the stage is left untouched.
+ * Local derivation from the (possibly stale) local stage is used only as a
+ * fallback when the field is absent — an older server that predates it.
+ */
+export function applyChampionAutoMove(
+  companies: Company[],
+  { contact, prevContactStatus, statusPatched, movedCompanyStage }: ChampionMoveInput,
+): Company[] {
+  // Newer server: trust the returned stage (string) or explicit no-move (null).
+  if (movedCompanyStage !== undefined) {
+    if (typeof movedCompanyStage === 'string' && contact.companyId) {
+      const companyId = contact.companyId
+      const stage = movedCompanyStage
+      return companies.map((c) => (c.id === companyId ? { ...c, stage } : c))
+    }
+    return companies
+  }
+
+  // Older server (field absent): derive the move from the local company stage.
+  if (
+    statusPatched &&
+    prevContactStatus !== undefined &&
+    prevContactStatus !== contact.contactStatus &&
+    contact.champion &&
+    contact.companyId
+  ) {
+    const company = companies.find((c) => c.id === contact.companyId)
+    if (company) {
+      const nextStage = resolveAutoMoveStage(company.stage, contact.contactStatus)
+      if (nextStage) {
+        return companies.map((c) =>
+          c.id === company.id ? { ...c, stage: nextStage } : c,
+        )
+      }
+    }
+  }
+  return companies
 }
 
 export function useCrmStore(enabled: boolean, userRole?: string) {
@@ -142,10 +203,10 @@ export function useCrmStore(enabled: boolean, userRole?: string) {
 
   const updateContact = useCallback(
     async (id: string, patch: Partial<Contact>) => {
-      const contact = await api<Contact>(`/api/contacts/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(patch),
-      })
+      const { movedCompanyStage, ...contact } = await api<UpdateContactResponse>(
+        `/api/contacts/${id}`,
+        { method: 'PATCH', body: JSON.stringify(patch) },
+      )
       setState((s) => {
         const prev = s.contacts.find((t) => t.id === id)
         let companies = s.companies
@@ -155,24 +216,15 @@ export function useCrmStore(enabled: boolean, userRole?: string) {
             c.id === contact.companyId ? { ...c, primaryContactId: contact.id } : c,
           )
         }
-        // Mirror the server's champion auto-move (issue #29) so the board updates without a refetch.
-        if (
-          patch.contactStatus !== undefined &&
-          prev &&
-          prev.contactStatus !== contact.contactStatus &&
-          contact.champion &&
-          contact.companyId
-        ) {
-          const company = companies.find((c) => c.id === contact.companyId)
-          if (company) {
-            const nextStage = resolveAutoMoveStage(company.stage, contact.contactStatus)
-            if (nextStage) {
-              companies = companies.map((c) =>
-                c.id === company.id ? { ...c, stage: nextStage } : c,
-              )
-            }
-          }
-        }
+        // Mirror the server's champion auto-move (issue #29) so the board updates
+        // without a refetch, preferring the server-returned stage as the source of
+        // truth (local derivation stays only as a fallback for older servers).
+        companies = applyChampionAutoMove(companies, {
+          contact,
+          prevContactStatus: prev?.contactStatus,
+          statusPatched: patch.contactStatus !== undefined,
+          movedCompanyStage,
+        })
         return { companies, contacts }
       })
       await refreshMetrics()

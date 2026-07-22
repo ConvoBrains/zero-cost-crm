@@ -150,3 +150,148 @@ describe('champion contact → company auto-move (issue #29)', () => {
     await api(`/api/companies/${co.id}`, { method: 'DELETE', token })
   })
 })
+
+/** Champion-sourced `company.stage_changed` events on a company's activity lead. */
+async function championStageMoves(
+  token: string,
+  companyId: string,
+): Promise<Array<{ eventType: string; payload: Record<string, unknown> }>> {
+  const lead = await api<{
+    events: Array<{ eventType: string; payload: Record<string, unknown> }>
+  }>(`/api/activity/lead/company/${companyId}`, { token })
+  expect(lead.status).toBe(200)
+  return lead.data.events.filter(
+    (e) =>
+      e.eventType === 'company.stage_changed' &&
+      (e.payload as { source?: string }).source === 'champion_contact',
+  )
+}
+
+type PatchRes = { contactStatus?: string; movedCompanyStage?: string | null }
+
+// The PATCH response echoes `movedCompanyStage` (string | null): the stage the company
+// was auto-advanced to, or null when no auto-move happened. Every case pins it exactly.
+function expectMovedStage(data: PatchRes, expected: string | null) {
+  expect(data.movedCompanyStage).toBe(expected)
+}
+
+describe('champion auto-move matrix (issue #29)', () => {
+  it('Rejected champion moves the company to Not Interested', async () => {
+    const { token } = await loginAs(SEED.founder)
+    const co = await createCompany(token) // Lead Added
+    const contact = await createContact(token, co.id, { champion: true })
+
+    const patched = await api<PatchRes>(`/api/contacts/${contact.id}`, {
+      method: 'PATCH',
+      body: { contactStatus: 'Rejected' },
+      token,
+    })
+    expect(patched.status).toBe(200)
+    expect(patched.data.contactStatus).toBe('Rejected')
+
+    expect((await getCompany(token, co.id))?.stage).toBe('Not Interested')
+
+    const moves = await championStageMoves(token, co.id)
+    expect(moves).toHaveLength(1)
+    expect(moves[0].payload.from).toBe('Lead Added')
+    expect(moves[0].payload.to).toBe('Not Interested')
+    expectMovedStage(patched.data, 'Not Interested')
+
+    await api(`/api/companies/${co.id}`, { method: 'DELETE', token })
+  })
+
+  // A company sitting at a closed stage never auto-moves, even though 'Not Interested'
+  // (the Rejected target) is ahead of both closed stages in STAGES order.
+  for (const stage of ['Closed Won', 'Closed Lost'] as const) {
+    it(`does not move a company already at ${stage} (closed-company guard)`, async () => {
+      const { token } = await loginAs(SEED.founder)
+      const co = await createCompany(token, { stage })
+      expect(co.stage).toBe(stage)
+      const contact = await createContact(token, co.id, { champion: true })
+
+      const patched = await api<PatchRes>(`/api/contacts/${contact.id}`, {
+        method: 'PATCH',
+        body: { contactStatus: 'Rejected' },
+        token,
+      })
+      expect(patched.status).toBe(200)
+
+      expect((await getCompany(token, co.id))?.stage).toBe(stage)
+      expect(await championStageMoves(token, co.id)).toHaveLength(0)
+      expectMovedStage(patched.data, null)
+
+      await api(`/api/companies/${co.id}`, { method: 'DELETE', token })
+    })
+  }
+
+  it('does not move when the company is already AHEAD of the mapped stage', async () => {
+    const { token } = await loginAs(SEED.founder)
+    const co = await createCompany(token, { stage: 'Follow-up' })
+    const contact = await createContact(token, co.id, { champion: true })
+
+    // Interested → 'Discovery Call Done', which sits BEHIND 'Follow-up'.
+    const patched = await api<PatchRes>(`/api/contacts/${contact.id}`, {
+      method: 'PATCH',
+      body: { contactStatus: 'Interested' },
+      token,
+    })
+    expect(patched.status).toBe(200)
+
+    expect((await getCompany(token, co.id))?.stage).toBe('Follow-up')
+    expect(await championStageMoves(token, co.id)).toHaveLength(0)
+    expectMovedStage(patched.data, null)
+
+    await api(`/api/companies/${co.id}`, { method: 'DELETE', token })
+  })
+
+  it('does not move when the company is already AT the mapped stage (strictly forward only)', async () => {
+    const { token } = await loginAs(SEED.founder)
+    const co = await createCompany(token, { stage: 'Discovery Call Done' })
+    const contact = await createContact(token, co.id, { champion: true })
+
+    // Interested → 'Discovery Call Done' equals the current stage, so no move.
+    const patched = await api<PatchRes>(`/api/contacts/${contact.id}`, {
+      method: 'PATCH',
+      body: { contactStatus: 'Interested' },
+      token,
+    })
+    expect(patched.status).toBe(200)
+
+    expect((await getCompany(token, co.id))?.stage).toBe('Discovery Call Done')
+    expect(await championStageMoves(token, co.id)).toHaveLength(0)
+    expectMovedStage(patched.data, null)
+
+    await api(`/api/companies/${co.id}`, { method: 'DELETE', token })
+  })
+
+  it('a same-status PATCH neither moves the company nor logs a second stage change', async () => {
+    const { token } = await loginAs(SEED.founder)
+    const co = await createCompany(token) // Lead Added
+    const contact = await createContact(token, co.id, { champion: true })
+
+    // First real change advances Lead Added → Discovery Call Done (one champion move).
+    const first = await api<PatchRes>(`/api/contacts/${contact.id}`, {
+      method: 'PATCH',
+      body: { contactStatus: 'Interested' },
+      token,
+    })
+    expect(first.status).toBe(200)
+    expect((await getCompany(token, co.id))?.stage).toBe('Discovery Call Done')
+    expect(await championStageMoves(token, co.id)).toHaveLength(1)
+    expectMovedStage(first.data, 'Discovery Call Done')
+
+    // Re-PATCH the SAME status: no status_changed fires, so there is no auto-move and no
+    // new company.stage_changed activity — the champion-move count stays at exactly one.
+    const again = await api<PatchRes>(`/api/contacts/${contact.id}`, {
+      method: 'PATCH',
+      body: { contactStatus: 'Interested' },
+      token,
+    })
+    expect(again.status).toBe(200)
+    expect((await getCompany(token, co.id))?.stage).toBe('Discovery Call Done')
+    expect(await championStageMoves(token, co.id)).toHaveLength(1)
+    expectMovedStage(again.data, null)
+
+    await api(`/api/companies/${co.id}`, { method: 'DELETE', token })
+  })
+})

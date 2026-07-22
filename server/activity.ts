@@ -1,4 +1,5 @@
 import { pool } from './db.js'
+import type { Pool, PoolClient } from 'pg'
 
 export const IDLE_MS = 45 * 60 * 1000
 export const ACTIVITY_TZ = 'Asia/Kolkata'
@@ -49,9 +50,18 @@ export function isConnectedStatus(status: string): boolean {
   return CONNECTED_STATUSES.has(status)
 }
 
-export async function logActivity(input: LogActivityInput): Promise<void> {
+/**
+ * A pg executor for an activity insert: the shared `pool` (default, autocommit)
+ * or a `PoolClient` bound to an open transaction.
+ */
+export type ActivityExecutor = Pool | PoolClient
+
+export async function logActivity(
+  input: LogActivityInput,
+  executor: ActivityExecutor = pool,
+): Promise<void> {
   try {
-    await pool.query(
+    await executor.query(
       `
       INSERT INTO activity_events (
         user_id, session_id, event_type, entity_type, entity_id, summary, payload, created_at
@@ -70,6 +80,12 @@ export async function logActivity(input: LogActivityInput): Promise<void> {
     )
   } catch (e) {
     console.error('[activity] log failed', e)
+    // On the shared pool an activity insert stays best-effort (non-fatal), as
+    // before. Inside a transaction it is part of the atomic unit — and a pg
+    // transaction is poisoned the moment any statement errors (every later
+    // command fails until ROLLBACK), so the failure MUST surface to let the
+    // caller roll back instead of committing partial state.
+    if (executor !== pool) throw e
   }
 }
 

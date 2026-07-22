@@ -15,14 +15,8 @@ import { useMemo, useState } from 'react'
 import type { Company, Contact, PipelineView, Stage } from '../types'
 import { STAGES } from '../types'
 import type { CrmStore } from '../hooks/useCrmStore'
-import {
-  PIPELINE_VIEWS,
-  filterCompanies,
-  intentColor,
-  stageAccent,
-  todayIso,
-} from '../lib/views'
-import { buildCardBadges, buildChampionTrail, findChampion } from '../lib/championCard'
+import { PIPELINE_VIEWS, filterCompanies, intentColor, stageAccent } from '../lib/views'
+import { buildCardBadges, buildChampionTrail, findChampion, istToday } from '../lib/championCard'
 import { logViewEvent } from '../lib/activity'
 import { CompanyForm } from './CompanyForm'
 import { Modal, btnPrimary } from './ui'
@@ -259,7 +253,9 @@ export function Pipeline({ store }: PipelineProps) {
     : null
 
   // Compute once per board render so every card's badges share one reference date.
-  const today = todayIso()
+  // Uses the Asia/Kolkata calendar day so the "Due today" badge and the champion
+  // follow-up line (also IST-formatted) agree near midnight.
+  const today = istToday()
 
   const onDragStart = (e: DragStartEvent) => setActiveId(String(e.active.id))
 

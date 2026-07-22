@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
+  IST_TZ,
   NOTE_PREVIEW_MAX,
   buildCardBadges,
   buildChampionTrail,
   findChampion,
+  istToday,
 } from '../../src/lib/championCard'
 import type { Company, Contact } from '../../src/types'
 
@@ -49,6 +51,32 @@ function company(partial: Partial<Company> & Pick<Company, 'id'>): Company {
 }
 
 const TODAY = '2026-07-19'
+
+describe('istToday', () => {
+  it('anchors the calendar-day policy to Asia/Kolkata', () => {
+    expect(IST_TZ).toBe('Asia/Kolkata')
+  })
+
+  it('returns the Asia/Kolkata calendar day as YYYY-MM-DD', () => {
+    // IST is UTC+5:30, so 20:00 UTC on the 19th is already 01:30 on the 20th in Kolkata.
+    expect(istToday(new Date('2026-07-19T20:00:00Z'))).toBe('2026-07-20')
+    // 05:00 UTC on the 19th is 10:30 IST — still the 19th.
+    expect(istToday(new Date('2026-07-19T05:00:00Z'))).toBe('2026-07-19')
+  })
+
+  it('rolls over at IST midnight (18:30 UTC), not at browser-local midnight', () => {
+    expect(istToday(new Date('2026-07-19T18:29:59Z'))).toBe('2026-07-19') // 23:59:59 IST
+    expect(istToday(new Date('2026-07-19T18:30:00Z'))).toBe('2026-07-20') // 00:00:00 IST
+  })
+
+  it('zero-pads single-digit months and days', () => {
+    expect(istToday(new Date('2026-01-05T12:00:00Z'))).toBe('2026-01-05')
+  })
+
+  it('defaults to the current instant and always yields a well-formed date', () => {
+    expect(istToday()).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+  })
+})
 
 describe('findChampion', () => {
   it('returns the champion contact for the company', () => {
@@ -115,6 +143,49 @@ describe('buildCardBadges', () => {
       contact({ id: 'c1', companyId: 'co-1', champion: false, nextFollowUp: TODAY }),
     ]
     expect(buildCardBadges(co, contacts, TODAY).followUpDueToday).toBe(false)
+  })
+
+  it('flags Due today when the company follow-up equals the Asia/Kolkata calendar day', () => {
+    // Near IST midnight: 20:00 UTC on the 19th is already the 20th in Kolkata.
+    const istDay = istToday(new Date('2026-07-19T20:00:00Z'))
+    expect(istDay).toBe('2026-07-20')
+    const badges = buildCardBadges(company({ id: 'co-1', nextFollowUp: istDay }), [], istDay)
+    expect(badges.followUpDueToday).toBe(true)
+  })
+
+  it('flags Due today when the champion follow-up equals the Asia/Kolkata calendar day', () => {
+    const istDay = istToday(new Date('2026-07-19T20:00:00Z'))
+    const contacts = [
+      contact({ id: 'c1', companyId: 'co-1', champion: true, nextFollowUp: istDay }),
+    ]
+    expect(buildCardBadges(co, contacts, istDay).followUpDueToday).toBe(true)
+  })
+
+  it('compares against the IST day, not the browser-local day, near midnight', () => {
+    // The original bug: the badge used browser-local todayIso() while the trail formats
+    // in Asia/Kolkata. At 20:00 UTC the IST day has already rolled to the 20th, so a
+    // follow-up dated for the IST day must flag even though local time still reads the 19th.
+    const istDay = istToday(new Date('2026-07-19T20:00:00Z')) // '2026-07-20'
+    const browserLocalDay = '2026-07-19' // what the stale todayIso() would have compared against
+    expect(istDay).not.toBe(browserLocalDay)
+    expect(
+      buildCardBadges(company({ id: 'co-1', nextFollowUp: istDay }), [], istDay).followUpDueToday,
+    ).toBe(true)
+    expect(
+      buildCardBadges(company({ id: 'co-1', nextFollowUp: browserLocalDay }), [], istDay)
+        .followUpDueToday,
+    ).toBe(false)
+  })
+
+  it('derives the IST today itself when no reference day is passed', () => {
+    const todayIst = istToday()
+    expect(
+      buildCardBadges(company({ id: 'co-1', nextFollowUp: todayIst }), []).followUpDueToday,
+    ).toBe(true)
+    const contacts = [
+      contact({ id: 'c1', companyId: 'co-1', champion: true, nextFollowUp: todayIst }),
+    ]
+    expect(buildCardBadges(co, contacts).followUpDueToday).toBe(true)
   })
 })
 
