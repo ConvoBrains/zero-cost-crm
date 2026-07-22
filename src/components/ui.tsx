@@ -1,3 +1,4 @@
+import { useEffect, useId, useRef } from 'react'
 import type { ReactNode } from 'react'
 
 interface ModalProps {
@@ -9,6 +10,19 @@ interface ModalProps {
 }
 
 export function Modal({ open, title, onClose, children, wide }: ModalProps) {
+  const titleId = useId()
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+
+  useEffect(() => {
+    if (!open) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCloseRef.current()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [open])
+
   if (!open) return null
 
   return (
@@ -20,12 +34,18 @@ export function Modal({ open, title, onClose, children, wide }: ModalProps) {
         onClick={onClose}
       />
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         className={`relative z-10 my-0 w-full rounded-none border border-[var(--color-line)] bg-[var(--color-panel)] sm:my-4 ${
           wide ? 'max-w-3xl' : 'max-w-xl'
         }`}
       >
         <div className="flex items-center justify-between border-b border-[var(--color-line)] px-4 py-3 sm:px-5 sm:py-4">
-          <h2 className="font-[family-name:var(--font-display)] text-xl text-stone-900 sm:text-2xl">
+          <h2
+            id={titleId}
+            className="font-[family-name:var(--font-display)] text-xl text-stone-900 sm:text-2xl"
+          >
             {title}
           </h2>
           <button
