@@ -27,8 +27,14 @@ import {
   logActivity,
   touchSession,
 } from './activity.js'
-import { CONTACT_STATUSES, STAGES } from '../src/types.js'
 import { resolveAutoMoveStage } from '../src/lib/championSync.js'
+import {
+  getAppSettings,
+  isAllowedContactStatus,
+  isAllowedStage,
+  updateAppSettings,
+  type SettingsPatch,
+} from './settings.js'
 
 const app = express()
 app.use(
@@ -81,14 +87,6 @@ function todayIso() {
   return new Date().toISOString().slice(0, 10)
 }
 
-function isContactStatus(value: unknown): value is (typeof CONTACT_STATUSES)[number] {
-  return typeof value === 'string' && (CONTACT_STATUSES as readonly string[]).includes(value)
-}
-
-function isStage(value: unknown): value is (typeof STAGES)[number] {
-  return typeof value === 'string' && (STAGES as readonly string[]).includes(value)
-}
-
 function cleanEmail(raw: string): string {
   return raw
     .trim()
@@ -139,12 +137,69 @@ function sqlUpdateBuilder() {
 
 // ─── Public config (no auth) ────────────────────────────────────────────────
 
-app.get('/api/config', (_req, res) => {
-  res.json({
-    allowedEmailDomain: config.primaryEmailDomain,
-    allowedEmailDomains: config.allowedEmailAny ? ['*'] : config.allowedEmailDomains,
-    allowAnyEmailDomain: config.allowedEmailAny,
-  })
+app.get('/api/config', async (_req, res) => {
+  try {
+    const settings = await getAppSettings()
+    res.json({
+      brandName: settings.brandName,
+      brandTagline: settings.brandTagline,
+      logoUrl: settings.logoUrl,
+      stages: settings.stages,
+      contactStatuses: settings.contactStatuses,
+      championStatusToStage: settings.championStatusToStage,
+      allowedEmailDomain: config.primaryEmailDomain,
+      allowedEmailDomains: config.allowedEmailAny ? ['*'] : config.allowedEmailDomains,
+      allowAnyEmailDomain: config.allowedEmailAny,
+    })
+  } catch (e) {
+    res.status(500).json({
+      error: e instanceof Error ? e.message : 'Failed to load config.',
+    })
+  }
+})
+
+// ─── Instance settings (admin / founder) ────────────────────────────────────
+
+app.patch('/api/settings', requireAuth, requireAdmin, async (req, res) => {
+  const b = req.body as Record<string, unknown>
+  const patch: SettingsPatch = {}
+  if (typeof b.brandName === 'string') patch.brandName = b.brandName
+  if (typeof b.brandTagline === 'string') patch.brandTagline = b.brandTagline
+  if (typeof b.logoUrl === 'string') patch.logoUrl = b.logoUrl
+  if (Array.isArray(b.stages)) {
+    patch.stages = b.stages.filter((x): x is string => typeof x === 'string')
+  }
+  if (Array.isArray(b.contactStatuses)) {
+    patch.contactStatuses = b.contactStatuses.filter(
+      (x): x is string => typeof x === 'string',
+    )
+  }
+  if (b.championStatusToStage && typeof b.championStatusToStage === 'object') {
+    const map: Record<string, string | null> = {}
+    for (const [k, v] of Object.entries(
+      b.championStatusToStage as Record<string, unknown>,
+    )) {
+      if (v === null || typeof v === 'string') map[k] = v
+    }
+    patch.championStatusToStage = map
+  }
+
+  try {
+    const settings = await updateAppSettings(patch)
+    res.json({
+      brandName: settings.brandName,
+      brandTagline: settings.brandTagline,
+      logoUrl: settings.logoUrl,
+      stages: settings.stages,
+      contactStatuses: settings.contactStatuses,
+      championStatusToStage: settings.championStatusToStage,
+      updatedAt: settings.updatedAt,
+    })
+  } catch (e) {
+    res.status(400).json({
+      error: e instanceof Error ? e.message : 'Invalid settings.',
+    })
+  }
 })
 
 // ─── Auth ───────────────────────────────────────────────────────────────────
@@ -403,10 +458,11 @@ app.get('/api/metrics', requireAuth, async (_req, res) => {
 
 app.post('/api/companies', requireAuth, async (req, res) => {
   const b = req.body
-  const stage = b.stage ?? 'Lead Added'
-  if (!isStage(stage)) {
+  const settings = await getAppSettings()
+  const stage = b.stage ?? settings.stages[0] ?? 'Lead Added'
+  if (!isAllowedStage(settings, stage)) {
     res.status(400).json({
-      error: `Invalid stage. Allowed: ${STAGES.join(', ')}.`,
+      error: `Invalid stage. Allowed: ${settings.stages.join(', ')}.`,
     })
     return
   }
@@ -468,9 +524,10 @@ app.patch('/api/companies/:id', requireAuth, async (req, res) => {
 
   if (b.companyName !== undefined) update.set('company_name', b.companyName)
   if (b.stage !== undefined) {
-    if (!isStage(b.stage)) {
+    const settings = await getAppSettings()
+    if (!isAllowedStage(settings, b.stage)) {
       res.status(400).json({
-        error: `Invalid stage. Allowed: ${STAGES.join(', ')}.`,
+        error: `Invalid stage. Allowed: ${settings.stages.join(', ')}.`,
       })
       return
     }
@@ -604,10 +661,11 @@ app.delete('/api/companies/:id', requireAuth, requireAdmin, async (req, res) => 
 
 app.post('/api/contacts', requireAuth, async (req, res) => {
   const b = req.body
-  const contactStatus = b.contactStatus ?? 'Not Contacted'
-  if (!isContactStatus(contactStatus)) {
+  const settings = await getAppSettings()
+  const contactStatus = b.contactStatus ?? settings.contactStatuses[0] ?? 'Not Contacted'
+  if (!isAllowedContactStatus(settings, contactStatus)) {
     res.status(400).json({
-      error: `Invalid contact status. Allowed: ${CONTACT_STATUSES.join(', ')}.`,
+      error: `Invalid contact status. Allowed: ${settings.contactStatuses.join(', ')}.`,
     })
     return
   }
@@ -676,9 +734,10 @@ app.patch('/api/contacts/:id', requireAuth, async (req, res) => {
   if (b.email !== undefined) update.set('email', b.email)
   if (b.linkedInProfile !== undefined) update.set('linkedin_profile', b.linkedInProfile)
   if (b.contactStatus !== undefined) {
-    if (!isContactStatus(b.contactStatus)) {
+    const settings = await getAppSettings()
+    if (!isAllowedContactStatus(settings, b.contactStatus)) {
       res.status(400).json({
-        error: `Invalid contact status. Allowed: ${CONTACT_STATUSES.join(', ')}.`,
+        error: `Invalid contact status. Allowed: ${settings.contactStatuses.join(', ')}.`,
       })
       return
     }
@@ -805,7 +864,13 @@ app.patch('/api/contacts/:id', requireAuth, async (req, res) => {
       )
       const company = companyRows[0]
       if (company) {
-        const target = resolveAutoMoveStage(company.stage, contact.contact_status)
+        const settings = await getAppSettings()
+        const target = resolveAutoMoveStage(
+          company.stage,
+          contact.contact_status,
+          settings.stages,
+          settings.championStatusToStage,
+        )
         if (target) {
           await client.query('UPDATE companies SET stage = $1, updated_at = now() WHERE id = $2', [
             target,

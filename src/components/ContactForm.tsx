@@ -1,12 +1,14 @@
 import { useState, type FormEvent } from 'react'
 import type { Contact } from '../types'
-import { CONTACT_STATUSES } from '../types'
+import { DEFAULT_CONTACT_STATUSES } from '../defaults'
 import type { CrmStore } from '../hooks/useCrmStore'
 import { Field, inputClass, btnPrimary, btnGhost } from './ui'
 import { ConversationPanel } from './ConversationPanel'
 
 interface ContactFormProps {
   store: CrmStore
+  contactStatuses?: string[]
+  stages?: string[]
   initial?: Contact | null
   defaultCompanyId?: string | null
   onDone: () => void
@@ -14,6 +16,8 @@ interface ContactFormProps {
 
 export function ContactForm({
   store,
+  contactStatuses = [...DEFAULT_CONTACT_STATUSES],
+  stages,
   initial,
   defaultCompanyId,
   onDone,
@@ -25,7 +29,7 @@ export function ContactForm({
     phone: initial?.phone ?? '',
     email: initial?.email ?? '',
     linkedInProfile: initial?.linkedInProfile ?? '',
-    contactStatus: initial?.contactStatus ?? ('Not Contacted' as const),
+    contactStatus: initial?.contactStatus ?? contactStatuses[0] ?? 'Not Contacted',
     champion: initial?.champion ?? false,
     lastContacted: initial?.lastContacted ?? '',
     nextFollowUp: initial?.nextFollowUp ?? '',
@@ -121,7 +125,7 @@ export function ContactForm({
             value={form.contactStatus}
             onChange={(e) => set('contactStatus', e.target.value)}
           >
-            {CONTACT_STATUSES.map((s) => (
+            {contactStatuses.map((s) => (
               <option key={s} value={s}>
                 {s}
               </option>
@@ -186,6 +190,7 @@ export function ContactForm({
           store={store}
           contactId={initial.id}
           companyId={form.companyId || initial.companyId}
+          stages={stages}
         />
       ) : (
         <p className="rounded-none border border-dashed border-stone-300 px-3 py-2 text-xs text-stone-500">

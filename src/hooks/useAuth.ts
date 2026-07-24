@@ -2,12 +2,14 @@ import { useCallback, useEffect, useState } from 'react'
 import type { AuthUser } from '../types'
 import { api, getStoredToken, setAuthToken } from '../lib/api'
 import { useIdleSession } from './useIdleSession'
+import { useAppConfig } from './useAppConfig'
 
-const USER_KEY = 'convobrains-crm-user'
+const USER_KEY = 'zcrm-user'
+const LEGACY_USER_KEY = 'convobrains-crm-user'
 
 function loadUser(): AuthUser | null {
   try {
-    const raw = localStorage.getItem(USER_KEY)
+    const raw = localStorage.getItem(USER_KEY) ?? localStorage.getItem(LEGACY_USER_KEY)
     if (!raw) return null
     return JSON.parse(raw) as AuthUser
   } catch {
@@ -17,14 +19,20 @@ function loadUser(): AuthUser | null {
 
 function saveUser(user: AuthUser | null) {
   try {
-    if (user) localStorage.setItem(USER_KEY, JSON.stringify(user))
-    else localStorage.removeItem(USER_KEY)
+    if (user) {
+      localStorage.setItem(USER_KEY, JSON.stringify(user))
+      localStorage.removeItem(LEGACY_USER_KEY)
+    } else {
+      localStorage.removeItem(USER_KEY)
+      localStorage.removeItem(LEGACY_USER_KEY)
+    }
   } catch {
     /* ignore */
   }
 }
 
 export function useAuth() {
+  const { config, ready: configReady, refresh: refreshConfig } = useAppConfig()
   const [user, setUser] = useState<AuthUser | null>(() => {
     const token = getStoredToken()
     if (token) setAuthToken(token)
@@ -32,8 +40,6 @@ export function useAuth() {
   })
   const [error, setError] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
-  const [allowedEmailDomain, setAllowedEmailDomain] = useState<string | null>('convobrains.com')
-  const [allowAnyEmailDomain, setAllowAnyEmailDomain] = useState(false)
 
   const clearLocal = useCallback(() => {
     setAuthToken(null)
@@ -42,20 +48,7 @@ export function useAuth() {
   }, [])
 
   useEffect(() => {
-    void api<{
-      allowedEmailDomain: string | null
-      allowAnyEmailDomain: boolean
-    }>('/api/config')
-      .then((cfg) => {
-        setAllowedEmailDomain(cfg.allowedEmailDomain)
-        setAllowAnyEmailDomain(!!cfg.allowAnyEmailDomain)
-      })
-      .catch(() => {
-        /* keep defaults until API is up */
-      })
-  }, [])
-
-  useEffect(() => {
+    if (!configReady) return
     const token = getStoredToken()
     if (!token) {
       setReady(true)
@@ -71,15 +64,15 @@ export function useAuth() {
         clearLocal()
       })
       .finally(() => setReady(true))
-  }, [clearLocal])
+  }, [clearLocal, configReady])
 
   const login = useCallback(
     async (email: string, password: string) => {
       setError(null)
       const normalized = email.trim().toLowerCase()
-      if (!allowAnyEmailDomain && allowedEmailDomain) {
-        if (!normalized.endsWith(`@${allowedEmailDomain}`)) {
-          setError(`Only @${allowedEmailDomain} emails are allowed.`)
+      if (!config.allowAnyEmailDomain && config.allowedEmailDomain) {
+        if (!normalized.endsWith(`@${config.allowedEmailDomain}`)) {
+          setError(`Only @${config.allowedEmailDomain} emails are allowed.`)
           return false
         }
       }
@@ -100,7 +93,7 @@ export function useAuth() {
         return false
       }
     },
-    [allowAnyEmailDomain, allowedEmailDomain],
+    [config.allowAnyEmailDomain, config.allowedEmailDomain],
   )
 
   const logout = useCallback(async () => {
@@ -126,10 +119,12 @@ export function useAuth() {
     error,
     login,
     logout,
-    ready,
+    ready: ready && configReady,
     clearError: () => setError(null),
     idleWarnSeconds: warnSeconds,
-    allowedEmailDomain,
-    allowAnyEmailDomain,
+    allowedEmailDomain: config.allowedEmailDomain,
+    allowAnyEmailDomain: config.allowAnyEmailDomain,
+    config,
+    refreshConfig,
   }
 }

@@ -8,6 +8,8 @@ interface SidebarProps {
   onLogout: () => void
   userName: string
   userRole?: string
+  brandName?: string
+  logoUrl?: string
   className?: string
 }
 
@@ -17,6 +19,8 @@ export function Sidebar({
   onLogout,
   userName,
   userRole,
+  brandName = 'Zero Cost CRM',
+  logoUrl = '/convobrains-logo.png',
   className = '',
 }: SidebarProps) {
   const items = navItemsForRole(userRole)
@@ -27,12 +31,12 @@ export function Sidebar({
     >
       <div className="shrink-0 border-b border-[var(--color-line)] px-5 py-4">
         <img
-          src="/convobrains-logo.png"
-          alt="Zero Cost CRM"
+          src={logoUrl}
+          alt={brandName}
           className="h-16 w-full object-contain"
         />
         <p className="mt-2 text-center text-[10px] font-semibold tracking-[0.14em] text-stone-500 uppercase">
-          Zero Cost CRM
+          {brandName}
         </p>
       </div>
 

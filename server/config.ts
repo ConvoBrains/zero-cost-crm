@@ -2,6 +2,8 @@
  * Central runtime configuration. Fail closed in production.
  */
 
+import './loadEnv.js'
+
 function read(name: string): string | undefined {
   const v = process.env[name]
   if (v == null) return undefined
@@ -37,7 +39,8 @@ function requireJwtSecret(): string {
 
 /** Comma-separated domains, or "*" to allow any email domain. */
 function parseAllowedEmailDomains(): { any: boolean; domains: string[] } {
-  const raw = read('ALLOWED_EMAIL_DOMAIN') ?? read('ALLOWED_EMAIL_DOMAINS') ?? 'convobrains.com'
+  // Default: any domain (generic OSS). Set ALLOWED_EMAIL_DOMAIN for your org.
+  const raw = read('ALLOWED_EMAIL_DOMAIN') ?? read('ALLOWED_EMAIL_DOMAINS') ?? '*'
   if (raw === '*') return { any: true, domains: [] }
   const domains = parseList(raw).map((d) => d.replace(/^@/, '').toLowerCase())
   if (!domains.length) return { any: true, domains: [] }

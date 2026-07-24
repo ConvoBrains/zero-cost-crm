@@ -12,7 +12,7 @@ test.describe('Auth (UI)', () => {
     await gotoLogin(page)
     await page.getByLabel('Email').fill(SEED.founder.email)
     await page.getByLabel('Password').fill('wrong-password')
-    await page.getByRole('button', { name: 'Log in' }).click()
+    await page.getByRole('button', { name: 'Sign in' }).click()
     await expect(page.getByText(/invalid email or password/i)).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible()
   })

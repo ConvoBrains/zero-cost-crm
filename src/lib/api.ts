@@ -6,14 +6,15 @@ export class ApiError extends Error {
   }
 }
 
-const AUTH_KEY = 'convobrains-crm-token'
+const AUTH_KEY = 'zcrm-token'
+const LEGACY_AUTH_KEY = 'convobrains-crm-token'
 
 let authToken: string | null = null
 
 export function getStoredToken(): string | null {
   if (authToken) return authToken
   try {
-    return localStorage.getItem(AUTH_KEY)
+    return localStorage.getItem(AUTH_KEY) ?? localStorage.getItem(LEGACY_AUTH_KEY)
   } catch {
     return null
   }
@@ -22,8 +23,13 @@ export function getStoredToken(): string | null {
 export function setAuthToken(token: string | null) {
   authToken = token
   try {
-    if (token) localStorage.setItem(AUTH_KEY, token)
-    else localStorage.removeItem(AUTH_KEY)
+    if (token) {
+      localStorage.setItem(AUTH_KEY, token)
+      localStorage.removeItem(LEGACY_AUTH_KEY)
+    } else {
+      localStorage.removeItem(AUTH_KEY)
+      localStorage.removeItem(LEGACY_AUTH_KEY)
+    }
   } catch {
     /* ignore */
   }

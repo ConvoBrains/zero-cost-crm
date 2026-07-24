@@ -21,22 +21,8 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS companies (
   id                     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   company_name           TEXT NOT NULL,
-  stage                  TEXT NOT NULL DEFAULT 'Lead Added'
-    CHECK (stage IN (
-      'Lead Added',
-      'Discovery Call Done',
-      'Follow-up',
-      'Demo Scheduled',
-      'Demo Delivered',
-      'Commercial Proposal Shared',
-      'POC Kickoff',
-      'Client Data Received',
-      'POC Delivered',
-      'Final Negotiation',
-      'Closed Won',
-      'Closed Lost',
-      'Not Interested'
-    )),
+  -- Stage values are validated in the API against app_settings.stages
+  stage                  TEXT NOT NULL DEFAULT 'Lead Added',
   industry               TEXT,
   location               TEXT,
   estimated_call_volume  INTEGER,
@@ -90,21 +76,10 @@ ALTER TABLE contacts ADD COLUMN IF NOT EXISTS next_follow_up DATE;
 
 CREATE INDEX IF NOT EXISTS contacts_next_follow_up_idx ON contacts (next_follow_up);
 
+-- Contact statuses / company stages are instance-configurable via app_settings.
+-- Drop legacy CHECK constraints so tenants can extend lists without forking SQL.
 ALTER TABLE contacts DROP CONSTRAINT IF EXISTS contacts_contact_status_check;
-ALTER TABLE contacts ADD CONSTRAINT contacts_contact_status_check CHECK (
-  contact_status IN (
-    'Not Contacted',
-    'Didn''t Pick',
-    'Connected - Got Referral',
-    'Connected - Not Right Person',
-    'Connected - Future Follow-up',
-    'Interested',
-    'Called',
-    'No Answer',
-    'Follow-up Required',
-    'Rejected'
-  )
-);
+ALTER TABLE companies DROP CONSTRAINT IF EXISTS companies_stage_check;
 
 DO $$
 BEGIN
@@ -116,6 +91,75 @@ BEGIN
       FOREIGN KEY (primary_contact_id) REFERENCES contacts(id) ON DELETE SET NULL;
   END IF;
 END $$;
+
+-- ─── Instance settings (branding + pipeline lists) ───────────────────────────
+-- Singleton row (id = 1). Seeded by migrate; Node ensureAppSettings() fills gaps.
+
+CREATE TABLE IF NOT EXISTS app_settings (
+  id                         SMALLINT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  brand_name                 TEXT NOT NULL DEFAULT 'Zero Cost CRM',
+  brand_tagline              TEXT NOT NULL DEFAULT '',
+  logo_url                   TEXT NOT NULL DEFAULT '/convobrains-logo.png',
+  stages                     JSONB NOT NULL DEFAULT '[]'::jsonb,
+  contact_statuses           JSONB NOT NULL DEFAULT '[]'::jsonb,
+  champion_status_to_stage   JSONB NOT NULL DEFAULT '{}'::jsonb,
+  updated_at                 TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+INSERT INTO app_settings (
+  id,
+  brand_name,
+  brand_tagline,
+  logo_url,
+  stages,
+  contact_statuses,
+  champion_status_to_stage
+)
+SELECT
+  1,
+  'Zero Cost CRM',
+  'Track what happens. ConvoBrains explains why.',
+  '/convobrains-logo.png',
+  '[
+    "Lead Added",
+    "Discovery Call Done",
+    "Follow-up",
+    "Demo Scheduled",
+    "Demo Delivered",
+    "Commercial Proposal Shared",
+    "POC Kickoff",
+    "Client Data Received",
+    "POC Delivered",
+    "Final Negotiation",
+    "Closed Won",
+    "Closed Lost",
+    "Not Interested"
+  ]'::jsonb,
+  '[
+    "Not Contacted",
+    "Didn''t Pick",
+    "Connected - Got Referral",
+    "Connected - Not Right Person",
+    "Connected - Future Follow-up",
+    "Interested",
+    "Called",
+    "No Answer",
+    "Follow-up Required",
+    "Rejected"
+  ]'::jsonb,
+  '{
+    "Not Contacted": null,
+    "Didn''t Pick": null,
+    "Connected - Got Referral": "Follow-up",
+    "Connected - Not Right Person": "Follow-up",
+    "Connected - Future Follow-up": "Follow-up",
+    "Interested": "Discovery Call Done",
+    "Called": "Discovery Call Done",
+    "No Answer": null,
+    "Follow-up Required": "Follow-up",
+    "Rejected": "Not Interested"
+  }'::jsonb
+WHERE NOT EXISTS (SELECT 1 FROM app_settings WHERE id = 1);
 
 -- ─── Daily import staging ──────────────────────────────────────────────────
 

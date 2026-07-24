@@ -43,11 +43,16 @@ const CONNECTED_STATUSES = new Set([
 ])
 
 export function isCallOutcomeStatus(status: string): boolean {
-  return CALL_OUTCOME_STATUSES.has(status)
+  if (CALL_OUTCOME_STATUSES.has(status)) return true
+  // Instance-custom statuses (e.g. WhatsApp / DQ) still count as call outcomes.
+  if (status.startsWith('Connected')) return true
+  if (status === 'Wrong/Bad Number') return true
+  return false
 }
 
 export function isConnectedStatus(status: string): boolean {
-  return CONNECTED_STATUSES.has(status)
+  if (CONNECTED_STATUSES.has(status)) return true
+  return status.startsWith('Connected') || status === 'Interested' || status === 'Called'
 }
 
 /**
@@ -237,14 +242,32 @@ export function accumulateCallMetrics(
   if (eventType === 'contact.status_changed') {
     const to = String(payload.to ?? '')
     if (isCallOutcomeStatus(to)) metrics.callsMade += 1
-    if (to === "Didn't Pick" || to === 'No Answer') metrics.didntPick += 1
+    if (to === "Didn't Pick" || to === 'No Answer' || to === 'Wrong/Bad Number') {
+      metrics.didntPick += 1
+    }
     if (isConnectedStatus(to)) metrics.connected += 1
-    if (to === 'Connected - Not Right Person') metrics.wrongPerson += 1
-    if (to === 'Interested') metrics.interested += 1
-    if (to === 'Follow-up Required' || to === 'Connected - Future Follow-up') {
+    if (to === 'Connected - Not Right Person' || to === 'Wrong/Bad Number') {
+      metrics.wrongPerson += 1
+    }
+    if (to === 'Interested' || to === 'Connected - Booked a Discovery Call') {
+      metrics.interested += 1
+    }
+    if (
+      to === 'Follow-up Required' ||
+      to === 'Connected - Future Follow-up' ||
+      to === 'Connected - Send Me an Email' ||
+      to === 'Connected - Send Me a WhatsApp Message'
+    ) {
       metrics.followUps += 1
     }
-    if (to === 'Rejected') metrics.notInterested += 1
+    if (
+      to === 'Rejected' ||
+      to === 'Connected - Information Gathered (Not ICP)' ||
+      to === 'Connected - DQ Prospect (Not ICP)' ||
+      to === 'Connected - DQ Company (Bad Fit)'
+    ) {
+      metrics.notInterested += 1
+    }
   }
   if (eventType === 'contact.follow_up_set') metrics.followUps += 1
   if (eventType === 'company.stage_changed' && payload.source !== 'champion_contact') {

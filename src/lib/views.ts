@@ -26,6 +26,20 @@ export const PIPELINE_VIEWS: PipelineView[] = [
 
 const DIDNT_PICK_STATUSES: ContactStatus[] = ["Didn't Pick", 'No Answer']
 
+const TERMINAL_STATUSES: ContactStatus[] = [
+  'Rejected',
+  'Wrong/Bad Number',
+  'Connected - Information Gathered (Not ICP)',
+  'Connected - DQ Prospect (Not ICP)',
+  'Connected - DQ Company (Bad Fit)',
+]
+
+const NOT_ICP_DQ_STATUSES: ContactStatus[] = [
+  'Connected - Information Gathered (Not ICP)',
+  'Connected - DQ Prospect (Not ICP)',
+  'Connected - DQ Company (Bad Fit)',
+]
+
 export function isoDateOffset(days: number): string {
   const d = new Date()
   d.setDate(d.getDate() + days)
@@ -48,7 +62,7 @@ function isDidntPick(status: ContactStatus): boolean {
 }
 
 function isActiveContact(contact: Contact): boolean {
-  return contact.contactStatus !== 'Rejected'
+  return !TERMINAL_STATUSES.includes(contact.contactStatus)
 }
 
 export const CONTACT_VIEW_GROUPS: { label: string; views: ContactView[] }[] = [
@@ -58,13 +72,31 @@ export const CONTACT_VIEW_GROUPS: { label: string; views: ContactView[] }[] = [
   },
   {
     label: 'Outreach',
-    views: ['Not Contacted', "Didn't Pick", 'Got Referral', 'Wrong Person'],
+    views: [
+      'Not Contacted',
+      "Didn't Pick",
+      'Wrong/Bad Number',
+      'Got Referral',
+      'Wrong Person',
+      'Send Email',
+      'Send WhatsApp',
+    ],
   },
   {
     label: 'Pipeline',
-    views: ['Interested', 'Champions', 'Future Follow-up', 'Rejected', 'All Contacts'],
+    views: [
+      'Discovery Booked',
+      'Interested',
+      'Champions',
+      'Future Follow-up',
+      'Not ICP / DQ',
+      'Rejected',
+      'All Contacts',
+    ],
   },
 ]
+
+export const CONTACT_VIEWS: ContactView[] = CONTACT_VIEW_GROUPS.flatMap((g) => g.views)
 
 export const CONTACT_VIEW_HINTS: Record<ContactView, string> = {
   'All Contacts': 'Everyone in the database.',
@@ -75,8 +107,13 @@ export const CONTACT_VIEW_HINTS: Record<ContactView, string> = {
   "Didn't Pick Yesterday": 'No answer yesterday — try again today.',
   'Not Contacted': 'Never called yet.',
   "Didn't Pick": 'All no-answer contacts (any date).',
+  'Wrong/Bad Number': 'Invalid or bad phone numbers — find a better number.',
   'Got Referral': 'They gave you another name — add the referral and call.',
   'Wrong Person': 'Wrong stakeholder — find the right contact at this company.',
+  'Send Email': 'Connected — asked to be emailed.',
+  'Send WhatsApp': 'Connected — asked for a WhatsApp message.',
+  'Discovery Booked': 'Connected — discovery call booked.',
+  'Not ICP / DQ': 'Connected but not ICP, or DQ’d prospect/company.',
   Interested: 'Showed interest — push toward champion / discovery.',
   Champions: 'Primary buyers marked as champion on their company.',
   'Future Follow-up': 'Scheduled for a later call — check the follow-up date.',
@@ -149,6 +186,20 @@ export function filterContacts(contacts: Contact[], view: ContactView): Contact[
       return contacts.filter((t) => t.contactStatus === 'Connected - Got Referral')
     case 'Wrong Person':
       return contacts.filter((t) => t.contactStatus === 'Connected - Not Right Person')
+    case 'Wrong/Bad Number':
+      return contacts.filter((t) => t.contactStatus === 'Wrong/Bad Number')
+    case 'Send Email':
+      return contacts.filter((t) => t.contactStatus === 'Connected - Send Me an Email')
+    case 'Send WhatsApp':
+      return contacts.filter(
+        (t) => t.contactStatus === 'Connected - Send Me a WhatsApp Message',
+      )
+    case 'Discovery Booked':
+      return contacts.filter(
+        (t) => t.contactStatus === 'Connected - Booked a Discovery Call',
+      )
+    case 'Not ICP / DQ':
+      return contacts.filter((t) => NOT_ICP_DQ_STATUSES.includes(t.contactStatus))
     case 'Interested':
       return contacts.filter((t) => t.contactStatus === 'Interested')
     case 'Champions':
@@ -158,6 +209,8 @@ export function filterContacts(contacts: Contact[], view: ContactView): Contact[
         (t) =>
           t.contactStatus === 'Connected - Future Follow-up' ||
           t.contactStatus === 'Follow-up Required' ||
+          t.contactStatus === 'Connected - Send Me an Email' ||
+          t.contactStatus === 'Connected - Send Me a WhatsApp Message' ||
           (isActiveContact(t) && !!t.nextFollowUp && t.nextFollowUp > today),
       )
     case 'Rejected':
@@ -211,13 +264,17 @@ export function intentColor(intent: string): string {
 export function statusColor(status: ContactStatus): string {
   switch (status) {
     case 'Interested':
+    case 'Connected - Booked a Discovery Call':
       return 'bg-emerald-100 text-emerald-800'
     case 'Connected - Got Referral':
       return 'bg-violet-100 text-violet-800'
     case 'Connected - Future Follow-up':
     case 'Follow-up Required':
+    case 'Connected - Send Me an Email':
+    case 'Connected - Send Me a WhatsApp Message':
       return 'bg-amber-100 text-amber-800'
     case 'Connected - Not Right Person':
+    case 'Wrong/Bad Number':
       return 'bg-orange-100 text-orange-800'
     case 'Called':
       return 'bg-sky-100 text-sky-800'
@@ -225,6 +282,9 @@ export function statusColor(status: ContactStatus): string {
     case 'No Answer':
       return 'bg-stone-200 text-stone-700'
     case 'Rejected':
+    case 'Connected - Information Gathered (Not ICP)':
+    case 'Connected - DQ Prospect (Not ICP)':
+    case 'Connected - DQ Company (Bad Fit)':
       return 'bg-rose-100 text-rose-800'
     default:
       return 'bg-stone-100 text-stone-600'

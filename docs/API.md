@@ -9,7 +9,8 @@ Unless noted, endpoints require `Authorization: Bearer <jwt>`.
 | Method | Path | Description |
 | ------ | ---- | ----------- |
 | `GET` | `/api/health` | Liveness `{ ok: true }` |
-| `GET` | `/api/config` | `{ allowedEmailDomain, allowedEmailDomains, allowAnyEmailDomain }` |
+| `GET` | `/api/config` | Public instance config: email policy + `brandName`, `brandTagline`, `logoUrl`, `stages`, `contactStatuses`, `championStatusToStage` |
+| `PATCH` | `/api/settings` | Admin/founder: update branding + stages + contactStatuses (+ optional championStatusToStage map) |
 
 ## Auth
 

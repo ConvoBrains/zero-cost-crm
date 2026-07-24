@@ -16,7 +16,7 @@ import {
   presignPut,
   stagingKey,
 } from './s3.js'
-import { STAGES } from '../src/types.js'
+import { getAppSettings, isAllowedStage } from './settings.js'
 import { logActivity } from './activity.js'
 
 const CONVERSATION_SELECT = `
@@ -30,10 +30,6 @@ const CONVERSATION_SELECT = `
   JOIN contacts ct ON ct.id = cv.contact_id
   JOIN companies co ON co.id = cv.company_id
 `
-
-function isStage(s: string): boolean {
-  return (STAGES as readonly string[]).includes(s)
-}
 
 export function registerConversationRoutes(app: Express, pool: Pool) {
   app.post('/api/conversations/presign', requireAuth, async (req, res) => {
@@ -59,8 +55,10 @@ export function registerConversationRoutes(app: Express, pool: Pool) {
       return
     }
 
-    let stageAtCall = String(req.body.stageAtCall ?? contact.company_stage ?? 'Lead Added')
-    if (!isStage(stageAtCall)) stageAtCall = 'Lead Added'
+    const settings = await getAppSettings()
+    const fallbackStage = settings.stages[0] ?? 'Lead Added'
+    let stageAtCall = String(req.body.stageAtCall ?? contact.company_stage ?? fallbackStage)
+    if (!isAllowedStage(settings, stageAtCall)) stageAtCall = fallbackStage
 
     const { rows } = await pool.query(
       `

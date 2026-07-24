@@ -10,6 +10,7 @@ import { Pipeline } from './components/Pipeline'
 import { Contacts } from './components/Contacts'
 import { ImportLeads } from './components/ImportLeads'
 import { Users } from './components/Users'
+import { SettingsPage } from './components/SettingsPage'
 import { LoginPage } from './components/LoginPage'
 import { PAGE_TITLE } from './lib/nav'
 
@@ -18,7 +19,7 @@ const SdrActivity = lazy(() =>
   import('./components/SdrActivity').then((m) => ({ default: m.SdrActivity })),
 )
 
-const ADMIN_ONLY_PAGES: Page[] = ['activity', 'users']
+const ADMIN_ONLY_PAGES: Page[] = ['activity', 'users', 'settings']
 
 export default function App() {
   const auth = useAuth()
@@ -27,6 +28,11 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   const manageUsers = canManageUsers(auth.user?.role)
+  const config = auth.config
+
+  useEffect(() => {
+    document.title = config.brandName
+  }, [config.brandName])
 
   const navigate = useCallback(
     (next: Page) => {
@@ -41,7 +47,6 @@ export default function App() {
     [auth.user?.role],
   )
 
-  // Never leave SDRs on admin-only pages (no Activity UI, no "access denied" messaging).
   useEffect(() => {
     if (!auth.user) return
     if (ADMIN_ONLY_PAGES.includes(page) && !canManageUsers(auth.user.role)) {
@@ -64,6 +69,9 @@ export default function App() {
         onLogin={auth.login}
         allowedEmailDomain={auth.allowedEmailDomain}
         allowAnyEmailDomain={auth.allowAnyEmailDomain}
+        brandName={config.brandName}
+        brandTagline={config.brandTagline}
+        logoUrl={config.logoUrl}
       />
     )
   }
@@ -83,7 +91,6 @@ export default function App() {
           You will be signed out soon due to inactivity — move the mouse or press a key to stay signed in ({auth.idleWarnSeconds}s)
         </div>
       ) : null}
-      {/* Mobile top bar */}
       <header
         className="sticky top-0 z-30 flex items-center gap-3 border-b border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3 lg:hidden"
         style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
@@ -103,13 +110,12 @@ export default function App() {
           <p className="truncate text-[11px] text-stone-500">{auth.user.name}</p>
         </div>
         <img
-          src="/convobrains-mark.png"
-          alt="ConvoBrains"
+          src={config.logoUrl}
+          alt={config.brandName}
           className="h-9 w-9 shrink-0 rounded-none object-cover"
         />
       </header>
 
-      {/* Mobile drawer */}
       {menuOpen ? (
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
@@ -125,19 +131,22 @@ export default function App() {
               userName={auth.user.name}
               userRole={auth.user.role}
               onLogout={() => void auth.logout()}
+              brandName={config.brandName}
+              logoUrl={config.logoUrl}
               className="h-full w-full"
             />
           </div>
         </div>
       ) : null}
 
-      {/* Desktop sidebar */}
       <Sidebar
         page={page}
         onNavigate={navigate}
         userName={auth.user.name}
         userRole={auth.user.role}
         onLogout={() => void auth.logout()}
+        brandName={config.brandName}
+        logoUrl={config.logoUrl}
         className="sticky top-0 hidden h-[100dvh] lg:flex"
       />
 
@@ -148,17 +157,29 @@ export default function App() {
           </p>
         ) : null}
         {page === 'dashboard' ? (
-          <Dashboard store={store} onNavigate={navigate} canManageUsers={manageUsers} />
+          <Dashboard
+            store={store}
+            onNavigate={navigate}
+            canManageUsers={manageUsers}
+            brandName={config.brandName}
+          />
         ) : null}
         {page === 'import' ? <ImportLeads store={store} /> : null}
-        {page === 'pipeline' ? <Pipeline store={store} /> : null}
-        {page === 'contacts' ? <Contacts store={store} /> : null}
+        {page === 'pipeline' ? (
+          <Pipeline store={store} stages={config.stages} />
+        ) : null}
+        {page === 'contacts' ? (
+          <Contacts store={store} contactStatuses={config.contactStatuses} stages={config.stages} />
+        ) : null}
         {page === 'activity' && manageUsers ? (
           <Suspense fallback={<p className="text-sm text-stone-500">Loading…</p>}>
             <SdrActivity />
           </Suspense>
         ) : null}
         {page === 'users' && manageUsers ? <Users /> : null}
+        {page === 'settings' && manageUsers ? (
+          <SettingsPage config={config} onSaved={auth.refreshConfig} />
+        ) : null}
       </main>
 
       <MobileNav page={page} onNavigate={navigate} userRole={auth.user.role} />

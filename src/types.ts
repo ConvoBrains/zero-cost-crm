@@ -1,20 +1,16 @@
-export const STAGES = [
-  'Lead Added',
-  'Discovery Call Done',
-  'Follow-up',
-  'Demo Scheduled',
-  'Demo Delivered',
-  'Commercial Proposal Shared',
-  'POC Kickoff',
-  'Client Data Received',
-  'POC Delivered',
-  'Final Negotiation',
-  'Closed Won',
-  'Closed Lost',
-  'Not Interested',
-] as const
+export {
+  DEFAULT_BRAND_NAME,
+  DEFAULT_BRAND_TAGLINE,
+  DEFAULT_CONTACT_STATUSES,
+  DEFAULT_LOGO_URL,
+  DEFAULT_STAGES,
+} from './defaults.js'
 
-export type Stage = (typeof STAGES)[number]
+/** @deprecated Prefer instance settings from GET /api/config — kept as default lists. */
+export { DEFAULT_STAGES as STAGES, DEFAULT_CONTACT_STATUSES as CONTACT_STATUSES } from './defaults.js'
+
+export type Stage = string
+export type ContactStatus = string
 
 export const INTENTS = ['Hot', 'Warm', 'Cold'] as const
 export type Intent = (typeof INTENTS)[number]
@@ -31,20 +27,6 @@ export const INDUSTRIES = [
   'Other',
 ] as const
 export type Industry = (typeof INDUSTRIES)[number]
-
-export const CONTACT_STATUSES = [
-  'Not Contacted',
-  "Didn't Pick",
-  'Connected - Got Referral',
-  'Connected - Not Right Person',
-  'Connected - Future Follow-up',
-  'Interested',
-  'Called',
-  'No Answer',
-  'Follow-up Required',
-  'Rejected',
-] as const
-export type ContactStatus = (typeof CONTACT_STATUSES)[number]
 
 export interface Company {
   id: string
@@ -83,7 +65,14 @@ export interface Contact {
   createdAt: string
 }
 
-export type Page = 'dashboard' | 'pipeline' | 'contacts' | 'import' | 'users' | 'activity'
+export type Page =
+  | 'dashboard'
+  | 'pipeline'
+  | 'contacts'
+  | 'import'
+  | 'users'
+  | 'activity'
+  | 'settings'
 
 export type PipelineView =
   | 'All Companies'
@@ -107,8 +96,13 @@ export type ContactView =
   | "Didn't Pick Yesterday"
   | 'Not Contacted'
   | "Didn't Pick"
+  | 'Wrong/Bad Number'
   | 'Got Referral'
   | 'Wrong Person'
+  | 'Send Email'
+  | 'Send WhatsApp'
+  | 'Discovery Booked'
+  | 'Not ICP / DQ'
   | 'Interested'
   | 'Champions'
   | 'Future Follow-up'
@@ -171,4 +165,17 @@ export interface Conversation {
   calledAt: string
   s3Url: string
   notes: string
+}
+
+/** Public + authenticated instance config from GET /api/config */
+export interface AppConfig {
+  brandName: string
+  brandTagline: string
+  logoUrl: string
+  stages: string[]
+  contactStatuses: string[]
+  championStatusToStage: Record<string, string | null>
+  allowedEmailDomain: string | null
+  allowedEmailDomains: string[]
+  allowAnyEmailDomain: boolean
 }

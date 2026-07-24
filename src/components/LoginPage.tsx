@@ -1,18 +1,25 @@
 import { useState, type FormEvent } from 'react'
 import { Field, inputClass, btnPrimary } from './ui'
+import { DEFAULT_BRAND_NAME, DEFAULT_BRAND_TAGLINE, DEFAULT_LOGO_URL } from '../defaults'
 
 interface LoginPageProps {
   error: string | null
   onLogin: (email: string, password: string) => Promise<boolean>
   allowedEmailDomain?: string | null
   allowAnyEmailDomain?: boolean
+  brandName?: string
+  brandTagline?: string
+  logoUrl?: string
 }
 
 export function LoginPage({
   error,
   onLogin,
-  allowedEmailDomain = 'convobrains.com',
-  allowAnyEmailDomain = false,
+  allowedEmailDomain = null,
+  allowAnyEmailDomain = true,
+  brandName = DEFAULT_BRAND_NAME,
+  brandTagline = DEFAULT_BRAND_TAGLINE,
+  logoUrl = DEFAULT_LOGO_URL,
 }: LoginPageProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -28,28 +35,21 @@ export function LoginPage({
     }
   }
 
+  const emailHint = allowAnyEmailDomain
+    ? 'Work email'
+    : allowedEmailDomain
+      ? `@${allowedEmailDomain} email`
+      : 'Work email'
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--color-canvas)] px-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <img
-            src="/convobrains-logo.png"
-            alt="ConvoBrains"
-            className="mx-auto mb-3 w-56"
-          />
-          <p className="mt-1 text-sm text-stone-500">Zero Cost CRM</p>
-          <p className="mt-2 text-xs text-stone-400">
-            Track what happens.{' '}
-            <a
-              href="https://www.convobrains.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium text-stone-700 underline-offset-2 hover:underline"
-            >
-              ConvoBrains
-            </a>{' '}
-            explains why.
-          </p>
+          <img src={logoUrl} alt={brandName} className="mx-auto mb-3 w-56" />
+          <p className="mt-1 text-sm text-stone-500">{brandName}</p>
+          {brandTagline ? (
+            <p className="mt-2 text-xs text-stone-400">{brandTagline}</p>
+          ) : null}
         </div>
 
         <form
@@ -57,7 +57,7 @@ export function LoginPage({
           className="rounded-none border border-[var(--color-line)] bg-[var(--color-panel)] p-6"
         >
           <h2 className="text-lg font-semibold text-stone-800">Welcome back</h2>
-          <p className="mt-1 text-sm text-stone-500">Sign in to Zero Cost CRM.</p>
+          <p className="mt-1 text-sm text-stone-500">Sign in to {brandName}.</p>
 
           <div className="mt-5 space-y-4">
             <Field label="Email">
@@ -68,11 +68,7 @@ export function LoginPage({
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="username"
-                placeholder={
-                  allowAnyEmailDomain
-                    ? 'you@example.com'
-                    : `name@${allowedEmailDomain ?? 'example.com'}`
-                }
+                placeholder={emailHint}
               />
             </Field>
             <Field label="Password">
@@ -83,30 +79,17 @@ export function LoginPage({
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete="current-password"
-                placeholder="••••••••"
               />
             </Field>
           </div>
 
           {error ? (
-            <p className="mt-3 rounded-none bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
+            <p className="mt-4 rounded-none bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
           ) : null}
 
-          <button type="submit" disabled={submitting} className={`${btnPrimary} mt-5 w-full`}>
-            {submitting ? 'Signing in…' : 'Log in'}
+          <button type="submit" className={`${btnPrimary} mt-5 w-full`} disabled={submitting}>
+            {submitting ? 'Signing in…' : 'Sign in'}
           </button>
-
-          <p className="mt-4 text-center text-[11px] leading-relaxed text-stone-400">
-            {allowAnyEmailDomain ? (
-              'Sign in with an account created by your CRM admin.'
-            ) : (
-              <>
-                Only{' '}
-                <span className="font-medium text-stone-500">@{allowedEmailDomain}</span> accounts
-                can sign in.
-              </>
-            )}
-          </p>
         </form>
       </div>
     </div>

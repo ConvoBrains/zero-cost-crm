@@ -107,6 +107,19 @@ Skip it if you need enterprise CPQ, multi-currency ERP integrations, or a full m
 | **Manager alerts**    | No login by 10:30, zero connects, missing follow-ups |
 | **Roles**             | Founder / admin / SDR                                |
 | **Self-hosted**       | Your Postgres, your rules                            |
+| **Instance settings** | Brand name, stages, statuses in DB (Settings UI)     |
+
+### Configuring your instance
+
+Keep the **code** generic. Put company-specific values in env or the database:
+
+| What | Where |
+| ---- | ----- |
+| Postgres / JWT / email domain / S3 / CORS | Server `.env` (`DATABASE_URL`, `JWT_SECRET`, `ALLOWED_EMAIL_DOMAIN`, …) |
+| Brand name, logo, pipeline stages, contact statuses | DB `app_settings` — edit in **Settings** (founder/admin) or `PATCH /api/settings` |
+| Optional first-boot brand | `BRAND_NAME`, `BRAND_TAGLINE`, `BRAND_LOGO_URL` in env (seeded once) |
+
+Example Convobrains status list: [`sql/examples/convobrains-settings.sql`](sql/examples/convobrains-settings.sql).
 
 ---
 

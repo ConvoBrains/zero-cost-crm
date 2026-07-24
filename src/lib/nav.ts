@@ -7,6 +7,7 @@ export const NAV_ITEMS: { id: Page; label: string; hint: string; short: string; 
   { id: 'contacts', label: 'Contacts', hint: 'People at companies', short: 'Contacts' },
   { id: 'activity', label: 'SDR Activity', hint: 'Calls · sessions · targets', short: 'Activity', adminOnly: true },
   { id: 'users', label: 'Users', hint: 'Add team accounts', short: 'Users', adminOnly: true },
+  { id: 'settings', label: 'Settings', hint: 'Brand · stages · statuses', short: 'Settings', adminOnly: true },
 ]
 
 export const PAGE_TITLE: Record<Page, string> = {
@@ -16,6 +17,7 @@ export const PAGE_TITLE: Record<Page, string> = {
   contacts: 'Contacts',
   activity: 'SDR Activity',
   users: 'Users',
+  settings: 'Settings',
 }
 
 export function navItemsForRole(role?: string) {

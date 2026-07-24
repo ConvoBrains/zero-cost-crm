@@ -1,23 +1,30 @@
 import { useState, type FormEvent } from 'react'
 import type { Company } from '../types'
-import { INDUSTRIES, INTENTS, STAGES } from '../types'
+import { INDUSTRIES, INTENTS } from '../types'
+import { DEFAULT_STAGES } from '../defaults'
 import type { CrmStore } from '../hooks/useCrmStore'
 import { Field, inputClass, btnPrimary, btnGhost } from './ui'
 
 interface CompanyFormProps {
   store: CrmStore
+  stages?: string[]
   initial?: Company | null
   onDone: () => void
 }
 
-export function CompanyForm({ store, initial, onDone }: CompanyFormProps) {
+export function CompanyForm({
+  store,
+  stages = [...DEFAULT_STAGES],
+  initial,
+  onDone,
+}: CompanyFormProps) {
   const contactOptions = initial
     ? store.contacts.filter((t) => t.companyId === initial.id)
     : []
 
   const [form, setForm] = useState({
     companyName: initial?.companyName ?? '',
-    stage: initial?.stage ?? ('Lead Added' as const),
+    stage: initial?.stage ?? stages[0] ?? 'Lead Added',
     industry: initial?.industry ?? '',
     location: initial?.location ?? '',
     estimatedCallVolume: initial?.estimatedCallVolume?.toString() ?? '',
@@ -91,7 +98,7 @@ export function CompanyForm({ store, initial, onDone }: CompanyFormProps) {
             value={form.stage}
             onChange={(e) => set('stage', e.target.value)}
           >
-            {STAGES.map((s) => (
+            {stages.map((s) => (
               <option key={s} value={s}>
                 {s}
               </option>

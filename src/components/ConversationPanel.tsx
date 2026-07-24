@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Conversation, Stage } from '../types'
-import { STAGES } from '../types'
+import { DEFAULT_STAGES } from '../defaults'
 import type { CrmStore } from '../hooks/useCrmStore'
 import {
   deleteConversation,
@@ -15,6 +15,7 @@ interface ConversationPanelProps {
   store: CrmStore
   contactId: string
   companyId: string | null
+  stages?: string[]
 }
 
 function formatCalledAt(iso: string): string {
@@ -28,9 +29,16 @@ function formatCalledAt(iso: string): string {
   }
 }
 
-export function ConversationPanel({ store, contactId, companyId }: ConversationPanelProps) {
+export function ConversationPanel({
+  store,
+  contactId,
+  companyId,
+  stages = [...DEFAULT_STAGES],
+}: ConversationPanelProps) {
   const company = companyId ? store.getCompany(companyId) : null
-  const [stageAtCall, setStageAtCall] = useState<Stage>(company?.stage ?? 'Lead Added')
+  const [stageAtCall, setStageAtCall] = useState<Stage>(
+    company?.stage ?? stages[0] ?? 'Lead Added',
+  )
   const [notes, setNotes] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -120,7 +128,7 @@ export function ConversationPanel({ store, contactId, companyId }: ConversationP
             value={stageAtCall}
             onChange={(e) => setStageAtCall(e.target.value as Stage)}
           >
-            {STAGES.map((s) => (
+            {stages.map((s) => (
               <option key={s} value={s}>
                 {s}
               </option>

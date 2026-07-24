@@ -14,6 +14,8 @@ import { Modal, btnPrimary } from './ui'
 
 interface ContactsProps {
   store: CrmStore
+  contactStatuses?: string[]
+  stages?: string[]
 }
 
 function ContactRow({
@@ -66,7 +68,11 @@ function ContactRow({
   )
 }
 
-export function Contacts({ store }: ContactsProps) {
+export function Contacts({
+  store,
+  contactStatuses,
+  stages,
+}: ContactsProps) {
   const [view, setView] = useState<ContactView>('To Call Today')
   const [editing, setEditing] = useState<Contact | null>(null)
   const [creating, setCreating] = useState(false)
@@ -219,7 +225,12 @@ export function Contacts({ store }: ContactsProps) {
       </div>
 
       <Modal open={creating} title="Add contact" onClose={() => setCreating(false)} wide>
-        <ContactForm store={store} onDone={() => setCreating(false)} />
+        <ContactForm
+          store={store}
+          contactStatuses={contactStatuses}
+          stages={stages}
+          onDone={() => setCreating(false)}
+        />
       </Modal>
 
       <Modal
@@ -232,6 +243,8 @@ export function Contacts({ store }: ContactsProps) {
           <ContactForm
             key={editing.id}
             store={store}
+            contactStatuses={contactStatuses}
+            stages={stages}
             initial={editing}
             onDone={() => setEditing(null)}
           />

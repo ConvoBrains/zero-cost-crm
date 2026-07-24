@@ -13,7 +13,6 @@ import {
 } from '@dnd-kit/core'
 import { useMemo, useState } from 'react'
 import type { Company, Contact, PipelineView, Stage } from '../types'
-import { STAGES } from '../types'
 import type { CrmStore } from '../hooks/useCrmStore'
 import { PIPELINE_VIEWS, filterCompanies, intentColor, stageAccent } from '../lib/views'
 import { buildCardBadges, buildChampionTrail, findChampion, istToday } from '../lib/championCard'
@@ -23,13 +22,16 @@ import { Modal, btnPrimary } from './ui'
 
 interface PipelineProps {
   store: CrmStore
+  stages: string[]
 }
 
-const ALL_STAGES = [...STAGES]
-
-function resolveDropStage(overId: string | number, companies: Company[]): Stage | null {
+function resolveDropStage(
+  overId: string | number,
+  companies: Company[],
+  stages: readonly string[],
+): Stage | null {
   const id = String(overId)
-  if ((STAGES as readonly string[]).includes(id)) return id as Stage
+  if (stages.includes(id)) return id
   const target = companies.find((c) => c.id === id)
   return target?.stage ?? null
 }
@@ -217,7 +219,7 @@ function KanbanColumn({
   )
 }
 
-export function Pipeline({ store }: PipelineProps) {
+export function Pipeline({ store, stages }: PipelineProps) {
   const [view, setView] = useState<PipelineView>('All Companies')
   const [editing, setEditing] = useState<Company | null>(null)
   const [creating, setCreating] = useState(false)
@@ -240,21 +242,27 @@ export function Pipeline({ store }: PipelineProps) {
 
   const byStage = useMemo(() => {
     const map = new Map<Stage, Company[]>()
-    for (const s of ALL_STAGES) map.set(s, [])
+    for (const s of stages) map.set(s, [])
     for (const c of filtered) {
       const list = map.get(c.stage)
       if (list) list.push(c)
+      else {
+        // Unknown/legacy stage — still show a column so cards aren't lost.
+        map.set(c.stage, [c])
+      }
     }
     return map
-  }, [filtered])
+  }, [filtered, stages])
+
+  const boardStages = useMemo(() => {
+    const extra = [...byStage.keys()].filter((s) => !stages.includes(s))
+    return [...stages, ...extra]
+  }, [byStage, stages])
 
   const activeCompany = activeId
     ? store.companies.find((c) => c.id === activeId) ?? null
     : null
 
-  // Compute once per board render so every card's badges share one reference date.
-  // Uses the Asia/Kolkata calendar day so the "Due today" badge and the champion
-  // follow-up line (also IST-formatted) agree near midnight.
   const today = istToday()
 
   const onDragStart = (e: DragStartEvent) => setActiveId(String(e.active.id))
@@ -264,7 +272,7 @@ export function Pipeline({ store }: PipelineProps) {
     const { active, over } = e
     if (!over) return
     const companyId = String(active.id)
-    const stage = resolveDropStage(over.id, store.companies)
+    const stage = resolveDropStage(over.id, store.companies, boardStages)
     if (!stage) return
 
     const company = store.companies.find((c) => c.id === companyId)
@@ -316,7 +324,7 @@ export function Pipeline({ store }: PipelineProps) {
         onDragEnd={onDragEnd}
       >
         <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto pb-2 kanban-scroll">
-          {ALL_STAGES.map((stage) => (
+          {boardStages.map((stage) => (
             <KanbanColumn
               key={stage}
               stage={stage}
@@ -341,7 +349,7 @@ export function Pipeline({ store }: PipelineProps) {
       </DndContext>
 
       <Modal open={creating} title="Add company" onClose={() => setCreating(false)} wide>
-        <CompanyForm store={store} onDone={() => setCreating(false)} />
+        <CompanyForm store={store} stages={stages} onDone={() => setCreating(false)} />
       </Modal>
 
       <Modal
@@ -354,6 +362,7 @@ export function Pipeline({ store }: PipelineProps) {
           <CompanyForm
             key={editing.id}
             store={store}
+            stages={stages}
             initial={editing}
             onDone={() => setEditing(null)}
           />

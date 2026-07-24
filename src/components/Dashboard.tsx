@@ -7,9 +7,15 @@ interface DashboardProps {
   store: CrmStore
   onNavigate: (page: Page) => void
   canManageUsers?: boolean
+  brandName?: string
 }
 
-export function Dashboard({ store, onNavigate, canManageUsers }: DashboardProps) {
+export function Dashboard({
+  store,
+  onNavigate,
+  canManageUsers,
+  brandName = 'Zero Cost CRM',
+}: DashboardProps) {
   const { metrics } = store
   const today = new Date().toISOString().slice(0, 10)
 
@@ -67,7 +73,7 @@ export function Dashboard({ store, onNavigate, canManageUsers }: DashboardProps)
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-semibold tracking-[0.14em] text-teal-700 uppercase">
-            Zero Cost CRM · Morning brief
+            {brandName} · Morning brief
           </p>
           <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl text-stone-900 sm:text-5xl">
             SDR Dashboard

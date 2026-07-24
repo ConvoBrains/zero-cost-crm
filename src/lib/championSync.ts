@@ -1,26 +1,28 @@
-import { STAGES } from '../types.js'
+import {
+  DEFAULT_CHAMPION_STATUS_TO_STAGE,
+  DEFAULT_STAGES,
+} from '../defaults.js'
 import type { ContactStatus, Stage } from '../types.js'
 
-export const CHAMPION_STATUS_TO_STAGE: Record<ContactStatus, Stage | null> = {
-  'Not Contacted': null,
-  "Didn't Pick": null,
-  'Connected - Got Referral': 'Follow-up',
-  'Connected - Not Right Person': 'Follow-up',
-  'Connected - Future Follow-up': 'Follow-up',
-  'Interested': 'Discovery Call Done',
-  'Called': 'Discovery Call Done',
-  'No Answer': null,
-  'Follow-up Required': 'Follow-up',
-  'Rejected': 'Not Interested',
+/** @deprecated Prefer settings.championStatusToStage from the API. */
+export const CHAMPION_STATUS_TO_STAGE: Record<string, string | null> = {
+  ...DEFAULT_CHAMPION_STATUS_TO_STAGE,
 }
 
 export function resolveAutoMoveStage(
   currentStage: Stage,
   championStatus: ContactStatus,
+  stages: readonly string[] = DEFAULT_STAGES,
+  statusToStage: Record<string, string | null> = DEFAULT_CHAMPION_STATUS_TO_STAGE,
 ): Stage | null {
   if (currentStage === 'Closed Won' || currentStage === 'Closed Lost') return null
-  const target = CHAMPION_STATUS_TO_STAGE[championStatus]
-  if (target === null) return null
-  if (STAGES.indexOf(target) <= STAGES.indexOf(currentStage)) return null
+  const target = Object.prototype.hasOwnProperty.call(statusToStage, championStatus)
+    ? statusToStage[championStatus]
+    : undefined
+  if (target == null) return null
+  const targetIdx = stages.indexOf(target)
+  const currentIdx = stages.indexOf(currentStage)
+  if (targetIdx < 0 || currentIdx < 0) return null
+  if (targetIdx <= currentIdx) return null
   return target
 }
