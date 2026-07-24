@@ -24,7 +24,8 @@ RUN npm ci --omit=dev && npm install tsx@^4.20.5
 
 COPY --from=builder /app/dist ./dist
 COPY server ./server
-COPY --from=builder /app/src/types.ts ./src/types.ts
+# Server imports shared modules under src/ (defaults, championSync, types).
+COPY --from=builder /app/src ./src
 COPY sql ./sql
 COPY scripts ./scripts
 
