@@ -86,7 +86,7 @@ test.describe('Click behaviours (UI)', () => {
     await expect(page.getByRole('heading', { name: 'Add contact' })).toBeVisible()
     await page.getByLabel('Contact Name *').fill(name)
     await page.locator('form select').first().selectOption({ label: 'Nova Health' })
-    await page.getByLabel('Email').fill(`click.${stamp}@seed.example`)
+    await page.getByLabel('Email', { exact: true }).fill(`click.${stamp}@seed.example`)
     await page.getByRole('button', { name: 'Add contact', exact: true }).click()
 
     await page.getByRole('button', { name: /All Contacts/ }).click()

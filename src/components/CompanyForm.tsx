@@ -1,15 +1,32 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { Company } from '../types'
 import { INDUSTRIES, INTENTS } from '../types'
 import { DEFAULT_STAGES } from '../defaults'
 import type { CrmStore } from '../hooks/useCrmStore'
 import { Field, inputClass, btnPrimary, btnGhost } from './ui'
+import {
+  activityDetailLines,
+  eventTypeLabel,
+  fetchCompanyHistory,
+  type CompanyHistoryEvent,
+} from '../lib/activity'
 
 interface CompanyFormProps {
   store: CrmStore
   stages?: string[]
   initial?: Company | null
   onDone: () => void
+}
+
+function formatEventTime(iso: string): string {
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(new Date(iso))
+  } catch {
+    return iso
+  }
 }
 
 export function CompanyForm({
@@ -39,6 +56,38 @@ export function CompanyForm({
     companyWebsite: initial?.companyWebsite ?? '',
     linkedInCompany: initial?.linkedInCompany ?? '',
   })
+
+  const [history, setHistory] = useState<CompanyHistoryEvent[]>([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyError, setHistoryError] = useState<string | null>(null)
+  const historyEndRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (!initial?.id) return
+    let cancelled = false
+    setHistoryLoading(true)
+    setHistoryError(null)
+    void fetchCompanyHistory(initial.id)
+      .then((data) => {
+        if (cancelled) return
+        setHistory(data.events)
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return
+        setHistoryError(err instanceof Error ? err.message : 'Failed to load history')
+      })
+      .finally(() => {
+        if (!cancelled) setHistoryLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [initial?.id])
+
+  useEffect(() => {
+    if (!history.length) return
+    historyEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }, [history])
 
   const set = (key: string, value: string) =>
     setForm((f) => ({ ...f, [key]: value }))
@@ -253,6 +302,58 @@ export function CompanyForm({
           />
         </Field>
       </div>
+
+      {initial ? (
+        <section
+          className="space-y-2 border-t border-[var(--color-line)] pt-4"
+          aria-label="Company progress history"
+        >
+          <h3 className="text-sm font-semibold text-stone-800">Progress</h3>
+          <p className="text-xs text-stone-500">
+            Chronological activity for this company and its contacts.
+          </p>
+          {historyLoading ? (
+            <p className="text-sm text-stone-500">Loading history…</p>
+          ) : historyError ? (
+            <p className="text-sm text-rose-600">{historyError}</p>
+          ) : history.length === 0 ? (
+            <p className="rounded-none border border-dashed border-stone-300 px-3 py-2 text-xs text-stone-500">
+              No activity yet.
+            </p>
+          ) : (
+            <ol className="max-h-64 space-y-2 overflow-y-auto border border-stone-200 bg-stone-50/80 p-3">
+              {history.map((ev) => {
+                const details = activityDetailLines(ev)
+                return (
+                  <li key={ev.id} className="text-sm text-stone-700">
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                      <time
+                        className="shrink-0 font-mono text-xs text-stone-500"
+                        dateTime={ev.createdAt}
+                      >
+                        {formatEventTime(ev.createdAt)}
+                      </time>
+                      <span className="font-medium text-stone-800">
+                        {eventTypeLabel(ev.eventType)}
+                      </span>
+                      <span className="text-xs text-stone-500">{ev.userName}</span>
+                      {ev.contactName ? (
+                        <span className="text-xs text-teal-800">· {ev.contactName}</span>
+                      ) : null}
+                    </div>
+                    <div className="mt-0.5 space-y-0.5 text-xs text-stone-600">
+                      {details.map((line) => (
+                        <p key={line}>{line}</p>
+                      ))}
+                    </div>
+                  </li>
+                )
+              })}
+              <div ref={historyEndRef} />
+            </ol>
+          )}
+        </section>
+      ) : null}
 
       <div className="flex items-center justify-between gap-3 border-t border-[var(--color-line)] pt-4">
         {initial && store.canDelete ? (

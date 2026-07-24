@@ -56,7 +56,7 @@ async function addContact(
   await expect(page.getByRole('heading', { name: 'Add contact' })).toBeVisible()
   await page.getByLabel('Contact Name *').fill(opts.name)
   await page.locator('form select').first().selectOption({ label: opts.company })
-  await page.getByLabel('Email').fill(opts.email)
+  await page.getByLabel('Email', { exact: true }).fill(opts.email)
   if (opts.champion) await page.locator('form input[type="checkbox"]').first().check()
   await page.getByRole('button', { name: 'Add contact', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Add contact' })).toHaveCount(0)

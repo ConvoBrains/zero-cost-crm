@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
-import type { Contact } from '../types'
-import { DEFAULT_CONTACT_STATUSES } from '../defaults'
+import type { Contact, Stage } from '../types'
+import { DEFAULT_CONTACT_STATUSES, DEFAULT_STAGES } from '../defaults'
 import type { CrmStore } from '../hooks/useCrmStore'
 import { Field, inputClass, btnPrimary, btnGhost } from './ui'
 import { ConversationPanel } from './ConversationPanel'
@@ -17,7 +17,7 @@ interface ContactFormProps {
 export function ContactForm({
   store,
   contactStatuses = [...DEFAULT_CONTACT_STATUSES],
-  stages,
+  stages = [...DEFAULT_STAGES],
   initial,
   defaultCompanyId,
   onDone,
@@ -35,9 +35,26 @@ export function ContactForm({
     nextFollowUp: initial?.nextFollowUp ?? '',
     notes: initial?.notes ?? '',
   })
+  const [stageBusy, setStageBusy] = useState(false)
 
   const set = (key: string, value: string | boolean) =>
     setForm((f) => ({ ...f, [key]: value }))
+
+  const linkedCompany = form.companyId
+    ? store.companies.find((c) => c.id === form.companyId)
+    : undefined
+
+  const onCompanyStageChange = async (stage: string) => {
+    if (!form.companyId || !linkedCompany || stage === linkedCompany.stage) return
+    setStageBusy(true)
+    try {
+      await store.moveCompanyStage(form.companyId, stage as Stage, {
+        stageChangeSource: 'contact_form',
+      })
+    } finally {
+      setStageBusy(false)
+    }
+  }
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -92,6 +109,24 @@ export function ContactForm({
             ))}
           </select>
         </Field>
+
+        {form.companyId ? (
+          <Field label="Company pipeline stage">
+            <select
+              className={inputClass}
+              value={linkedCompany?.stage ?? stages[0] ?? ''}
+              disabled={!linkedCompany || stageBusy}
+              onChange={(e) => void onCompanyStageChange(e.target.value)}
+              aria-label="Company pipeline stage"
+            >
+              {stages.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </Field>
+        ) : null}
 
         <Field label="Role / Designation">
           <input

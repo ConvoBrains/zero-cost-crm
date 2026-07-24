@@ -119,6 +119,27 @@ export async function fetchTimeline(opts: {
   )
 }
 
+export interface CompanyHistoryEvent {
+  id: string
+  userId: string
+  userName: string
+  eventType: string
+  entityType: string
+  entityId: string | null
+  contactName: string | null
+  summary: string
+  payload: Record<string, unknown>
+  createdAt: string
+}
+
+export async function fetchCompanyHistory(companyId: string) {
+  return api<{
+    companyId: string
+    companyName: string
+    events: CompanyHistoryEvent[]
+  }>(`/api/activity/company/${companyId}/history`)
+}
+
 export function logViewEvent(
   eventType: 'contact.opened' | 'company.opened',
   entityId: string,
@@ -154,4 +175,28 @@ export function eventTypeLabel(eventType: string): string {
     'leads.imported': 'Leads imported',
   }
   return map[eventType] ?? eventType
+}
+
+export function activityDetailLines(ev: {
+  summary: string
+  payload: Record<string, unknown>
+}): string[] {
+  const lines: string[] = []
+  const changes = ev.payload.changes
+  if (Array.isArray(changes)) {
+    for (const raw of changes) {
+      if (!raw || typeof raw !== 'object') continue
+      const c = raw as { label?: unknown; from?: unknown; to?: unknown }
+      const label = typeof c.label === 'string' ? c.label : 'Field'
+      const from = c.from == null || c.from === '' ? '—' : String(c.from)
+      const to = c.to == null || c.to === '' ? '—' : String(c.to)
+      lines.push(`${label}: ${from} → ${to}`)
+    }
+  }
+  const note = ev.payload.note
+  if (typeof note === 'string' && note.trim() && !ev.summary.includes(note.trim().slice(0, 40))) {
+    lines.push(`Note: ${note.trim()}`)
+  }
+  if (lines.length === 0 && ev.summary) lines.push(ev.summary)
+  return lines
 }

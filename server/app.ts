@@ -26,6 +26,10 @@ import {
   IDLE_MS,
   logActivity,
   touchSession,
+  collectFieldChanges,
+  formatFieldChangeSummary,
+  noteSnippet,
+  normalizeActivityValue,
 } from './activity.js'
 import { resolveAutoMoveStage } from '../src/lib/championSync.js'
 import {
@@ -565,6 +569,10 @@ app.patch('/api/companies/:id', requireAuth, async (req, res) => {
   const sid = req.user!.sid
   const uid = req.user!.sub
   if (b.stage !== undefined && b.stage !== before.stage) {
+    const source =
+      typeof b.stageChangeSource === 'string' && b.stageChangeSource.trim()
+        ? b.stageChangeSource.trim()
+        : undefined
     await logActivity({
       userId: uid,
       sessionId: sid,
@@ -572,59 +580,138 @@ app.patch('/api/companies/:id', requireAuth, async (req, res) => {
       entityType: 'company',
       entityId: String(id),
       summary: `Stage → ${b.stage} (${name})`,
-      payload: { from: before.stage, to: b.stage, name },
+      payload: {
+        from: before.stage,
+        to: b.stage,
+        name,
+        ...(source ? { source } : {}),
+      },
     })
   }
   if (b.nextFollowUp !== undefined && b.nextFollowUp !== before.next_follow_up) {
+    const from = normalizeActivityValue(before.next_follow_up)
+    const to = normalizeActivityValue(b.nextFollowUp)
     await logActivity({
       userId: uid,
       sessionId: sid,
       eventType: 'company.follow_up_set',
       entityType: 'company',
       entityId: String(id),
-      summary: `Follow-up set for ${name}`,
-      payload: { nextFollowUp: b.nextFollowUp, name },
+      summary: `Follow-up: ${from ?? '—'} → ${to ?? '—'} (${name})`,
+      payload: { from, to, nextFollowUp: to, name },
     })
   }
   if (b.notes !== undefined && b.notes !== before.notes) {
+    const from = normalizeActivityValue(before.notes)
+    const to = normalizeActivityValue(b.notes)
+    const snippet = noteSnippet(to)
     await logActivity({
       userId: uid,
       sessionId: sid,
       eventType: 'company.note_added',
       entityType: 'company',
       entityId: String(id),
-      summary: `Note updated on ${name}`,
-      payload: { name },
+      summary: snippet
+        ? `Note updated on ${name}: "${snippet}"`
+        : `Note cleared on ${name}`,
+      payload: { name, from, to, note: to },
     })
   }
-  if (
-    b.stage === undefined &&
-    b.nextFollowUp === undefined &&
-    b.notes === undefined
-  ) {
+  const companyOtherChanges = collectFieldChanges([
+    {
+      field: 'companyName',
+      label: 'Name',
+      before: before.company_name,
+      after: b.companyName,
+      provided: b.companyName !== undefined,
+    },
+    {
+      field: 'industry',
+      label: 'Industry',
+      before: before.industry,
+      after: b.industry,
+      provided: b.industry !== undefined,
+    },
+    {
+      field: 'location',
+      label: 'Location',
+      before: before.location,
+      after: b.location,
+      provided: b.location !== undefined,
+    },
+    {
+      field: 'intent',
+      label: 'Intent',
+      before: before.intent,
+      after: b.intent,
+      provided: b.intent !== undefined,
+    },
+    {
+      field: 'lastContacted',
+      label: 'Last contacted',
+      before: before.last_contacted,
+      after: b.lastContacted,
+      provided: b.lastContacted !== undefined,
+    },
+    {
+      field: 'estimatedCallVolume',
+      label: 'Call volume',
+      before: before.estimated_call_volume,
+      after: b.estimatedCallVolume,
+      provided: b.estimatedCallVolume !== undefined,
+    },
+    {
+      field: 'employeeCount',
+      label: 'Employees',
+      before: before.employee_count,
+      after: b.employeeCount,
+      provided: b.employeeCount !== undefined,
+    },
+    {
+      field: 'offeredPrice',
+      label: 'Offered price',
+      before: before.offered_price,
+      after: b.offeredPrice,
+      provided: b.offeredPrice !== undefined,
+    },
+    {
+      field: 'companyWebsite',
+      label: 'Website',
+      before: before.company_website,
+      after: b.companyWebsite,
+      provided: b.companyWebsite !== undefined,
+    },
+    {
+      field: 'linkedInCompany',
+      label: 'LinkedIn',
+      before: before.linkedin_company,
+      after: b.linkedInCompany,
+      provided: b.linkedInCompany !== undefined,
+    },
+    {
+      field: 'sourceLink',
+      label: 'Source link',
+      before: before.source_link,
+      after: b.sourceLink,
+      provided: b.sourceLink !== undefined,
+    },
+    {
+      field: 'primaryContactId',
+      label: 'Primary contact',
+      before: before.primary_contact_id,
+      after: b.primaryContactId,
+      provided: b.primaryContactId !== undefined,
+    },
+  ])
+  if (companyOtherChanges.length > 0) {
     await logActivity({
       userId: uid,
       sessionId: sid,
       eventType: 'company.updated',
       entityType: 'company',
       entityId: String(id),
-      summary: `Updated ${name}`,
-      payload: { name },
-    })
-  } else if (
-    b.companyName !== undefined ||
-    b.industry !== undefined ||
-    b.location !== undefined ||
-    b.intent !== undefined
-  ) {
-    await logActivity({
-      userId: uid,
-      sessionId: sid,
-      eventType: 'company.updated',
-      entityType: 'company',
-      entityId: String(id),
-      summary: `Updated ${name}`,
-      payload: { name },
+      summary: formatFieldChangeSummary(name, companyOtherChanges),
+      payload: { name, changes: companyOtherChanges },
     })
   }
 
@@ -788,6 +875,7 @@ app.patch('/api/contacts/:id', requireAuth, async (req, res) => {
     const name = String(contact.contact_name)
     const sid = req.user!.sid
     const uid = req.user!.sub
+
     if (b.contactStatus !== undefined && b.contactStatus !== before.contact_status) {
       await logActivity(
         {
@@ -796,13 +884,18 @@ app.patch('/api/contacts/:id', requireAuth, async (req, res) => {
           eventType: 'contact.status_changed',
           entityType: 'contact',
           entityId: String(id),
-          summary: `Changed status → ${b.contactStatus}`,
+          summary: `Status: ${before.contact_status} → ${b.contactStatus} (${name})`,
           payload: { from: before.contact_status, to: b.contactStatus, name },
         },
         client,
       )
     }
-    if (b.nextFollowUp !== undefined && b.nextFollowUp !== before.next_follow_up) {
+    if (
+      b.nextFollowUp !== undefined &&
+      normalizeActivityValue(b.nextFollowUp) !== normalizeActivityValue(before.next_follow_up)
+    ) {
+      const from = normalizeActivityValue(before.next_follow_up)
+      const to = normalizeActivityValue(b.nextFollowUp)
       await logActivity(
         {
           userId: uid,
@@ -810,13 +903,19 @@ app.patch('/api/contacts/:id', requireAuth, async (req, res) => {
           eventType: 'contact.follow_up_set',
           entityType: 'contact',
           entityId: String(id),
-          summary: `Follow-up added for ${name}`,
-          payload: { nextFollowUp: b.nextFollowUp, name },
+          summary: `Follow-up: ${from ?? '—'} → ${to ?? '—'} (${name})`,
+          payload: { from, to, nextFollowUp: to, name },
         },
         client,
       )
     }
-    if (b.notes !== undefined && b.notes !== before.notes) {
+    if (
+      b.notes !== undefined &&
+      normalizeActivityValue(b.notes) !== normalizeActivityValue(before.notes)
+    ) {
+      const from = normalizeActivityValue(before.notes)
+      const to = normalizeActivityValue(b.notes)
+      const snippet = noteSnippet(to)
       await logActivity(
         {
           userId: uid,
@@ -824,20 +923,74 @@ app.patch('/api/contacts/:id', requireAuth, async (req, res) => {
           eventType: 'contact.note_added',
           entityType: 'contact',
           entityId: String(id),
-          summary: `Added note on ${name}`,
-          payload: { name },
+          summary: snippet
+            ? `Note updated on ${name}: "${snippet}"`
+            : `Note cleared on ${name}`,
+          payload: { name, from, to, note: to },
         },
         client,
       )
     }
-    if (
-      (b.contactName !== undefined ||
-        b.phone !== undefined ||
-        b.email !== undefined ||
-        b.role !== undefined ||
-        b.companyId !== undefined) &&
-      b.contactStatus === undefined
-    ) {
+
+    const otherChanges = collectFieldChanges([
+      {
+        field: 'contactName',
+        label: 'Name',
+        before: before.contact_name,
+        after: b.contactName,
+        provided: b.contactName !== undefined,
+      },
+      {
+        field: 'companyId',
+        label: 'Company',
+        before: before.company_id,
+        after: b.companyId,
+        provided: b.companyId !== undefined,
+      },
+      {
+        field: 'role',
+        label: 'Role',
+        before: before.role,
+        after: b.role,
+        provided: b.role !== undefined,
+      },
+      {
+        field: 'phone',
+        label: 'Phone',
+        before: before.phone,
+        after: b.phone,
+        provided: b.phone !== undefined,
+      },
+      {
+        field: 'email',
+        label: 'Email',
+        before: before.email,
+        after: b.email,
+        provided: b.email !== undefined,
+      },
+      {
+        field: 'linkedInProfile',
+        label: 'LinkedIn',
+        before: before.linkedin_profile,
+        after: b.linkedInProfile,
+        provided: b.linkedInProfile !== undefined,
+      },
+      {
+        field: 'champion',
+        label: 'Champion',
+        before: before.champion,
+        after: b.champion,
+        provided: b.champion !== undefined,
+      },
+      {
+        field: 'lastContacted',
+        label: 'Last contacted',
+        before: before.last_contacted,
+        after: b.lastContacted,
+        provided: b.lastContacted !== undefined,
+      },
+    ])
+    if (otherChanges.length > 0) {
       await logActivity(
         {
           userId: uid,
@@ -845,8 +998,8 @@ app.patch('/api/contacts/:id', requireAuth, async (req, res) => {
           eventType: 'contact.updated',
           entityType: 'contact',
           entityId: String(id),
-          summary: `Updated ${name}`,
-          payload: { name },
+          summary: formatFieldChangeSummary(name, otherChanges),
+          payload: { name, changes: otherChanges },
         },
         client,
       )

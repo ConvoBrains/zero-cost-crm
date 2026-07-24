@@ -174,10 +174,23 @@ export function useCrmStore(enabled: boolean, userRole?: string) {
   )
 
   const moveCompanyStage = useCallback(
-    async (id: string, stage: Stage) => {
-      await updateCompany(id, { stage })
+    async (id: string, stage: Stage, opts?: { stageChangeSource?: string }) => {
+      const company = await api<Company>(`/api/companies/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          stage,
+          ...(opts?.stageChangeSource
+            ? { stageChangeSource: opts.stageChangeSource }
+            : {}),
+        }),
+      })
+      setState((s) => ({
+        ...s,
+        companies: s.companies.map((c) => (c.id === id ? company : c)),
+      }))
+      await refreshMetrics()
     },
-    [updateCompany],
+    [refreshMetrics],
   )
 
   const addContact = useCallback(

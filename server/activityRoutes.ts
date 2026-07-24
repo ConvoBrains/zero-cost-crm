@@ -459,6 +459,73 @@ export function registerActivityRoutes(app: Express) {
   })
 
   app.get(
+    '/api/activity/company/:id/history',
+    requireAuth,
+    async (req: Request, res: Response) => {
+      const id = String(req.params.id)
+      const { rows: companyRows } = await pool.query(
+        `SELECT id, company_name FROM companies WHERE id = $1`,
+        [id],
+      )
+      if (!companyRows[0]) {
+        res.status(404).json({ error: 'Company not found' })
+        return
+      }
+
+      const { rows } = await pool.query(
+        `
+        SELECT
+          ae.*,
+          u.name AS user_name,
+          CASE
+            WHEN ae.entity_type = 'contact' THEN ct.contact_name
+            ELSE NULL
+          END AS contact_name
+        FROM activity_events ae
+        JOIN users u ON u.id = ae.user_id
+        LEFT JOIN contacts ct
+          ON ae.entity_type = 'contact' AND ae.entity_id = ct.id
+        WHERE
+          (ae.entity_type = 'company' AND ae.entity_id = $1)
+          OR (
+            ae.entity_type = 'contact'
+            AND ae.entity_id IN (SELECT id FROM contacts WHERE company_id = $1)
+          )
+          OR (
+            ae.entity_type = 'conversation'
+            AND (
+              (ae.payload->>'companyId') = $1::text
+              OR (ae.payload->>'contactId') IN (
+                SELECT id::text FROM contacts WHERE company_id = $1
+              )
+            )
+          )
+        ORDER BY ae.created_at ASC
+        LIMIT 500
+        `,
+        [id],
+      )
+
+      res.json({
+        companyId: id,
+        companyName: String(companyRows[0].company_name),
+        events: rows.map((e) => ({
+          id: String(e.id),
+          userId: String(e.user_id),
+          userName: String(e.user_name),
+          eventType: String(e.event_type),
+          entityType: String(e.entity_type),
+          entityId: e.entity_id ? String(e.entity_id) : null,
+          contactName: e.contact_name ? String(e.contact_name) : null,
+          summary: String(e.summary),
+          payload: e.payload ?? {},
+          createdAt: new Date(String(e.created_at)).toISOString(),
+        })),
+      })
+    },
+  )
+
+  app.get(
     '/api/activity/lead/:entityType/:id',
     requireAuth,
     requireAdmin,
