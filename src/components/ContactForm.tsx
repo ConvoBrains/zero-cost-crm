@@ -111,6 +111,21 @@ export function ContactForm({
         </Field>
 
         {form.companyId ? (
+          <div className="flex flex-col justify-end gap-2">
+            <button
+              type="button"
+              className={btnGhost}
+              onClick={() => {
+                const url = `${window.location.origin}/?page=pipeline&companyId=${encodeURIComponent(form.companyId)}`
+                window.open(url, '_blank', 'noopener,noreferrer')
+              }}
+            >
+              Open company
+            </button>
+          </div>
+        ) : null}
+
+        {form.companyId ? (
           <Field label="Company pipeline stage">
             <select
               className={inputClass}

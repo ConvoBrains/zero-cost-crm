@@ -161,6 +161,7 @@ export function eventTypeLabel(eventType: string): string {
     'company.stage_changed': 'Stage changed',
     'company.follow_up_set': 'Company follow-up',
     'company.note_added': 'Company note',
+    'company.discovery_updated': 'Discovery updated',
     'company.updated': 'Company updated',
     'company.opened': 'Opened company',
     'contact.created': 'Contact created',

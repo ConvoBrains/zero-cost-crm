@@ -9,8 +9,8 @@ Unless noted, endpoints require `Authorization: Bearer <jwt>`.
 | Method | Path | Description |
 | ------ | ---- | ----------- |
 | `GET` | `/api/health` | Liveness `{ ok: true }` |
-| `GET` | `/api/config` | Public instance config: email policy + `brandName`, `brandTagline`, `logoUrl`, `stages`, `contactStatuses`, `championStatusToStage` |
-| `PATCH` | `/api/settings` | Admin/founder: update branding + stages + contactStatuses (+ optional championStatusToStage map) |
+| `GET` | `/api/config` | Public instance config: email policy + branding, stages, contactStatuses, championStatusToStage, discoveryQuestions |
+| `PATCH` | `/api/settings` | Admin/founder: update branding + stages + contactStatuses (+ optional champion map / discoveryQuestions) |
 
 ## Auth
 
@@ -67,6 +67,8 @@ Requires AWS env vars. See `.env.example`.
 | `GET` | `/api/activity/timeline` | Event timeline |
 | `GET` | `/api/activity/company/:id/history` | Company progress (company + linked contact events) |
 | `GET` | `/api/activity/lead/:entityType/:id` | Lead-centric activity |
+
+Deep-link (SPA): `/?page=pipeline&companyId=<uuid>` opens Sales Pipeline with that company dialog.
 
 ## Errors
 

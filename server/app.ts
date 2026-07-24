@@ -37,6 +37,7 @@ import {
   isAllowedContactStatus,
   isAllowedStage,
   updateAppSettings,
+  asDiscoveryQuestions,
   type SettingsPatch,
 } from './settings.js'
 
@@ -123,9 +124,11 @@ function sqlUpdateBuilder() {
   const fields: string[] = []
   const values: unknown[] = []
   return {
-    set(col: string, val: unknown) {
+    set(col: string, val: unknown, cast?: string) {
       values.push(val)
-      fields.push(`${col} = $${values.length}`)
+      fields.push(
+        cast ? `${col} = $${values.length}::${cast}` : `${col} = $${values.length}`,
+      )
     },
     get isEmpty() {
       return fields.length === 0
@@ -151,6 +154,7 @@ app.get('/api/config', async (_req, res) => {
       stages: settings.stages,
       contactStatuses: settings.contactStatuses,
       championStatusToStage: settings.championStatusToStage,
+      discoveryQuestions: settings.discoveryQuestions,
       allowedEmailDomain: config.primaryEmailDomain,
       allowedEmailDomains: config.allowedEmailAny ? ['*'] : config.allowedEmailDomains,
       allowAnyEmailDomain: config.allowedEmailAny,
@@ -187,6 +191,9 @@ app.patch('/api/settings', requireAuth, requireAdmin, async (req, res) => {
     }
     patch.championStatusToStage = map
   }
+  if (Array.isArray(b.discoveryQuestions)) {
+    patch.discoveryQuestions = asDiscoveryQuestions(b.discoveryQuestions)
+  }
 
   try {
     const settings = await updateAppSettings(patch)
@@ -197,6 +204,7 @@ app.patch('/api/settings', requireAuth, requireAdmin, async (req, res) => {
       stages: settings.stages,
       contactStatuses: settings.contactStatuses,
       championStatusToStage: settings.championStatusToStage,
+      discoveryQuestions: settings.discoveryQuestions,
       updatedAt: settings.updatedAt,
     })
   } catch (e) {
@@ -470,14 +478,23 @@ app.post('/api/companies', requireAuth, async (req, res) => {
     })
     return
   }
+  const answers =
+    b.discoveryAnswers && typeof b.discoveryAnswers === 'object' && !Array.isArray(b.discoveryAnswers)
+      ? Object.fromEntries(
+          Object.entries(b.discoveryAnswers as Record<string, unknown>).map(([k, v]) => [
+            k,
+            v == null ? '' : String(v),
+          ]),
+        )
+      : {}
   const { rows } = await pool.query(
     `
     INSERT INTO companies (
       company_name, stage, industry, location, estimated_call_volume, employee_count,
       intent, offered_price, primary_contact_id, assigned_to, last_contacted,
-      next_follow_up, notes, source_link, company_website, linkedin_company
+      next_follow_up, notes, source_link, company_website, linkedin_company, discovery_answers
     ) VALUES (
-      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17::jsonb
     )
     RETURNING id
     `,
@@ -498,6 +515,7 @@ app.post('/api/companies', requireAuth, async (req, res) => {
       b.sourceLink ?? '',
       b.companyWebsite ?? '',
       b.linkedInCompany ?? '',
+      JSON.stringify(answers),
     ],
   )
   const { rows: full } = await pool.query(`${COMPANY_SELECT} WHERE c.id = $1`, [rows[0].id])
@@ -550,6 +568,18 @@ app.patch('/api/companies/:id', requireAuth, async (req, res) => {
   if (b.sourceLink !== undefined) update.set('source_link', b.sourceLink)
   if (b.companyWebsite !== undefined) update.set('company_website', b.companyWebsite)
   if (b.linkedInCompany !== undefined) update.set('linkedin_company', b.linkedInCompany)
+  if (b.discoveryAnswers !== undefined) {
+    const answers =
+      b.discoveryAnswers && typeof b.discoveryAnswers === 'object' && !Array.isArray(b.discoveryAnswers)
+        ? Object.fromEntries(
+            Object.entries(b.discoveryAnswers as Record<string, unknown>).map(([k, v]) => [
+              k,
+              v == null ? '' : String(v),
+            ]),
+          )
+        : {}
+    update.set('discovery_answers', JSON.stringify(answers), 'jsonb')
+  }
 
   if (update.isEmpty) {
     res.status(400).json({ error: 'No fields to update' })
@@ -616,6 +646,37 @@ app.patch('/api/companies/:id', requireAuth, async (req, res) => {
         : `Note cleared on ${name}`,
       payload: { name, from, to, note: to },
     })
+  }
+  if (b.discoveryAnswers !== undefined) {
+    const beforeAnswers =
+      before.discovery_answers && typeof before.discovery_answers === 'object'
+        ? (before.discovery_answers as Record<string, unknown>)
+        : {}
+    const afterAnswers =
+      full[0].discovery_answers && typeof full[0].discovery_answers === 'object'
+        ? (full[0].discovery_answers as Record<string, unknown>)
+        : {}
+    const keys = new Set([
+      ...Object.keys(beforeAnswers),
+      ...Object.keys(afterAnswers),
+    ])
+    const changed: string[] = []
+    for (const key of keys) {
+      const from = normalizeActivityValue(beforeAnswers[key])
+      const to = normalizeActivityValue(afterAnswers[key])
+      if (from !== to) changed.push(key)
+    }
+    if (changed.length > 0) {
+      await logActivity({
+        userId: uid,
+        sessionId: sid,
+        eventType: 'company.discovery_updated',
+        entityType: 'company',
+        entityId: String(id),
+        summary: `Discovery answers updated (${changed.length}) on ${name}`,
+        payload: { name, changedFields: changed },
+      })
+    }
   }
   const companyOtherChanges = collectFieldChanges([
     {

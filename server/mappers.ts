@@ -14,6 +14,15 @@ function pgDateToIso(val: unknown): string | null {
 }
 
 export function mapCompany(row: Record<string, unknown>): Company {
+  const answersRaw = row.discovery_answers
+  const discoveryAnswers: Record<string, string> = {}
+  if (answersRaw && typeof answersRaw === 'object' && !Array.isArray(answersRaw)) {
+    for (const [k, v] of Object.entries(answersRaw as Record<string, unknown>)) {
+      if (typeof v === 'string') discoveryAnswers[k] = v
+      else if (v == null) continue
+      else discoveryAnswers[k] = String(v)
+    }
+  }
   return {
     id: String(row.id),
     companyName: String(row.company_name),
@@ -33,6 +42,7 @@ export function mapCompany(row: Record<string, unknown>): Company {
     sourceLink: String(row.source_link ?? ''),
     companyWebsite: String(row.company_website ?? ''),
     linkedInCompany: String(row.linkedin_company ?? ''),
+    discoveryAnswers,
     createdAt: pgDateToIso(row.created_at) ?? '',
   }
 }

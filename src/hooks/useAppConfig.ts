@@ -5,6 +5,7 @@ import {
   DEFAULT_BRAND_TAGLINE,
   DEFAULT_CHAMPION_STATUS_TO_STAGE,
   DEFAULT_CONTACT_STATUSES,
+  DEFAULT_DISCOVERY_QUESTIONS,
   DEFAULT_LOGO_URL,
   DEFAULT_STAGES,
 } from '../defaults'
@@ -17,6 +18,7 @@ const FALLBACK: AppConfig = {
   stages: [...DEFAULT_STAGES],
   contactStatuses: [...DEFAULT_CONTACT_STATUSES],
   championStatusToStage: { ...DEFAULT_CHAMPION_STATUS_TO_STAGE },
+  discoveryQuestions: [...DEFAULT_DISCOVERY_QUESTIONS],
   allowedEmailDomain: null,
   allowedEmailDomains: ['*'],
   allowAnyEmailDomain: true,
@@ -40,6 +42,9 @@ export function useAppConfig() {
         championStatusToStage: cfg.championStatusToStage ?? {
           ...DEFAULT_CHAMPION_STATUS_TO_STAGE,
         },
+        discoveryQuestions: Array.isArray(cfg.discoveryQuestions)
+          ? cfg.discoveryQuestions
+          : [...DEFAULT_DISCOVERY_QUESTIONS],
         allowedEmailDomain: cfg.allowedEmailDomain,
         allowedEmailDomains: cfg.allowedEmailDomains ?? ['*'],
         allowAnyEmailDomain: !!cfg.allowAnyEmailDomain,

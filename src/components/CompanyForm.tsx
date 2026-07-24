@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
-import type { Company } from '../types'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import type { Company, DiscoveryQuestion } from '../types'
 import { INDUSTRIES, INTENTS } from '../types'
 import { DEFAULT_STAGES } from '../defaults'
 import type { CrmStore } from '../hooks/useCrmStore'
@@ -14,6 +14,7 @@ import {
 interface CompanyFormProps {
   store: CrmStore
   stages?: string[]
+  discoveryQuestions?: DiscoveryQuestion[]
   initial?: Company | null
   onDone: () => void
 }
@@ -29,9 +30,25 @@ function formatEventTime(iso: string): string {
   }
 }
 
+function groupQuestions(questions: DiscoveryQuestion[]) {
+  const sections: Array<{ section: string; items: DiscoveryQuestion[] }> = []
+  const index = new Map<string, number>()
+  for (const q of questions) {
+    const existing = index.get(q.section)
+    if (existing == null) {
+      index.set(q.section, sections.length)
+      sections.push({ section: q.section, items: [q] })
+    } else {
+      sections[existing]!.items.push(q)
+    }
+  }
+  return sections
+}
+
 export function CompanyForm({
   store,
   stages = [...DEFAULT_STAGES],
+  discoveryQuestions = [],
   initial,
   onDone,
 }: CompanyFormProps) {
@@ -56,11 +73,19 @@ export function CompanyForm({
     companyWebsite: initial?.companyWebsite ?? '',
     linkedInCompany: initial?.linkedInCompany ?? '',
   })
+  const [discoveryAnswers, setDiscoveryAnswers] = useState<Record<string, string>>(
+    () => ({ ...(initial?.discoveryAnswers ?? {}) }),
+  )
 
   const [history, setHistory] = useState<CompanyHistoryEvent[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyError, setHistoryError] = useState<string | null>(null)
   const historyEndRef = useRef<HTMLDivElement | null>(null)
+
+  const discoverySections = useMemo(
+    () => groupQuestions(discoveryQuestions),
+    [discoveryQuestions],
+  )
 
   useEffect(() => {
     if (!initial?.id) return
@@ -92,6 +117,9 @@ export function CompanyForm({
   const set = (key: string, value: string) =>
     setForm((f) => ({ ...f, [key]: value }))
 
+  const setAnswer = (id: string, value: string) =>
+    setDiscoveryAnswers((prev) => ({ ...prev, [id]: value }))
+
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     if (!form.companyName.trim()) return
@@ -114,6 +142,7 @@ export function CompanyForm({
       sourceLink: form.sourceLink,
       companyWebsite: form.companyWebsite,
       linkedInCompany: form.linkedInCompany,
+      discoveryAnswers,
     }
 
     if (initial) {
@@ -302,6 +331,47 @@ export function CompanyForm({
           />
         </Field>
       </div>
+
+      {discoverySections.length > 0 ? (
+        <section
+          className="space-y-4 border-t border-[var(--color-line)] pt-4"
+          aria-label="Discovery questions"
+        >
+          <div>
+            <h3 className="text-sm font-semibold text-stone-800">Discovery questions</h3>
+            <p className="text-xs text-stone-500">
+              Quick discovery answers for demo prep. Saved with this company.
+            </p>
+          </div>
+          {discoverySections.map(({ section, items }) => (
+            <div key={section} className="space-y-3">
+              <h4 className="text-xs font-semibold tracking-[0.12em] text-teal-800 uppercase">
+                {section}
+              </h4>
+              <div className="grid gap-3">
+                {items.map((q) => (
+                  <Field key={q.id} label={q.prompt}>
+                    {q.input === 'textarea' ? (
+                      <textarea
+                        className={`${inputClass} min-h-[72px] resize-y`}
+                        value={discoveryAnswers[q.id] ?? ''}
+                        onChange={(e) => setAnswer(q.id, e.target.value)}
+                      />
+                    ) : (
+                      <input
+                        type={q.input === 'number' ? 'number' : 'text'}
+                        className={inputClass}
+                        value={discoveryAnswers[q.id] ?? ''}
+                        onChange={(e) => setAnswer(q.id, e.target.value)}
+                      />
+                    )}
+                  </Field>
+                ))}
+              </div>
+            </div>
+          ))}
+        </section>
+      ) : null}
 
       {initial ? (
         <section

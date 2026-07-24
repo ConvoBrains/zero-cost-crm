@@ -58,5 +58,79 @@ UPDATE app_settings SET
     "Follow-up Required": "Follow-up",
     "Rejected": "Not Interested"
   }'::jsonb,
+  discovery_questions = '[
+    {
+      "id": "problem_pain",
+      "section": "The Problem",
+      "prompt": "What''s the main pain point you''re hoping to solve with ConvoBrains?",
+      "input": "textarea"
+    },
+    {
+      "id": "floors_type",
+      "section": "Your Floors",
+      "prompt": "Do you have a Sales floor, Support floor, or both?",
+      "input": "text"
+    },
+    {
+      "id": "floors_reps",
+      "section": "Your Floors",
+      "prompt": "Reps per floor?",
+      "input": "text"
+    },
+    {
+      "id": "floors_volume",
+      "section": "Your Floors",
+      "prompt": "Daily/monthly call volume?",
+      "input": "text"
+    },
+    {
+      "id": "floors_direction",
+      "section": "Your Floors",
+      "prompt": "Inbound, outbound, or mix?",
+      "input": "text"
+    },
+    {
+      "id": "qa_people",
+      "section": "Quality Assurance",
+      "prompt": "How many QA people do you currently have?",
+      "input": "number"
+    },
+    {
+      "id": "qa_channels",
+      "section": "Quality Assurance",
+      "prompt": "Do you also want QA done on emails/chats/messages? If yes, what''s the rough volume (daily/monthly)?",
+      "input": "textarea"
+    },
+    {
+      "id": "tools_dialer",
+      "section": "Current Tools",
+      "prompt": "Dialer in use?",
+      "input": "text"
+    },
+    {
+      "id": "tools_crm",
+      "section": "Current Tools",
+      "prompt": "CRM in use?",
+      "input": "text"
+    },
+    {
+      "id": "tools_recording_qa",
+      "section": "Current Tools",
+      "prompt": "Are calls recorded today? QA done manually or with a tool?",
+      "input": "textarea"
+    },
+    {
+      "id": "business_model",
+      "section": "Business",
+      "prompt": "B2B or B2C?",
+      "input": "text"
+    },
+    {
+      "id": "business_ticket",
+      "section": "Business",
+      "prompt": "Average ticket size per customer?",
+      "input": "text"
+    }
+  ]'::jsonb,
   updated_at = now()
 WHERE id = 1;

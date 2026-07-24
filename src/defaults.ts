@@ -52,3 +52,16 @@ export const DEFAULT_CHAMPION_STATUS_TO_STAGE: Record<string, string | null> = {
   'Follow-up Required': 'Follow-up',
   Rejected: 'Not Interested',
 }
+
+/** Instance discovery questionnaire. Empty = hide Discovery section. */
+export type DiscoveryInputType = 'text' | 'textarea' | 'number'
+
+export interface DiscoveryQuestion {
+  id: string
+  section: string
+  prompt: string
+  input: DiscoveryInputType
+}
+
+export const DEFAULT_DISCOVERY_QUESTIONS: DiscoveryQuestion[] = []
+

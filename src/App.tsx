@@ -20,12 +20,45 @@ const SdrActivity = lazy(() =>
 )
 
 const ADMIN_ONLY_PAGES: Page[] = ['activity', 'users', 'settings']
+const ALL_PAGES: Page[] = [
+  'dashboard',
+  'import',
+  'pipeline',
+  'contacts',
+  'activity',
+  'users',
+  'settings',
+]
+
+function readQuery(): { page: Page | null; companyId: string | null } {
+  const params = new URLSearchParams(window.location.search)
+  const rawPage = params.get('page')
+  const page =
+    rawPage && (ALL_PAGES as string[]).includes(rawPage) ? (rawPage as Page) : null
+  const companyId = params.get('companyId')
+  return { page, companyId: companyId || null }
+}
+
+function writeQuery(page: Page, companyId: string | null) {
+  const params = new URLSearchParams()
+  params.set('page', page)
+  if (companyId) params.set('companyId', companyId)
+  const next = `${window.location.pathname}?${params.toString()}`
+  const current = `${window.location.pathname}${window.location.search}`
+  if (next !== current) {
+    window.history.replaceState(null, '', next)
+  }
+}
 
 export default function App() {
   const auth = useAuth()
   const store = useCrmStore(!!auth.user, auth.user?.role)
-  const [page, setPage] = useState<Page>('dashboard')
+  const initialQuery = readQuery()
+  const [page, setPage] = useState<Page>(initialQuery.page ?? 'dashboard')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [openCompanyId, setOpenCompanyId] = useState<string | null>(
+    initialQuery.companyId,
+  )
 
   const manageUsers = canManageUsers(auth.user?.role)
   const config = auth.config
@@ -39,20 +72,50 @@ export default function App() {
       if (ADMIN_ONLY_PAGES.includes(next) && !canManageUsers(auth.user?.role)) {
         setPage('dashboard')
         setMenuOpen(false)
+        writeQuery('dashboard', null)
         return
       }
       setPage(next)
       setMenuOpen(false)
+      writeQuery(next, next === 'pipeline' ? openCompanyId : null)
     },
-    [auth.user?.role],
+    [auth.user?.role, openCompanyId],
   )
 
   useEffect(() => {
     if (!auth.user) return
     if (ADMIN_ONLY_PAGES.includes(page) && !canManageUsers(auth.user.role)) {
       setPage('dashboard')
+      writeQuery('dashboard', null)
     }
   }, [auth.user, page])
+
+  // Deep-link: ?page=pipeline&companyId=... (new tab from contact Open company)
+  useEffect(() => {
+    if (!auth.user || store.loading) return
+    const { page: qPage, companyId } = readQuery()
+    if (qPage) {
+      if (ADMIN_ONLY_PAGES.includes(qPage) && !canManageUsers(auth.user.role)) {
+        setPage('dashboard')
+        return
+      }
+      setPage(qPage)
+    }
+    if (companyId) {
+      setPage('pipeline')
+      setOpenCompanyId(companyId)
+    }
+  }, [auth.user, store.loading])
+
+  useEffect(() => {
+    const onPop = () => {
+      const { page: qPage, companyId } = readQuery()
+      if (qPage) setPage(qPage)
+      setOpenCompanyId(companyId)
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
 
   if (!auth.ready) {
     return (
@@ -166,7 +229,16 @@ export default function App() {
         ) : null}
         {page === 'import' ? <ImportLeads store={store} /> : null}
         {page === 'pipeline' ? (
-          <Pipeline store={store} stages={config.stages} />
+          <Pipeline
+            store={store}
+            stages={config.stages}
+            discoveryQuestions={config.discoveryQuestions}
+            openCompanyId={openCompanyId}
+            onOpenCompanyIdConsumed={() => setOpenCompanyId(null)}
+            onEditingCompanyChange={(companyId) => {
+              writeQuery('pipeline', companyId)
+            }}
+          />
         ) : null}
         {page === 'contacts' ? (
           <Contacts store={store} contactStatuses={config.contactStatuses} stages={config.stages} />

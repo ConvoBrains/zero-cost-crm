@@ -18,6 +18,7 @@ function company(partial: Partial<Company> & Pick<Company, 'id' | 'companyName' 
     sourceLink: '',
     companyWebsite: '',
     linkedInCompany: '',
+    discoveryAnswers: {},
     createdAt: '2026-01-01T00:00:00.000Z',
     ...partial,
   }

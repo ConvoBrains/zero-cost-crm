@@ -46,3 +46,9 @@ SELECT
     "No Answer": null, "Follow-up Required": "Follow-up", "Rejected": "Not Interested"
   }'::jsonb
 WHERE NOT EXISTS (SELECT 1 FROM app_settings WHERE id = 1);
+
+ALTER TABLE app_settings
+  ADD COLUMN IF NOT EXISTS discovery_questions JSONB NOT NULL DEFAULT '[]'::jsonb;
+
+ALTER TABLE companies
+  ADD COLUMN IF NOT EXISTS discovery_answers JSONB NOT NULL DEFAULT '{}'::jsonb;

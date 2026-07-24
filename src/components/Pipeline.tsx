@@ -11,7 +11,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { Company, Contact, PipelineView, Stage } from '../types'
 import type { CrmStore } from '../hooks/useCrmStore'
 import { PIPELINE_VIEWS, filterCompanies, intentColor, stageAccent } from '../lib/views'
@@ -23,6 +23,10 @@ import { Modal, btnPrimary } from './ui'
 interface PipelineProps {
   store: CrmStore
   stages: string[]
+  discoveryQuestions?: import('../types').DiscoveryQuestion[]
+  openCompanyId?: string | null
+  onOpenCompanyIdConsumed?: () => void
+  onEditingCompanyChange?: (companyId: string | null) => void
 }
 
 function resolveDropStage(
@@ -219,7 +223,14 @@ function KanbanColumn({
   )
 }
 
-export function Pipeline({ store, stages }: PipelineProps) {
+export function Pipeline({
+  store,
+  stages,
+  discoveryQuestions = [],
+  openCompanyId = null,
+  onOpenCompanyIdConsumed,
+  onEditingCompanyChange,
+}: PipelineProps) {
   const [view, setView] = useState<PipelineView>('All Companies')
   const [editing, setEditing] = useState<Company | null>(null)
   const [creating, setCreating] = useState(false)
@@ -227,8 +238,24 @@ export function Pipeline({ store, stages }: PipelineProps) {
 
   const openCompany = (c: Company) => {
     setEditing(c)
+    onEditingCompanyChange?.(c.id)
     logViewEvent('company.opened', c.id, c.companyName)
   }
+
+  const closeEditing = () => {
+    setEditing(null)
+    onEditingCompanyChange?.(null)
+  }
+
+  useEffect(() => {
+    if (!openCompanyId) return
+    const company = store.companies.find((c) => c.id === openCompanyId)
+    if (company) {
+      setEditing(company)
+      logViewEvent('company.opened', company.id, company.companyName)
+    }
+    onOpenCompanyIdConsumed?.()
+  }, [openCompanyId, store.companies, onOpenCompanyIdConsumed])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -349,13 +376,18 @@ export function Pipeline({ store, stages }: PipelineProps) {
       </DndContext>
 
       <Modal open={creating} title="Add company" onClose={() => setCreating(false)} wide>
-        <CompanyForm store={store} stages={stages} onDone={() => setCreating(false)} />
+        <CompanyForm
+          store={store}
+          stages={stages}
+          discoveryQuestions={discoveryQuestions}
+          onDone={() => setCreating(false)}
+        />
       </Modal>
 
       <Modal
         open={!!editing}
         title={editing?.companyName ?? 'Edit company'}
-        onClose={() => setEditing(null)}
+        onClose={closeEditing}
         wide
       >
         {editing ? (
@@ -363,8 +395,9 @@ export function Pipeline({ store, stages }: PipelineProps) {
             key={editing.id}
             store={store}
             stages={stages}
+            discoveryQuestions={discoveryQuestions}
             initial={editing}
-            onDone={() => setEditing(null)}
+            onDone={closeEditing}
           />
         ) : null}
       </Modal>

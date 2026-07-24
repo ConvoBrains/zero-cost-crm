@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS companies (
   source_link            TEXT,
   company_website        TEXT,
   linkedin_company       TEXT,
+  discovery_answers      JSONB NOT NULL DEFAULT '{}'::jsonb,
   created_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at             TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -103,6 +104,7 @@ CREATE TABLE IF NOT EXISTS app_settings (
   stages                     JSONB NOT NULL DEFAULT '[]'::jsonb,
   contact_statuses           JSONB NOT NULL DEFAULT '[]'::jsonb,
   champion_status_to_stage   JSONB NOT NULL DEFAULT '{}'::jsonb,
+  discovery_questions        JSONB NOT NULL DEFAULT '[]'::jsonb,
   updated_at                 TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -160,6 +162,12 @@ SELECT
     "Rejected": "Not Interested"
   }'::jsonb
 WHERE NOT EXISTS (SELECT 1 FROM app_settings WHERE id = 1);
+
+ALTER TABLE app_settings
+  ADD COLUMN IF NOT EXISTS discovery_questions JSONB NOT NULL DEFAULT '[]'::jsonb;
+
+ALTER TABLE companies
+  ADD COLUMN IF NOT EXISTS discovery_answers JSONB NOT NULL DEFAULT '{}'::jsonb;
 
 -- ─── Daily import staging ──────────────────────────────────────────────────
 

@@ -2,9 +2,11 @@ export {
   DEFAULT_BRAND_NAME,
   DEFAULT_BRAND_TAGLINE,
   DEFAULT_CONTACT_STATUSES,
+  DEFAULT_DISCOVERY_QUESTIONS,
   DEFAULT_LOGO_URL,
   DEFAULT_STAGES,
 } from './defaults.js'
+export type { DiscoveryInputType, DiscoveryQuestion } from './defaults.js'
 
 /** @deprecated Prefer instance settings from GET /api/config — kept as default lists. */
 export { DEFAULT_STAGES as STAGES, DEFAULT_CONTACT_STATUSES as CONTACT_STATUSES } from './defaults.js'
@@ -46,6 +48,8 @@ export interface Company {
   sourceLink: string
   companyWebsite: string
   linkedInCompany: string
+  /** questionId → answer string */
+  discoveryAnswers: Record<string, string>
   createdAt: string
 }
 
@@ -175,6 +179,7 @@ export interface AppConfig {
   stages: string[]
   contactStatuses: string[]
   championStatusToStage: Record<string, string | null>
+  discoveryQuestions: import('./defaults.js').DiscoveryQuestion[]
   allowedEmailDomain: string | null
   allowedEmailDomains: string[]
   allowAnyEmailDomain: boolean

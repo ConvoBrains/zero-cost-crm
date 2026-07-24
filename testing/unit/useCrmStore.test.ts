@@ -30,6 +30,7 @@ function makeCompany(overrides: Partial<Company> = {}): Company {
     sourceLink: '',
     companyWebsite: '',
     linkedInCompany: '',
+    discoveryAnswers: {},
     createdAt: '2026-01-01T00:00:00',
     ...overrides,
   }

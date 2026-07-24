@@ -1,5 +1,5 @@
 /**
- * Instance settings (branding, pipeline stages, contact statuses).
+ * Instance settings (branding, pipeline stages, contact statuses, discovery Qs).
  * Stored in `app_settings` so Zero Cost CRM stays generic across deploys.
  */
 
@@ -9,8 +9,11 @@ import {
   DEFAULT_BRAND_TAGLINE,
   DEFAULT_CHAMPION_STATUS_TO_STAGE,
   DEFAULT_CONTACT_STATUSES,
+  DEFAULT_DISCOVERY_QUESTIONS,
   DEFAULT_LOGO_URL,
   DEFAULT_STAGES,
+  type DiscoveryInputType,
+  type DiscoveryQuestion,
 } from '../src/defaults.js'
 
 export interface AppSettings {
@@ -20,6 +23,7 @@ export interface AppSettings {
   stages: string[]
   contactStatuses: string[]
   championStatusToStage: Record<string, string | null>
+  discoveryQuestions: DiscoveryQuestion[]
   updatedAt: string | null
 }
 
@@ -53,6 +57,29 @@ function asChampionMap(
   return Object.keys(out).length ? out : { ...DEFAULT_CHAMPION_STATUS_TO_STAGE }
 }
 
+const INPUT_TYPES = new Set<DiscoveryInputType>(['text', 'textarea', 'number'])
+
+export function asDiscoveryQuestions(value: unknown): DiscoveryQuestion[] {
+  if (!Array.isArray(value)) return [...DEFAULT_DISCOVERY_QUESTIONS]
+  const out: DiscoveryQuestion[] = []
+  const seen = new Set<string>()
+  for (const raw of value) {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue
+    const row = raw as Record<string, unknown>
+    const id = typeof row.id === 'string' ? row.id.trim() : ''
+    const section = typeof row.section === 'string' ? row.section.trim() : ''
+    const prompt = typeof row.prompt === 'string' ? row.prompt.trim() : ''
+    const inputRaw = typeof row.input === 'string' ? row.input.trim() : 'text'
+    const input = (INPUT_TYPES.has(inputRaw as DiscoveryInputType)
+      ? inputRaw
+      : 'text') as DiscoveryInputType
+    if (!id || !section || !prompt || seen.has(id)) continue
+    seen.add(id)
+    out.push({ id, section, prompt, input })
+  }
+  return out
+}
+
 function rowToSettings(row: Record<string, unknown>): AppSettings {
   return {
     brandName: String(row.brand_name ?? DEFAULT_BRAND_NAME),
@@ -61,6 +88,7 @@ function rowToSettings(row: Record<string, unknown>): AppSettings {
     stages: asStringArray(row.stages, DEFAULT_STAGES),
     contactStatuses: asStringArray(row.contact_statuses, DEFAULT_CONTACT_STATUSES),
     championStatusToStage: asChampionMap(row.champion_status_to_stage),
+    discoveryQuestions: asDiscoveryQuestions(row.discovery_questions),
     updatedAt: row.updated_at ? String(row.updated_at) : null,
   }
 }
@@ -73,6 +101,7 @@ function defaultSettingsFromEnv(): AppSettings {
     stages: [...DEFAULT_STAGES],
     contactStatuses: [...DEFAULT_CONTACT_STATUSES],
     championStatusToStage: { ...DEFAULT_CHAMPION_STATUS_TO_STAGE },
+    discoveryQuestions: [...DEFAULT_DISCOVERY_QUESTIONS],
     updatedAt: null,
   }
 }
@@ -97,10 +126,10 @@ export async function ensureAppSettings(): Promise<AppSettings> {
     `
     INSERT INTO app_settings (
       id, brand_name, brand_tagline, logo_url,
-      stages, contact_statuses, champion_status_to_stage
+      stages, contact_statuses, champion_status_to_stage, discovery_questions
     ) VALUES (
       1, $1, $2, $3,
-      $4::jsonb, $5::jsonb, $6::jsonb
+      $4::jsonb, $5::jsonb, $6::jsonb, $7::jsonb
     )
     ON CONFLICT (id) DO NOTHING
     `,
@@ -111,6 +140,7 @@ export async function ensureAppSettings(): Promise<AppSettings> {
       JSON.stringify(seed.stages),
       JSON.stringify(seed.contactStatuses),
       JSON.stringify(seed.championStatusToStage),
+      JSON.stringify(seed.discoveryQuestions),
     ],
   )
 
@@ -133,6 +163,7 @@ export interface SettingsPatch {
   stages?: string[]
   contactStatuses?: string[]
   championStatusToStage?: Record<string, string | null>
+  discoveryQuestions?: DiscoveryQuestion[]
 }
 
 function validateNonEmptyStrings(label: string, values: string[]): string | null {
@@ -153,6 +184,7 @@ export async function updateAppSettings(patch: SettingsPatch): Promise<AppSettin
     stages: patch.stages ?? current.stages,
     contactStatuses: patch.contactStatuses ?? current.contactStatuses,
     championStatusToStage: patch.championStatusToStage ?? current.championStatusToStage,
+    discoveryQuestions: patch.discoveryQuestions ?? current.discoveryQuestions,
     updatedAt: current.updatedAt,
   }
 
@@ -179,6 +211,7 @@ export async function updateAppSettings(patch: SettingsPatch): Promise<AppSettin
       stages = $4::jsonb,
       contact_statuses = $5::jsonb,
       champion_status_to_stage = $6::jsonb,
+      discovery_questions = $7::jsonb,
       updated_at = now()
     WHERE id = 1
     RETURNING *
@@ -190,6 +223,7 @@ export async function updateAppSettings(patch: SettingsPatch): Promise<AppSettin
       JSON.stringify(next.stages),
       JSON.stringify(next.contactStatuses),
       JSON.stringify(next.championStatusToStage),
+      JSON.stringify(next.discoveryQuestions),
     ],
   )
 
@@ -199,13 +233,10 @@ export async function updateAppSettings(patch: SettingsPatch): Promise<AppSettin
   return cache
 }
 
-export function isAllowedStage(settings: AppSettings, value: unknown): value is string {
-  return typeof value === 'string' && settings.stages.includes(value)
+export function isAllowedStage(settings: AppSettings, stage: string): boolean {
+  return settings.stages.includes(stage)
 }
 
-export function isAllowedContactStatus(
-  settings: AppSettings,
-  value: unknown,
-): value is string {
-  return typeof value === 'string' && settings.contactStatuses.includes(value)
+export function isAllowedContactStatus(settings: AppSettings, status: string): boolean {
+  return settings.contactStatuses.includes(status)
 }
