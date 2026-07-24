@@ -54,8 +54,8 @@ chmod +x scripts/local-against-live.sh
 
 This runs (crm-role safe — full `schema.sql` may fail on postgres-owned indexes):
 
-1. `sql/examples/live-rds-cutover.sql` — drop contact status CHECK, create `app_settings`
-2. `sql/examples/convobrains-settings.sql` — brand + full IntCRM contact statuses
+1. `sql/examples/live-rds-cutover.sql` — drop contact status CHECK, create `app_settings`, add `discovery_questions` / `discovery_answers`
+2. `sql/examples/convobrains-settings.sql` — brand + full IntCRM contact statuses + discovery questionnaire
 3. Prints counts: users / companies / contacts / brand / status count
 
 **Note:** `companies_stage_check` stays (postgres-owned). Default stages already match, so pipeline is fine.
