@@ -22,6 +22,12 @@ export function useIdleSession({ enabled, onIdleLogout }: Options) {
       return
     }
 
+    // Idle clock must start when the authenticated session starts — not when
+    // the login page mounted. Otherwise sitting on login > IDLE_MS then signing
+    // in triggers an immediate idle logout (hard reload "fixes" it by remounting).
+    lastActive.current = Date.now()
+    setWarnSeconds(null)
+
     const bump = () => {
       lastActive.current = Date.now()
       setWarnSeconds(null)
