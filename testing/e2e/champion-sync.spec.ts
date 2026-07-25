@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
-import { loginAsFounder, navTo } from './helpers'
+import { loginAsFounder, navTo, showAllContacts } from './helpers'
 
 /**
  * Issue #29 — a champion contact's status change auto-moves its company on the Kanban,
@@ -64,7 +64,7 @@ async function addContact(
 
 async function openContact(page: Page, name: string) {
   await navTo(page, 'Contacts')
-  await page.getByRole('button', { name: /All Contacts/ }).click()
+  await showAllContacts(page)
   await page.locator('main table').getByText(name).first().click()
   await expect(page.getByRole('heading', { name })).toBeVisible()
 }

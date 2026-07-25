@@ -112,6 +112,39 @@ export type ContactView =
   | 'Future Follow-up'
   | 'Rejected'
 
+/** Smart date-logic queue for the Contacts page — replaces the old "Today" tab group. */
+export type ContactQueue =
+  | 'all'
+  | 'to-call-today'
+  | 'follow-up-today'
+  | 'overdue'
+  | 'didnt-pick-yesterday'
+
+/** Time window applied to `contact.createdAt` for the Contacts page filter bar + lead insights. */
+export type ContactDateRange = 'all' | 'this-week' | 'this-month' | 'last-30-days'
+
+export type ContactSortKey =
+  | 'contactName'
+  | 'companyName'
+  | 'contactStatus'
+  | 'stage'
+  | 'nextFollowUp'
+  | 'lastContacted'
+  | 'createdAt'
+
+export type SortDirection = 'asc' | 'desc'
+
+/** Composable filter state for the Contacts page (search + dropdowns, replaces the 18-tab system). */
+export interface ContactFilters {
+  search: string
+  queue: ContactQueue
+  statuses: string[]
+  companyId: string | null
+  stages: string[]
+  championOnly: boolean
+  dateRange: ContactDateRange
+}
+
 /** One row from the daily prospect paste (Excel / Sheets / LinkedIn export). */
 export interface ProspectRow {
   company: string

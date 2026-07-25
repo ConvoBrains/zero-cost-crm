@@ -47,3 +47,12 @@ export async function loginAsSdr(page: Page) {
 export async function navTo(page: Page, label: string) {
   await page.locator('aside:visible').getByRole('button', { name: new RegExp(label) }).click()
 }
+
+/**
+ * Contacts page defaults to Queue = "To Call Today". Select Queue → All so the
+ * full table is visible (replaces the old "All Contacts" tab).
+ */
+export async function showAllContacts(page: Page) {
+  await page.getByTestId('contact-filter-queue').click()
+  await page.getByRole('option', { name: 'All', exact: true }).click()
+}
