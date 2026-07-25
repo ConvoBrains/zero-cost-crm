@@ -4,7 +4,7 @@ import {
   formatFieldChangeSummary,
   noteSnippet,
   normalizeActivityValue,
-} from '../../server/activity'
+} from '../../server/activityFields'
 
 describe('activity field change helpers', () => {
   it('normalizes empty and dates', () => {
