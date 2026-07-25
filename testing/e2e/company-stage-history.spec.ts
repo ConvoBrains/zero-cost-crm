@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
-import { loginAsFounder, navTo } from './helpers'
+import { loginAsFounder, navTo, showAllContacts } from './helpers'
 
 const cardSelector = (companyId: string) =>
   `[data-testid="company-card"][data-company-id="${companyId}"]`
@@ -40,7 +40,7 @@ async function addContact(
 
 async function openContact(page: Page, name: string) {
   await navTo(page, 'Contacts')
-  await page.getByRole('button', { name: /All Contacts/ }).click()
+  await showAllContacts(page)
   await page.locator('main table').getByText(name).first().click()
   await expect(page.getByRole('heading', { name })).toBeVisible()
 }

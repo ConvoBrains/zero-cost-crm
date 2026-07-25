@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { loginAsFounder, navTo } from './helpers'
+import { loginAsFounder, navTo, showAllContacts } from './helpers'
 
 test.describe('CRM flows (UI)', () => {
   test('pipeline shows seeded companies', async ({ page }) => {
@@ -14,7 +14,7 @@ test.describe('CRM flows (UI)', () => {
     await loginAsFounder(page)
     await navTo(page, 'Contacts')
     await expect(page.getByRole('heading', { name: 'Contacts' })).toBeVisible()
-    await page.getByRole('button', { name: /All Contacts/ }).click()
+    await showAllContacts(page)
     await expect(page.locator('main table').getByText('Alex Example').first()).toBeVisible()
   })
 

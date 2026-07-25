@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
-import { loginAsFounder, navTo } from './helpers'
+import { loginAsFounder, navTo, showAllContacts } from './helpers'
 
 /** Inner name button on a kanban card (not the outer dnd-kit drag handle). */
 function companyCard(page: Page, name: string | RegExp) {
@@ -89,14 +89,14 @@ test.describe('Click behaviours (UI)', () => {
     await page.getByLabel('Email', { exact: true }).fill(`click.${stamp}@seed.example`)
     await page.getByRole('button', { name: 'Add contact', exact: true }).click()
 
-    await page.getByRole('button', { name: /All Contacts/ }).click()
+    await showAllContacts(page)
     await expect(page.locator('main table').getByText(name)).toBeVisible()
   })
 
   test('editing a contact status updates the table', async ({ page }) => {
     await loginAsFounder(page)
     await navTo(page, 'Contacts')
-    await page.getByRole('button', { name: /All Contacts/ }).click()
+    await showAllContacts(page)
 
     await page.locator('main table').getByText('Jordan Sample').first().click()
     await expect(page.getByRole('heading', { name: 'Jordan Sample' })).toBeVisible()
