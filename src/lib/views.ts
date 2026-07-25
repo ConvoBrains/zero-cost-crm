@@ -1,12 +1,11 @@
 import type {
   PipelineView,
   Stage,
-  ContactView,
   ContactStatus,
   ContactFilters,
   ContactDateRange,
-  ContactSortKey,
-  SortDirection,
+  PipelineFilters,
+  PipelineDateRange,
   Company,
   Contact,
 } from '../types'
@@ -38,12 +37,6 @@ const TERMINAL_STATUSES: ContactStatus[] = [
   'Connected - DQ Company (Bad Fit)',
 ]
 
-const NOT_ICP_DQ_STATUSES: ContactStatus[] = [
-  'Connected - Information Gathered (Not ICP)',
-  'Connected - DQ Prospect (Not ICP)',
-  'Connected - DQ Company (Bad Fit)',
-]
-
 export function isoDateOffset(days: number, now = new Date()): string {
   const d = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   d.setDate(d.getDate() + days)
@@ -67,61 +60,6 @@ function isDidntPick(status: ContactStatus): boolean {
 
 function isActiveContact(contact: Contact): boolean {
   return !TERMINAL_STATUSES.includes(contact.contactStatus)
-}
-
-export const CONTACT_VIEW_GROUPS: { label: string; views: ContactView[] }[] = [
-  {
-    label: 'Today',
-    views: ['To Call Today', 'Follow-up Today', 'Overdue', "Didn't Pick Yesterday"],
-  },
-  {
-    label: 'Outreach',
-    views: [
-      'Not Contacted',
-      "Didn't Pick",
-      'Wrong/Bad Number',
-      'Got Referral',
-      'Wrong Person',
-      'Send Email',
-      'Send WhatsApp',
-    ],
-  },
-  {
-    label: 'Pipeline',
-    views: [
-      'Discovery Booked',
-      'Interested',
-      'Champions',
-      'Future Follow-up',
-      'Not ICP / DQ',
-      'Rejected',
-      'All Contacts',
-    ],
-  },
-]
-
-export const CONTACT_VIEWS: ContactView[] = CONTACT_VIEW_GROUPS.flatMap((g) => g.views)
-
-export const CONTACT_VIEW_HINTS: Record<ContactView, string> = {
-  'All Contacts': 'Everyone in the database.',
-  'To Call Today':
-    'Your call queue: fresh leads, follow-ups due, and retries from yesterday’s no-answers.',
-  'Follow-up Today': 'Contacts with next follow-up scheduled for today.',
-  Overdue: 'Follow-up date has passed — call these first.',
-  "Didn't Pick Yesterday": 'No answer yesterday — try again today.',
-  'Not Contacted': 'Never called yet.',
-  "Didn't Pick": 'All no-answer contacts (any date).',
-  'Wrong/Bad Number': 'Invalid or bad phone numbers — find a better number.',
-  'Got Referral': 'They gave you another name — add the referral and call.',
-  'Wrong Person': 'Wrong stakeholder — find the right contact at this company.',
-  'Send Email': 'Connected — asked to be emailed.',
-  'Send WhatsApp': 'Connected — asked for a WhatsApp message.',
-  'Discovery Booked': 'Connected — discovery call booked.',
-  'Not ICP / DQ': 'Connected but not ICP, or DQ’d prospect/company.',
-  Interested: 'Showed interest — push toward champion / discovery.',
-  Champions: 'Primary buyers marked as champion on their company.',
-  'Future Follow-up': 'Scheduled for a later call — check the follow-up date.',
-  Rejected: 'Not interested — skip unless re-engaging.',
 }
 
 export function filterCompanies(companies: Company[], view: PipelineView): Company[] {
@@ -152,103 +90,6 @@ export function filterCompanies(companies: Company[], view: PipelineView): Compa
       return companies.filter((c) => c.stage === 'Not Interested')
     default:
       return companies
-  }
-}
-
-export function filterContacts(contacts: Contact[], view: ContactView): Contact[] {
-  const today = todayIso()
-  const yesterday = yesterdayIso()
-
-  switch (view) {
-    case 'All Contacts':
-      return contacts
-    case 'To Call Today':
-      return contacts.filter((t) => {
-        if (!isActiveContact(t)) return false
-        if (t.contactStatus === 'Not Contacted') return true
-        if (t.nextFollowUp && t.nextFollowUp <= today) return true
-        if (isDidntPick(t.contactStatus) && t.lastContacted && t.lastContacted <= yesterday) {
-          return true
-        }
-        return false
-      })
-    case 'Follow-up Today':
-      return contacts.filter((t) => isActiveContact(t) && t.nextFollowUp === today)
-    case 'Overdue':
-      return contacts.filter(
-        (t) => isActiveContact(t) && !!t.nextFollowUp && t.nextFollowUp < today,
-      )
-    case "Didn't Pick Yesterday":
-      return contacts.filter(
-        (t) => isDidntPick(t.contactStatus) && t.lastContacted === yesterday,
-      )
-    case 'Not Contacted':
-      return contacts.filter((t) => t.contactStatus === 'Not Contacted')
-    case "Didn't Pick":
-      return contacts.filter((t) => isDidntPick(t.contactStatus))
-    case 'Got Referral':
-      return contacts.filter((t) => t.contactStatus === 'Connected - Got Referral')
-    case 'Wrong Person':
-      return contacts.filter((t) => t.contactStatus === 'Connected - Not Right Person')
-    case 'Wrong/Bad Number':
-      return contacts.filter((t) => t.contactStatus === 'Wrong/Bad Number')
-    case 'Send Email':
-      return contacts.filter((t) => t.contactStatus === 'Connected - Send Me an Email')
-    case 'Send WhatsApp':
-      return contacts.filter(
-        (t) => t.contactStatus === 'Connected - Send Me a WhatsApp Message',
-      )
-    case 'Discovery Booked':
-      return contacts.filter(
-        (t) => t.contactStatus === 'Connected - Booked a Discovery Call',
-      )
-    case 'Not ICP / DQ':
-      return contacts.filter((t) => NOT_ICP_DQ_STATUSES.includes(t.contactStatus))
-    case 'Interested':
-      return contacts.filter((t) => t.contactStatus === 'Interested')
-    case 'Champions':
-      return contacts.filter((t) => t.champion)
-    case 'Future Follow-up':
-      return contacts.filter(
-        (t) =>
-          t.contactStatus === 'Connected - Future Follow-up' ||
-          t.contactStatus === 'Follow-up Required' ||
-          t.contactStatus === 'Connected - Send Me an Email' ||
-          t.contactStatus === 'Connected - Send Me a WhatsApp Message' ||
-          (isActiveContact(t) && !!t.nextFollowUp && t.nextFollowUp > today),
-      )
-    case 'Rejected':
-      return contacts.filter((t) => t.contactStatus === 'Rejected')
-    default:
-      return contacts
-  }
-}
-
-export function sortContactsForView(contacts: Contact[], view: ContactView): Contact[] {
-  const sorted = [...contacts]
-  const byFollowUp = (a: Contact, b: Contact) => {
-    const af = a.nextFollowUp ?? '9999-12-31'
-    const bf = b.nextFollowUp ?? '9999-12-31'
-    if (af !== bf) return af.localeCompare(bf)
-    return a.contactName.localeCompare(b.contactName)
-  }
-  const byLastContacted = (a: Contact, b: Contact) => {
-    const af = a.lastContacted ?? ''
-    const bf = b.lastContacted ?? ''
-    if (af !== bf) return bf.localeCompare(af)
-    return a.contactName.localeCompare(b.contactName)
-  }
-
-  switch (view) {
-    case 'To Call Today':
-    case 'Follow-up Today':
-    case 'Overdue':
-      return sorted.sort(byFollowUp)
-    case "Didn't Pick Yesterday":
-    case "Didn't Pick":
-      return sorted.sort(byLastContacted)
-    default:
-      return sorted.sort((a, b) => a.contactName.localeCompare(b.contactName))
   }
 }
 
@@ -392,56 +233,6 @@ export function applyContactFilters(
   })
 }
 
-export function sortContactsByKey(
-  contacts: Contact[],
-  companies: Company[],
-  key: ContactSortKey,
-  direction: SortDirection,
-): Contact[] {
-  const companyById = new Map(companies.map((c) => [c.id, c]))
-  const mul = direction === 'asc' ? 1 : -1
-  const sorted = [...contacts]
-
-  sorted.sort((a, b) => {
-    let cmp = 0
-    switch (key) {
-      case 'contactName':
-        cmp = a.contactName.localeCompare(b.contactName)
-        break
-      case 'companyName': {
-        const an = companyById.get(a.companyId ?? '')?.companyName ?? ''
-        const bn = companyById.get(b.companyId ?? '')?.companyName ?? ''
-        cmp = an.localeCompare(bn)
-        break
-      }
-      case 'contactStatus':
-        cmp = a.contactStatus.localeCompare(b.contactStatus)
-        break
-      case 'stage': {
-        const as = companyById.get(a.companyId ?? '')?.stage ?? ''
-        const bs = companyById.get(b.companyId ?? '')?.stage ?? ''
-        cmp = as.localeCompare(bs)
-        break
-      }
-      case 'nextFollowUp':
-        cmp = (a.nextFollowUp ?? '9999-12-31').localeCompare(b.nextFollowUp ?? '9999-12-31')
-        break
-      case 'lastContacted':
-        cmp = (a.lastContacted ?? '').localeCompare(b.lastContacted ?? '')
-        break
-      case 'createdAt':
-        cmp = a.createdAt.localeCompare(b.createdAt)
-        break
-      default:
-        cmp = a.contactName.localeCompare(b.contactName)
-    }
-    if (cmp !== 0) return cmp * mul
-    return a.contactName.localeCompare(b.contactName)
-  })
-
-  return sorted
-}
-
 export interface ContactInsights {
   total: number
   contacted: number
@@ -524,6 +315,196 @@ export function contactFiltersAreActive(filters: ContactFilters): boolean {
     filters.championOnly ||
     filters.dateRange !== 'all'
   )
+}
+
+export const DEFAULT_PIPELINE_FILTERS: PipelineFilters = {
+  dateRange: 'all',
+  customFrom: null,
+  customTo: null,
+}
+
+export const PIPELINE_DATE_RANGE_OPTIONS: { value: PipelineDateRange; label: string }[] = [
+  { value: 'all', label: 'All Time' },
+  { value: 'this-week', label: 'This Week' },
+  { value: 'this-month', label: 'This Month' },
+  { value: 'last-30-days', label: 'Last 30 Days' },
+  { value: 'custom', label: 'Custom' },
+]
+
+/** Inclusive createdAt date bounds for pipeline filtering. */
+export function pipelineDateBounds(
+  filters: PipelineFilters,
+  now = new Date(),
+): { start: string | null; end: string | null } {
+  if (filters.dateRange === 'custom') {
+    const start = filters.customFrom?.trim() || null
+    const end = filters.customTo?.trim() || null
+    // No bounds set yet → do not restrict (show all until the user picks dates).
+    if (!start && !end) return { start: null, end: null }
+    return { start, end }
+  }
+  return { start: dateRangeStartIso(filters.dateRange, now), end: null }
+}
+
+function companyInDateBounds(
+  company: Company,
+  bounds: { start: string | null; end: string | null },
+): boolean {
+  const created = createdAtDate(company.createdAt)
+  if (bounds.start && created < bounds.start) return false
+  if (bounds.end && created > bounds.end) return false
+  return true
+}
+
+/** Pipeline view filter ∩ company.createdAt date window. */
+export function applyPipelineFilters(
+  companies: Company[],
+  view: PipelineView,
+  filters: PipelineFilters,
+  now = new Date(),
+): Company[] {
+  const byView = filterCompanies(companies, view)
+  const bounds = pipelineDateBounds(filters, now)
+  if (!bounds.start && !bounds.end) return byView
+  return byView.filter((c) => companyInDateBounds(c, bounds))
+}
+
+export interface PipelineInsights {
+  total: number
+  contacted: number
+  discoveryDone: number
+  demosScheduled: number
+  demosDelivered: number
+  proposalsShared: number
+  closedWon: number
+  closedLost: number
+  stageCounts: { stage: string; count: number }[]
+  /** Percent of cohort that reached each milestone (0–100). */
+  conversion: {
+    toDiscovery: number
+    toDemo: number
+    toWon: number
+  }
+  contactTotal: number
+  champions: number
+  statusCounts: { status: string; count: number }[]
+}
+
+function pct(part: number, whole: number): number {
+  if (whole <= 0) return 0
+  return Math.round((part / whole) * 100)
+}
+
+const DISCOVERY_OR_LATER = new Set([
+  'Discovery Call Done',
+  'Demo Scheduled',
+  'Demo Delivered',
+  'Commercial Proposal Shared',
+  'POC Kickoff',
+  'Client Data Received',
+  'POC Delivered',
+  'Final Negotiation',
+  'Closed Won',
+])
+
+const DEMO_OR_LATER = new Set([
+  'Demo Scheduled',
+  'Demo Delivered',
+  'Commercial Proposal Shared',
+  'POC Kickoff',
+  'Client Data Received',
+  'POC Delivered',
+  'Final Negotiation',
+  'Closed Won',
+])
+
+/** Aggregate pipeline progress for the (already filtered) company cohort. */
+export function buildPipelineInsights(
+  companies: Company[],
+  contacts: Contact[],
+  stageOrder: readonly string[] = [],
+): PipelineInsights {
+  const companyIds = new Set(companies.map((c) => c.id))
+  const stageMap = new Map<string, number>()
+
+  let contacted = 0
+  let discoveryDone = 0
+  let demosScheduled = 0
+  let demosDelivered = 0
+  let proposalsShared = 0
+  let closedWon = 0
+  let closedLost = 0
+  let reachedDiscovery = 0
+  let reachedDemo = 0
+
+  for (const c of companies) {
+    stageMap.set(c.stage, (stageMap.get(c.stage) ?? 0) + 1)
+    if (c.lastContacted) contacted += 1
+    if (c.stage === 'Discovery Call Done') discoveryDone += 1
+    if (c.stage === 'Demo Scheduled') demosScheduled += 1
+    if (c.stage === 'Demo Delivered') demosDelivered += 1
+    if (c.stage === 'Commercial Proposal Shared') proposalsShared += 1
+    if (c.stage === 'Closed Won') closedWon += 1
+    if (c.stage === 'Closed Lost' || c.stage === 'Not Interested') closedLost += 1
+    if (DISCOVERY_OR_LATER.has(c.stage)) reachedDiscovery += 1
+    if (DEMO_OR_LATER.has(c.stage)) reachedDemo += 1
+  }
+
+  const orderedStages =
+    stageOrder.length > 0
+      ? [
+          ...stageOrder.filter((s) => stageMap.has(s)),
+          ...[...stageMap.keys()].filter((s) => !stageOrder.includes(s)),
+        ]
+      : [...stageMap.keys()].sort()
+
+  const stageCounts = orderedStages.map((stage) => ({
+    stage,
+    count: stageMap.get(stage) ?? 0,
+  }))
+
+  const statusMap = new Map<string, number>()
+  let contactTotal = 0
+  let champions = 0
+  for (const t of contacts) {
+    if (!t.companyId || !companyIds.has(t.companyId)) continue
+    contactTotal += 1
+    if (t.champion) champions += 1
+    statusMap.set(t.contactStatus, (statusMap.get(t.contactStatus) ?? 0) + 1)
+  }
+
+  const statusCounts = [...statusMap.entries()]
+    .map(([status, count]) => ({ status, count }))
+    .sort((a, b) => b.count - a.count)
+
+  const total = companies.length
+  return {
+    total,
+    contacted,
+    discoveryDone,
+    demosScheduled,
+    demosDelivered,
+    proposalsShared,
+    closedWon,
+    closedLost,
+    stageCounts,
+    conversion: {
+      toDiscovery: pct(reachedDiscovery, total),
+      toDemo: pct(reachedDemo, total),
+      toWon: pct(closedWon, total),
+    },
+    contactTotal,
+    champions,
+    statusCounts,
+  }
+}
+
+export function pipelineFiltersAreActive(filters: PipelineFilters): boolean {
+  if (filters.dateRange === 'all') return false
+  if (filters.dateRange === 'custom') {
+    return !!(filters.customFrom?.trim() || filters.customTo?.trim())
+  }
+  return true
 }
 
 export function intentColor(intent: string): string {

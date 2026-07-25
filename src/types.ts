@@ -92,26 +92,6 @@ export type PipelineView =
   | 'Closed Lost'
   | 'Not Interested'
 
-export type ContactView =
-  | 'All Contacts'
-  | 'To Call Today'
-  | 'Follow-up Today'
-  | 'Overdue'
-  | "Didn't Pick Yesterday"
-  | 'Not Contacted'
-  | "Didn't Pick"
-  | 'Wrong/Bad Number'
-  | 'Got Referral'
-  | 'Wrong Person'
-  | 'Send Email'
-  | 'Send WhatsApp'
-  | 'Discovery Booked'
-  | 'Not ICP / DQ'
-  | 'Interested'
-  | 'Champions'
-  | 'Future Follow-up'
-  | 'Rejected'
-
 /** Smart date-logic queue for the Contacts page — replaces the old "Today" tab group. */
 export type ContactQueue =
   | 'all'
@@ -129,7 +109,6 @@ export type ContactSortKey =
   | 'contactStatus'
   | 'stage'
   | 'nextFollowUp'
-  | 'lastContacted'
   | 'createdAt'
 
 export type SortDirection = 'asc' | 'desc'
@@ -143,6 +122,22 @@ export interface ContactFilters {
   stages: string[]
   championOnly: boolean
   dateRange: ContactDateRange
+}
+
+/** Time window applied to `company.createdAt` for Sales Pipeline board + progress insights. */
+export type PipelineDateRange =
+  | 'all'
+  | 'this-week'
+  | 'this-month'
+  | 'last-30-days'
+  | 'custom'
+
+export interface PipelineFilters {
+  dateRange: PipelineDateRange
+  /** Inclusive YYYY-MM-DD when dateRange === 'custom'. */
+  customFrom: string | null
+  /** Inclusive YYYY-MM-DD when dateRange === 'custom'. */
+  customTo: string | null
 }
 
 /** One row from the daily prospect paste (Excel / Sheets / LinkedIn export). */
