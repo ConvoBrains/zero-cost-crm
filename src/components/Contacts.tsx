@@ -262,7 +262,7 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
         />
       </div>
 
-      <div className="flex gap-1.5 overflow-x-auto pb-1 kanban-scroll">
+      <div className="flex flex-wrap gap-1.5 pb-1">
         <FilterDropdown
           data-testid="contact-filter-queue"
           label="Queue"

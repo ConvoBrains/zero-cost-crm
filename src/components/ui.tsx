@@ -1,5 +1,6 @@
-import { useEffect, useId, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import type { CSSProperties, ReactNode } from 'react'
 
 interface ModalProps {
   open: boolean
@@ -151,23 +152,71 @@ export function FilterDropdown({
 }: FilterDropdownProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
+  const [panelStyle, setPanelStyle] = useState<CSSProperties>({})
   const rootRef = useRef<HTMLDivElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
   const selected = Array.isArray(value) ? value : [String(value)]
+
+  const updatePosition = () => {
+    const btn = buttonRef.current
+    if (!btn) return
+    const rect = btn.getBoundingClientRect()
+    const width = Math.max(rect.width, 256)
+    const spaceBelow = window.innerHeight - rect.bottom
+    const openUp = spaceBelow < 280 && rect.top > spaceBelow
+    const maxHeight = Math.min(256, openUp ? rect.top - 12 : spaceBelow - 12)
+    let left = rect.left
+    if (left + width > window.innerWidth - 8) {
+      left = Math.max(8, window.innerWidth - width - 8)
+    }
+    setPanelStyle({
+      position: 'fixed',
+      left,
+      width,
+      maxHeight: Math.max(120, maxHeight),
+      zIndex: 80,
+      ...(openUp
+        ? { bottom: window.innerHeight - rect.top + 4 }
+        : { top: rect.bottom + 4 }),
+    })
+  }
+
+  useLayoutEffect(() => {
+    if (!open) return
+    updatePosition()
+  }, [open, options.length, query])
 
   useEffect(() => {
     if (!open) return
     const onDoc = (e: MouseEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false)
+      const target = e.target as Node
+      if (rootRef.current?.contains(target)) return
+      if (panelRef.current?.contains(target)) return
+      setOpen(false)
     }
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false)
     }
-    document.addEventListener('mousedown', onDoc)
+    const onReposition = () => updatePosition()
+    // Defer outside-close so the opening click never immediately closes the panel.
+    const timer = window.setTimeout(() => {
+      document.addEventListener('mousedown', onDoc)
+    }, 0)
     document.addEventListener('keydown', onKey)
+    window.addEventListener('resize', onReposition)
+    window.addEventListener('scroll', onReposition, true)
     return () => {
+      window.clearTimeout(timer)
       document.removeEventListener('mousedown', onDoc)
       document.removeEventListener('keydown', onKey)
+      window.removeEventListener('resize', onReposition)
+      window.removeEventListener('scroll', onReposition, true)
     }
+  }, [open])
+
+  useEffect(() => {
+    if (!open) setQuery('')
   }, [open])
 
   const filtered = searchable
@@ -197,14 +246,80 @@ export function FilterDropdown({
     setOpen(false)
   }
 
+  const panel =
+    open && typeof document !== 'undefined'
+      ? createPortal(
+          <div
+            ref={panelRef}
+            role="listbox"
+            data-testid={testId ? `${testId}-panel` : undefined}
+            aria-multiselectable={multi || undefined}
+            style={panelStyle}
+            className="overflow-auto border border-[var(--color-line)] bg-white shadow-lg"
+          >
+            {searchable ? (
+              <div className="sticky top-0 border-b border-[var(--color-line)] bg-white p-2">
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search…"
+                  className={`${inputClass} py-1.5 text-xs`}
+                  autoFocus
+                />
+              </div>
+            ) : null}
+            {filtered.length === 0 ? (
+              <p className="px-3 py-2 text-xs text-stone-400">No matches</p>
+            ) : (
+              filtered.map((opt) => {
+                const isOn = selected.includes(opt.value)
+                return (
+                  <button
+                    key={opt.value || '__all__'}
+                    type="button"
+                    role="option"
+                    aria-selected={isOn}
+                    onClick={() => toggle(opt.value)}
+                    className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition hover:bg-teal-50 ${
+                      isOn ? 'bg-teal-50/80 font-medium text-teal-900' : 'text-stone-700'
+                    }`}
+                  >
+                    {multi ? (
+                      <span
+                        aria-hidden
+                        className={`inline-flex h-3.5 w-3.5 items-center justify-center border text-[9px] ${
+                          isOn
+                            ? 'border-teal-700 bg-teal-700 text-white'
+                            : 'border-stone-300 bg-white'
+                        }`}
+                      >
+                        {isOn ? '✓' : ''}
+                      </span>
+                    ) : null}
+                    <span className="min-w-0 truncate">{opt.label}</span>
+                  </button>
+                )
+              })
+            )}
+          </div>,
+          document.body,
+        )
+      : null
+
   return (
     <div ref={rootRef} className="relative shrink-0">
       <button
+        ref={buttonRef}
         type="button"
         data-testid={testId}
         aria-expanded={open}
         aria-haspopup="listbox"
-        onClick={() => setOpen((v) => !v)}
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          setOpen((v) => !v)
+        }}
         className={`inline-flex items-center gap-1.5 rounded-none px-3 py-1.5 text-xs font-medium transition ${
           active
             ? 'bg-teal-700 text-white'
@@ -217,59 +332,7 @@ export function FilterDropdown({
           ▾
         </span>
       </button>
-      {open ? (
-        <div
-          role="listbox"
-          aria-multiselectable={multi || undefined}
-          className="absolute top-full left-0 z-30 mt-1 max-h-64 w-64 overflow-auto border border-[var(--color-line)] bg-white shadow-sm"
-        >
-          {searchable ? (
-            <div className="sticky top-0 border-b border-[var(--color-line)] bg-white p-2">
-              <input
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search…"
-                className={`${inputClass} py-1.5 text-xs`}
-                autoFocus
-              />
-            </div>
-          ) : null}
-          {filtered.length === 0 ? (
-            <p className="px-3 py-2 text-xs text-stone-400">No matches</p>
-          ) : (
-            filtered.map((opt) => {
-              const isOn = selected.includes(opt.value)
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  role="option"
-                  aria-selected={isOn}
-                  onClick={() => toggle(opt.value)}
-                  className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition hover:bg-teal-50 ${
-                    isOn ? 'bg-teal-50/80 font-medium text-teal-900' : 'text-stone-700'
-                  }`}
-                >
-                  {multi ? (
-                    <span
-                      aria-hidden
-                      className={`inline-flex h-3.5 w-3.5 items-center justify-center border text-[9px] ${
-                        isOn
-                          ? 'border-teal-700 bg-teal-700 text-white'
-                          : 'border-stone-300 bg-white'
-                      }`}
-                    >
-                      {isOn ? '✓' : ''}
-                    </span>
-                  ) : null}
-                  <span className="min-w-0 truncate">{opt.label}</span>
-                </button>
-              )
-            })
-          )}
-        </div>
-      ) : null}
+      {panel}
     </div>
   )
 }
