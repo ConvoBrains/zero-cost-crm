@@ -188,9 +188,6 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
         case 'nextFollowUp':
           cmp = (a.nextFollowUp ?? '9999-12-31').localeCompare(b.nextFollowUp ?? '9999-12-31')
           break
-        case 'lastContacted':
-          cmp = (a.lastContacted ?? '').localeCompare(b.lastContacted ?? '')
-          break
         case 'createdAt':
           cmp = a.createdAt.localeCompare(b.createdAt)
           break
@@ -215,7 +212,7 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
     } else {
       setSortKey(key)
-      setSortDir(key === 'createdAt' || key === 'lastContacted' ? 'desc' : 'asc')
+      setSortDir(key === 'createdAt' ? 'desc' : 'asc')
     }
   }
 

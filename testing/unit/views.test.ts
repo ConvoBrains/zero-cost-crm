@@ -6,7 +6,6 @@ import {
   buildPipelineInsights,
   dateRangeStartIso,
   filterCompanies,
-  filterContacts,
   startOfMonthIso,
   startOfWeekIso,
   todayIso,
@@ -77,58 +76,6 @@ describe('filterCompanies', () => {
     expect(filterCompanies(companies, 'POC Running')).toHaveLength(1)
     expect(filterCompanies(companies, 'Closed Won')[0]?.id).toBe('4')
     expect(filterCompanies(companies, 'All Companies')).toHaveLength(4)
-  })
-})
-
-describe('filterContacts', () => {
-  const today = todayIso()
-  const yesterday = yesterdayIso()
-  const companyId = 'c1'
-
-  const contacts = [
-    contact({
-      id: '1',
-      companyId,
-      contactName: 'Fresh',
-      contactStatus: 'Not Contacted',
-    }),
-    contact({
-      id: '2',
-      companyId,
-      contactName: 'Due',
-      contactStatus: 'Follow-up Required',
-      nextFollowUp: today,
-    }),
-    contact({
-      id: '3',
-      companyId,
-      contactName: 'Late',
-      contactStatus: 'Interested',
-      nextFollowUp: '2000-01-01',
-    }),
-    contact({
-      id: '4',
-      companyId,
-      contactName: 'NoAns',
-      contactStatus: "Didn't Pick",
-      lastContacted: yesterday,
-    }),
-    contact({
-      id: '5',
-      companyId,
-      contactName: 'Champ',
-      contactStatus: 'Interested',
-      champion: true,
-    }),
-  ]
-
-  it('builds call queues and status views', () => {
-    expect(filterContacts(contacts, 'Not Contacted').map((c) => c.id)).toEqual(['1'])
-    expect(filterContacts(contacts, 'Follow-up Today').map((c) => c.id)).toEqual(['2'])
-    expect(filterContacts(contacts, 'Overdue').map((c) => c.id)).toEqual(['3'])
-    expect(filterContacts(contacts, "Didn't Pick Yesterday").map((c) => c.id)).toEqual(['4'])
-    expect(filterContacts(contacts, 'Champions').map((c) => c.id)).toEqual(['5'])
-    expect(filterContacts(contacts, 'To Call Today').length).toBeGreaterThanOrEqual(3)
   })
 })
 
