@@ -145,6 +145,22 @@ export interface ContactFilters {
   dateRange: ContactDateRange
 }
 
+/** Time window applied to `company.createdAt` for Sales Pipeline board + progress insights. */
+export type PipelineDateRange =
+  | 'all'
+  | 'this-week'
+  | 'this-month'
+  | 'last-30-days'
+  | 'custom'
+
+export interface PipelineFilters {
+  dateRange: PipelineDateRange
+  /** Inclusive YYYY-MM-DD when dateRange === 'custom'. */
+  customFrom: string | null
+  /** Inclusive YYYY-MM-DD when dateRange === 'custom'. */
+  customTo: string | null
+}
+
 /** One row from the daily prospect paste (Excel / Sheets / LinkedIn export). */
 export interface ProspectRow {
   company: string

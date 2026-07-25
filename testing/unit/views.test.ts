@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   applyContactFilters,
+  applyPipelineFilters,
   buildContactInsights,
+  buildPipelineInsights,
   dateRangeStartIso,
   filterCompanies,
   filterContacts,
@@ -10,7 +12,7 @@ import {
   todayIso,
   yesterdayIso,
 } from '../../src/lib/views'
-import type { Company, Contact, ContactFilters } from '../../src/types'
+import type { Company, Contact, ContactFilters, PipelineFilters } from '../../src/types'
 
 function company(partial: Partial<Company> & Pick<Company, 'id' | 'companyName' | 'stage'>): Company {
   return {
@@ -323,5 +325,132 @@ describe('buildContactInsights', () => {
       ]),
     )
     expect(insights.statusCounts[0]?.count).toBeGreaterThanOrEqual(1)
+  })
+})
+
+describe('applyPipelineFilters', () => {
+  const base: PipelineFilters = {
+    dateRange: 'all',
+    customFrom: null,
+    customTo: null,
+  }
+
+  const companies = [
+    company({
+      id: '1',
+      companyName: 'Fresh Lead',
+      stage: 'Lead Added',
+      createdAt: `${todayIso()}T10:00:00.000Z`,
+    }),
+    company({
+      id: '2',
+      companyName: 'Old Demo',
+      stage: 'Demo Scheduled',
+      createdAt: '2020-01-01T00:00:00.000Z',
+    }),
+    company({
+      id: '3',
+      companyName: 'Mid Follow',
+      stage: 'Follow-up',
+      createdAt: '2026-07-01T00:00:00.000Z',
+    }),
+  ]
+
+  it('applies pipeline view then date presets', () => {
+    expect(applyPipelineFilters(companies, 'All Companies', base)).toHaveLength(3)
+    expect(applyPipelineFilters(companies, 'New Leads', base).map((c) => c.id)).toEqual(['1'])
+    expect(
+      applyPipelineFilters(companies, 'All Companies', {
+        ...base,
+        dateRange: 'last-30-days',
+      }).map((c) => c.id),
+    ).toEqual(['1', '3'])
+  })
+
+  it('applies custom inclusive date bounds', () => {
+    expect(
+      applyPipelineFilters(companies, 'All Companies', {
+        dateRange: 'custom',
+        customFrom: '2026-07-01',
+        customTo: '2026-07-01',
+      }).map((c) => c.id),
+    ).toEqual(['3'])
+
+    // Custom with no dates yet → unrestricted
+    expect(
+      applyPipelineFilters(companies, 'All Companies', {
+        dateRange: 'custom',
+        customFrom: null,
+        customTo: null,
+      }),
+    ).toHaveLength(3)
+  })
+})
+
+describe('buildPipelineInsights', () => {
+  it('aggregates stage funnel, outcomes, conversions, and contacts', () => {
+    const companies = [
+      company({
+        id: 'c1',
+        companyName: 'A',
+        stage: 'Lead Added',
+        lastContacted: null,
+      }),
+      company({
+        id: 'c2',
+        companyName: 'B',
+        stage: 'Discovery Call Done',
+        lastContacted: '2026-07-20',
+      }),
+      company({
+        id: 'c3',
+        companyName: 'C',
+        stage: 'Demo Scheduled',
+        lastContacted: '2026-07-21',
+      }),
+      company({
+        id: 'c4',
+        companyName: 'D',
+        stage: 'Closed Won',
+        lastContacted: '2026-07-22',
+      }),
+    ]
+    const contacts = [
+      contact({
+        id: 't1',
+        companyId: 'c2',
+        contactName: 'Champ',
+        contactStatus: 'Interested',
+        champion: true,
+      }),
+      contact({
+        id: 't2',
+        companyId: 'c3',
+        contactName: 'Other',
+        contactStatus: "Didn't Pick",
+      }),
+      contact({
+        id: 't3',
+        companyId: 'orphan',
+        contactName: 'Skip',
+        contactStatus: 'Not Contacted',
+      }),
+    ]
+
+    const insights = buildPipelineInsights(companies, contacts, [
+      'Lead Added',
+      'Discovery Call Done',
+      'Demo Scheduled',
+      'Closed Won',
+    ])
+    expect(insights.total).toBe(4)
+    expect(insights.contacted).toBe(3)
+    expect(insights.discoveryDone).toBe(1)
+    expect(insights.demosScheduled).toBe(1)
+    expect(insights.closedWon).toBe(1)
+    expect(insights.conversion.toWon).toBe(25)
+    expect(insights.contactTotal).toBe(2)
+    expect(insights.champions).toBe(1)
+    expect(insights.stageCounts[0]).toEqual({ stage: 'Lead Added', count: 1 })
   })
 })

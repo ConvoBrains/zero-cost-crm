@@ -1,6 +1,6 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import type { CSSProperties, ReactNode } from 'react'
+import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react'
 
 interface ModalProps {
   open: boolean
@@ -92,6 +92,8 @@ interface SearchInputProps {
   onChange: (value: string) => void
   placeholder?: string
   'data-testid'?: string
+  onKeyDown?: (e: ReactKeyboardEvent<HTMLInputElement>) => void
+  onFocus?: () => void
 }
 
 export function SearchInput({
@@ -99,6 +101,8 @@ export function SearchInput({
   onChange,
   placeholder = 'Search…',
   'data-testid': testId,
+  onKeyDown,
+  onFocus,
 }: SearchInputProps) {
   return (
     <div className="relative min-w-0 flex-1">
@@ -113,8 +117,10 @@ export function SearchInput({
         data-testid={testId}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onFocus={onFocus}
         onKeyDown={(e) => {
           if (e.key === 'Escape') onChange('')
+          onKeyDown?.(e)
         }}
         placeholder={placeholder}
         aria-label={placeholder}

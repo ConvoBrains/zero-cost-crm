@@ -7,6 +7,8 @@ import type {
   ContactDateRange,
   ContactSortKey,
   SortDirection,
+  PipelineFilters,
+  PipelineDateRange,
   Company,
   Contact,
 } from '../types'
@@ -524,6 +526,196 @@ export function contactFiltersAreActive(filters: ContactFilters): boolean {
     filters.championOnly ||
     filters.dateRange !== 'all'
   )
+}
+
+export const DEFAULT_PIPELINE_FILTERS: PipelineFilters = {
+  dateRange: 'all',
+  customFrom: null,
+  customTo: null,
+}
+
+export const PIPELINE_DATE_RANGE_OPTIONS: { value: PipelineDateRange; label: string }[] = [
+  { value: 'all', label: 'All Time' },
+  { value: 'this-week', label: 'This Week' },
+  { value: 'this-month', label: 'This Month' },
+  { value: 'last-30-days', label: 'Last 30 Days' },
+  { value: 'custom', label: 'Custom' },
+]
+
+/** Inclusive createdAt date bounds for pipeline filtering. */
+export function pipelineDateBounds(
+  filters: PipelineFilters,
+  now = new Date(),
+): { start: string | null; end: string | null } {
+  if (filters.dateRange === 'custom') {
+    const start = filters.customFrom?.trim() || null
+    const end = filters.customTo?.trim() || null
+    // No bounds set yet → do not restrict (show all until the user picks dates).
+    if (!start && !end) return { start: null, end: null }
+    return { start, end }
+  }
+  return { start: dateRangeStartIso(filters.dateRange, now), end: null }
+}
+
+function companyInDateBounds(
+  company: Company,
+  bounds: { start: string | null; end: string | null },
+): boolean {
+  const created = createdAtDate(company.createdAt)
+  if (bounds.start && created < bounds.start) return false
+  if (bounds.end && created > bounds.end) return false
+  return true
+}
+
+/** Pipeline view filter ∩ company.createdAt date window. */
+export function applyPipelineFilters(
+  companies: Company[],
+  view: PipelineView,
+  filters: PipelineFilters,
+  now = new Date(),
+): Company[] {
+  const byView = filterCompanies(companies, view)
+  const bounds = pipelineDateBounds(filters, now)
+  if (!bounds.start && !bounds.end) return byView
+  return byView.filter((c) => companyInDateBounds(c, bounds))
+}
+
+export interface PipelineInsights {
+  total: number
+  contacted: number
+  discoveryDone: number
+  demosScheduled: number
+  demosDelivered: number
+  proposalsShared: number
+  closedWon: number
+  closedLost: number
+  stageCounts: { stage: string; count: number }[]
+  /** Percent of cohort that reached each milestone (0–100). */
+  conversion: {
+    toDiscovery: number
+    toDemo: number
+    toWon: number
+  }
+  contactTotal: number
+  champions: number
+  statusCounts: { status: string; count: number }[]
+}
+
+function pct(part: number, whole: number): number {
+  if (whole <= 0) return 0
+  return Math.round((part / whole) * 100)
+}
+
+const DISCOVERY_OR_LATER = new Set([
+  'Discovery Call Done',
+  'Demo Scheduled',
+  'Demo Delivered',
+  'Commercial Proposal Shared',
+  'POC Kickoff',
+  'Client Data Received',
+  'POC Delivered',
+  'Final Negotiation',
+  'Closed Won',
+])
+
+const DEMO_OR_LATER = new Set([
+  'Demo Scheduled',
+  'Demo Delivered',
+  'Commercial Proposal Shared',
+  'POC Kickoff',
+  'Client Data Received',
+  'POC Delivered',
+  'Final Negotiation',
+  'Closed Won',
+])
+
+/** Aggregate pipeline progress for the (already filtered) company cohort. */
+export function buildPipelineInsights(
+  companies: Company[],
+  contacts: Contact[],
+  stageOrder: readonly string[] = [],
+): PipelineInsights {
+  const companyIds = new Set(companies.map((c) => c.id))
+  const stageMap = new Map<string, number>()
+
+  let contacted = 0
+  let discoveryDone = 0
+  let demosScheduled = 0
+  let demosDelivered = 0
+  let proposalsShared = 0
+  let closedWon = 0
+  let closedLost = 0
+  let reachedDiscovery = 0
+  let reachedDemo = 0
+
+  for (const c of companies) {
+    stageMap.set(c.stage, (stageMap.get(c.stage) ?? 0) + 1)
+    if (c.lastContacted) contacted += 1
+    if (c.stage === 'Discovery Call Done') discoveryDone += 1
+    if (c.stage === 'Demo Scheduled') demosScheduled += 1
+    if (c.stage === 'Demo Delivered') demosDelivered += 1
+    if (c.stage === 'Commercial Proposal Shared') proposalsShared += 1
+    if (c.stage === 'Closed Won') closedWon += 1
+    if (c.stage === 'Closed Lost' || c.stage === 'Not Interested') closedLost += 1
+    if (DISCOVERY_OR_LATER.has(c.stage)) reachedDiscovery += 1
+    if (DEMO_OR_LATER.has(c.stage)) reachedDemo += 1
+  }
+
+  const orderedStages =
+    stageOrder.length > 0
+      ? [
+          ...stageOrder.filter((s) => stageMap.has(s)),
+          ...[...stageMap.keys()].filter((s) => !stageOrder.includes(s)),
+        ]
+      : [...stageMap.keys()].sort()
+
+  const stageCounts = orderedStages.map((stage) => ({
+    stage,
+    count: stageMap.get(stage) ?? 0,
+  }))
+
+  const statusMap = new Map<string, number>()
+  let contactTotal = 0
+  let champions = 0
+  for (const t of contacts) {
+    if (!t.companyId || !companyIds.has(t.companyId)) continue
+    contactTotal += 1
+    if (t.champion) champions += 1
+    statusMap.set(t.contactStatus, (statusMap.get(t.contactStatus) ?? 0) + 1)
+  }
+
+  const statusCounts = [...statusMap.entries()]
+    .map(([status, count]) => ({ status, count }))
+    .sort((a, b) => b.count - a.count)
+
+  const total = companies.length
+  return {
+    total,
+    contacted,
+    discoveryDone,
+    demosScheduled,
+    demosDelivered,
+    proposalsShared,
+    closedWon,
+    closedLost,
+    stageCounts,
+    conversion: {
+      toDiscovery: pct(reachedDiscovery, total),
+      toDemo: pct(reachedDemo, total),
+      toWon: pct(closedWon, total),
+    },
+    contactTotal,
+    champions,
+    statusCounts,
+  }
+}
+
+export function pipelineFiltersAreActive(filters: PipelineFilters): boolean {
+  if (filters.dateRange === 'all') return false
+  if (filters.dateRange === 'custom') {
+    return !!(filters.customFrom?.trim() || filters.customTo?.trim())
+  }
+  return true
 }
 
 export function intentColor(intent: string): string {

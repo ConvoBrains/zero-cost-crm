@@ -67,11 +67,11 @@ test.describe('Click behaviours (UI)', () => {
 
     // Use firms not mutated by earlier click tests in this file
     await expect(companyCard(page, 'LogiFleet')).toBeVisible()
-    await page.getByRole('button', { name: 'Closed Won', exact: true }).click()
+    await page.getByRole('button', { name: /^Closed Won/ }).click()
     await expect(companyCard(page, 'CloudNest')).toBeVisible()
     await expect(companyCard(page, 'LogiFleet')).toHaveCount(0)
 
-    await page.getByRole('button', { name: 'All Companies', exact: true }).click()
+    await page.getByRole('button', { name: /^All Companies/ }).click()
     await expect(companyCard(page, 'LogiFleet')).toBeVisible()
   })
 
