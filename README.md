@@ -1,6 +1,7 @@
 # Zero Cost CRM
 
 [![Open Source Helpers](https://www.codetriage.com/convobrains/zero-cost-crm/badges/users.svg)](https://www.codetriage.com/convobrains/zero-cost-crm)
+[![first-timers-only](https://img.shields.io/badge/first--timers--only-friendly-blue.svg?style=flat-square)](https://www.firsttimersonly.com/)
 
 **We don't need Salesforce. We need to know which SDR is converting and why.**
 
