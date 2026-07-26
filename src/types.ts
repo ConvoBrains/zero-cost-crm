@@ -5,17 +5,20 @@ export {
   DEFAULT_DISCOVERY_QUESTIONS,
   DEFAULT_LOGO_URL,
   DEFAULT_STAGES,
-} from './defaults.js'
-export type { DiscoveryInputType, DiscoveryQuestion } from './defaults.js'
+} from './defaults.js';
+export type { DiscoveryInputType, DiscoveryQuestion } from './defaults.js';
 
 /** @deprecated Prefer instance settings from GET /api/config — kept as default lists. */
-export { DEFAULT_STAGES as STAGES, DEFAULT_CONTACT_STATUSES as CONTACT_STATUSES } from './defaults.js'
+export {
+  DEFAULT_STAGES as STAGES,
+  DEFAULT_CONTACT_STATUSES as CONTACT_STATUSES,
+} from './defaults.js';
 
-export type Stage = string
-export type ContactStatus = string
+export type Stage = string;
+export type ContactStatus = string;
 
-export const INTENTS = ['Hot', 'Warm', 'Cold'] as const
-export type Intent = (typeof INTENTS)[number]
+export const INTENTS = ['Hot', 'Warm', 'Cold'] as const;
+export type Intent = (typeof INTENTS)[number];
 
 export const INDUSTRIES = [
   'BFSI',
@@ -27,56 +30,50 @@ export const INDUSTRIES = [
   'Logistics',
   'Research / Biotech',
   'Other',
-] as const
-export type Industry = (typeof INDUSTRIES)[number]
+] as const;
+export type Industry = (typeof INDUSTRIES)[number];
 
 export interface Company {
-  id: string
-  companyName: string
-  stage: Stage
-  industry: Industry | ''
-  location: string
-  estimatedCallVolume: number | null
-  employeeCount: number | null
-  intent: Intent | ''
-  offeredPrice: number | null
-  primaryContactId: string | null
-  assignedTo: string
-  lastContacted: string | null
-  nextFollowUp: string | null
-  notes: string
-  sourceLink: string
-  companyWebsite: string
-  linkedInCompany: string
+  id: string;
+  companyName: string;
+  stage: Stage;
+  industry: Industry | '';
+  location: string;
+  estimatedCallVolume: number | null;
+  employeeCount: number | null;
+  intent: Intent | '';
+  offeredPrice: number | null;
+  primaryContactId: string | null;
+  assignedTo: string;
+  lastContacted: string | null;
+  nextFollowUp: string | null;
+  notes: string;
+  sourceLink: string;
+  companyWebsite: string;
+  linkedInCompany: string;
   /** questionId → answer string */
-  discoveryAnswers: Record<string, string>
-  createdAt: string
+  discoveryAnswers: Record<string, string>;
+  createdAt: string;
 }
 
 export interface Contact {
-  id: string
-  contactName: string
-  companyId: string | null
-  role: string
-  phone: string
-  email: string
-  linkedInProfile: string
-  contactStatus: ContactStatus
-  champion: boolean
-  lastContacted: string | null
-  nextFollowUp: string | null
-  notes: string
-  createdAt: string
+  id: string;
+  contactName: string;
+  companyId: string | null;
+  role: string;
+  phone: string;
+  email: string;
+  linkedInProfile: string;
+  contactStatus: ContactStatus;
+  champion: boolean;
+  lastContacted: string | null;
+  nextFollowUp: string | null;
+  notes: string;
+  createdAt: string;
 }
 
 export type Page =
-  | 'dashboard'
-  | 'pipeline'
-  | 'contacts'
-  | 'import'
-  | 'users'
-  | 'activity'
-  | 'settings'
+  'dashboard' | 'pipeline' | 'contacts' | 'import' | 'users' | 'activity' | 'settings';
 
 export type PipelineView =
   | 'All Companies'
@@ -90,125 +87,111 @@ export type PipelineView =
   | 'Final Negotiation'
   | 'Closed Won'
   | 'Closed Lost'
-  | 'Not Interested'
+  | 'Not Interested';
 
 /** Smart date-logic queue for the Contacts page — replaces the old "Today" tab group. */
 export type ContactQueue =
-  | 'all'
-  | 'to-call-today'
-  | 'follow-up-today'
-  | 'overdue'
-  | 'didnt-pick-yesterday'
+  'all' | 'to-call-today' | 'follow-up-today' | 'overdue' | 'didnt-pick-yesterday';
 
 /** Time window applied to `contact.createdAt` for the Contacts page filter bar + lead insights. */
-export type ContactDateRange = 'all' | 'this-week' | 'this-month' | 'last-30-days'
+export type ContactDateRange = 'all' | 'this-week' | 'this-month' | 'last-30-days';
 
 export type ContactSortKey =
-  | 'contactName'
-  | 'companyName'
-  | 'contactStatus'
-  | 'stage'
-  | 'nextFollowUp'
-  | 'createdAt'
+  'contactName' | 'companyName' | 'contactStatus' | 'stage' | 'nextFollowUp' | 'createdAt';
 
-export type SortDirection = 'asc' | 'desc'
+export type SortDirection = 'asc' | 'desc';
 
 /** Composable filter state for the Contacts page (search + dropdowns, replaces the 18-tab system). */
 export interface ContactFilters {
-  search: string
-  queue: ContactQueue
-  statuses: string[]
-  companyId: string | null
-  stages: string[]
-  championOnly: boolean
-  dateRange: ContactDateRange
+  search: string;
+  queue: ContactQueue;
+  statuses: string[];
+  companyId: string | null;
+  stages: string[];
+  championOnly: boolean;
+  dateRange: ContactDateRange;
 }
 
 /** Time window applied to `company.createdAt` for Sales Pipeline board + progress insights. */
-export type PipelineDateRange =
-  | 'all'
-  | 'this-week'
-  | 'this-month'
-  | 'last-30-days'
-  | 'custom'
+export type PipelineDateRange = 'all' | 'this-week' | 'this-month' | 'last-30-days' | 'custom';
 
 export interface PipelineFilters {
-  dateRange: PipelineDateRange
+  dateRange: PipelineDateRange;
   /** Inclusive YYYY-MM-DD when dateRange === 'custom'. */
-  customFrom: string | null
+  customFrom: string | null;
   /** Inclusive YYYY-MM-DD when dateRange === 'custom'. */
-  customTo: string | null
+  customTo: string | null;
 }
 
 /** One row from the daily prospect paste (Excel / Sheets / LinkedIn export). */
 export interface ProspectRow {
-  company: string
-  prospectName: string
-  jobTitle: string
-  email: string
-  phone: string
-  location: string
-  employees: number | null
-  industry: string
+  company: string;
+  prospectName: string;
+  jobTitle: string;
+  email: string;
+  phone: string;
+  location: string;
+  employees: number | null;
+  industry: string;
 }
 
 export interface ImportResult {
-  companiesCreated: number
-  companiesUpdated: number
-  contactsCreated: number
-  contactsSkipped: number
+  companiesCreated: number;
+  companiesUpdated: number;
+  contactsCreated: number;
+  contactsSkipped: number;
 }
 
 export interface AuthUser {
-  id: string
-  email: string
-  name: string
-  role?: string
+  id: string;
+  email: string;
+  name: string;
+  role?: string;
 }
 
-export const USER_ROLES = ['founder', 'sdr', 'admin'] as const
-export type UserRole = (typeof USER_ROLES)[number]
+export const USER_ROLES = ['founder', 'sdr', 'admin'] as const;
+export type UserRole = (typeof USER_ROLES)[number];
 
 export interface CrmUser {
-  id: string
-  email: string
-  name: string
-  role: UserRole | string
-  createdAt: string
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole | string;
+  createdAt: string;
 }
 
 export function canDeleteRecords(role?: string): boolean {
-  return role === 'admin' || role === 'founder'
+  return role === 'admin' || role === 'founder';
 }
 
 export function canManageUsers(role?: string): boolean {
-  return role === 'admin' || role === 'founder'
+  return role === 'admin' || role === 'founder';
 }
 
 export interface Conversation {
-  id: string
-  companyId: string
-  contactId: string
-  companyName: string
-  contactName: string
-  calledBy: string
-  calledByName: string
-  stageAtCall: Stage
-  calledAt: string
-  s3Url: string
-  notes: string
+  id: string;
+  companyId: string;
+  contactId: string;
+  companyName: string;
+  contactName: string;
+  calledBy: string;
+  calledByName: string;
+  stageAtCall: Stage;
+  calledAt: string;
+  s3Url: string;
+  notes: string;
 }
 
 /** Public + authenticated instance config from GET /api/config */
 export interface AppConfig {
-  brandName: string
-  brandTagline: string
-  logoUrl: string
-  stages: string[]
-  contactStatuses: string[]
-  championStatusToStage: Record<string, string | null>
-  discoveryQuestions: import('./defaults.js').DiscoveryQuestion[]
-  allowedEmailDomain: string | null
-  allowedEmailDomains: string[]
-  allowAnyEmailDomain: boolean
+  brandName: string;
+  brandTagline: string;
+  logoUrl: string;
+  stages: string[];
+  contactStatuses: string[];
+  championStatusToStage: Record<string, string | null>;
+  discoveryQuestions: import('./defaults.js').DiscoveryQuestion[];
+  allowedEmailDomain: string | null;
+  allowedEmailDomains: string[];
+  allowAnyEmailDomain: boolean;
 }

@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
-import type { AppConfig } from '../types'
+import { useCallback, useEffect, useState } from 'react';
+import type { AppConfig } from '../types';
 import {
   DEFAULT_BRAND_NAME,
   DEFAULT_BRAND_TAGLINE,
@@ -8,8 +8,8 @@ import {
   DEFAULT_DISCOVERY_QUESTIONS,
   DEFAULT_LOGO_URL,
   DEFAULT_STAGES,
-} from '../defaults'
-import { api } from '../lib/api'
+} from '../defaults';
+import { api } from '../lib/api';
 
 const FALLBACK: AppConfig = {
   brandName: DEFAULT_BRAND_NAME,
@@ -22,15 +22,15 @@ const FALLBACK: AppConfig = {
   allowedEmailDomain: null,
   allowedEmailDomains: ['*'],
   allowAnyEmailDomain: true,
-}
+};
 
 export function useAppConfig() {
-  const [config, setConfig] = useState<AppConfig>(FALLBACK)
-  const [ready, setReady] = useState(false)
+  const [config, setConfig] = useState<AppConfig>(FALLBACK);
+  const [ready, setReady] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
-      const cfg = await api<AppConfig>('/api/config')
+      const cfg = await api<AppConfig>('/api/config');
       setConfig({
         brandName: cfg.brandName || DEFAULT_BRAND_NAME,
         brandTagline: cfg.brandTagline ?? DEFAULT_BRAND_TAGLINE,
@@ -48,17 +48,17 @@ export function useAppConfig() {
         allowedEmailDomain: cfg.allowedEmailDomain,
         allowedEmailDomains: cfg.allowedEmailDomains ?? ['*'],
         allowAnyEmailDomain: !!cfg.allowAnyEmailDomain,
-      })
+      });
     } catch {
       /* keep fallback until API is up */
     } finally {
-      setReady(true)
+      setReady(true);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    void refresh()
-  }, [refresh])
+    void refresh();
+  }, [refresh]);
 
-  return { config, ready, refresh }
+  return { config, ready, refresh };
 }

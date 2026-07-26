@@ -1,0 +1,35 @@
+# Dependencies & build
+node_modules
+dist
+dist-ssr
+coverage
+
+# Lockfiles
+package-lock.json
+npm-shrinkwrap.json
+yarn.lock
+pnpm-lock.yaml
+
+# Test artifacts
+test-results
+playwright-report
+blob-report
+uploads
+tmp
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+# Generated / binary
+*.mp3
+*.pem
+*.key
+*.log
+
+# Git / editor
+.git
+.cursor
+.idea
+.vscode

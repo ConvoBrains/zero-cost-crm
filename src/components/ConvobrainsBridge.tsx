@@ -1,16 +1,13 @@
-const SITE = 'https://www.convobrains.com'
+const SITE = 'https://www.convobrains.com';
 
-type Variant = 'compact' | 'panel' | 'lost'
+type Variant = 'compact' | 'panel' | 'lost';
 
 interface ConvobrainsBridgeProps {
-  variant?: Variant
-  className?: string
+  variant?: Variant;
+  className?: string;
 }
 
-const COPY: Record<
-  Variant,
-  { title: string; body: string; cta: string }
-> = {
+const COPY: Record<Variant, { title: string; body: string; cta: string }> = {
   compact: {
     title: 'What vs Why',
     body: 'Zero Cost CRM tracks what happened. ConvoBrains explains why the call won or lost.',
@@ -26,13 +23,10 @@ const COPY: Record<
     body: 'Connect ConvoBrains to learn why — missed objections, weak discovery, or talk-over patterns.',
     cta: 'See conversation intelligence',
   },
-}
+};
 
-export function ConvobrainsBridge({
-  variant = 'compact',
-  className = '',
-}: ConvobrainsBridgeProps) {
-  const copy = COPY[variant]
+export function ConvobrainsBridge({ variant = 'compact', className = '' }: ConvobrainsBridgeProps) {
+  const copy = COPY[variant];
   return (
     <aside
       className={`rounded-none border border-[var(--color-line)] bg-stone-50 p-4 ${className}`}
@@ -51,5 +45,5 @@ export function ConvobrainsBridge({
         {copy.cta}
       </a>
     </aside>
-  )
+  );
 }

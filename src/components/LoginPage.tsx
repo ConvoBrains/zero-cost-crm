@@ -1,15 +1,15 @@
-import { useState, type FormEvent } from 'react'
-import { Field, inputClass, btnPrimary } from './ui'
-import { DEFAULT_BRAND_NAME, DEFAULT_BRAND_TAGLINE, DEFAULT_LOGO_URL } from '../defaults'
+import { useState, type FormEvent } from 'react';
+import { Field, inputClass, btnPrimary } from './ui';
+import { DEFAULT_BRAND_NAME, DEFAULT_BRAND_TAGLINE, DEFAULT_LOGO_URL } from '../defaults';
 
 interface LoginPageProps {
-  error: string | null
-  onLogin: (email: string, password: string) => Promise<boolean>
-  allowedEmailDomain?: string | null
-  allowAnyEmailDomain?: boolean
-  brandName?: string
-  brandTagline?: string
-  logoUrl?: string
+  error: string | null;
+  onLogin: (email: string, password: string) => Promise<boolean>;
+  allowedEmailDomain?: string | null;
+  allowAnyEmailDomain?: boolean;
+  brandName?: string;
+  brandTagline?: string;
+  logoUrl?: string;
 }
 
 export function LoginPage({
@@ -21,25 +21,25 @@ export function LoginPage({
   brandTagline = DEFAULT_BRAND_TAGLINE,
   logoUrl = DEFAULT_LOGO_URL,
 }: LoginPageProps) {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [submitting, setSubmitting] = useState(false)
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const submit = async (e: FormEvent) => {
-    e.preventDefault()
-    setSubmitting(true)
+    e.preventDefault();
+    setSubmitting(true);
     try {
-      await onLogin(email, password)
+      await onLogin(email, password);
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   const emailHint = allowAnyEmailDomain
     ? 'Work email'
     : allowedEmailDomain
       ? `@${allowedEmailDomain} email`
-      : 'Work email'
+      : 'Work email';
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--color-canvas)] px-4">
@@ -47,9 +47,7 @@ export function LoginPage({
         <div className="mb-8 text-center">
           <img src={logoUrl} alt={brandName} className="mx-auto mb-3 w-56" />
           <p className="mt-1 text-sm text-stone-500">{brandName}</p>
-          {brandTagline ? (
-            <p className="mt-2 text-xs text-stone-400">{brandTagline}</p>
-          ) : null}
+          {brandTagline ? <p className="mt-2 text-xs text-stone-400">{brandTagline}</p> : null}
         </div>
 
         <form
@@ -93,5 +91,5 @@ export function LoginPage({
         </form>
       </div>
     </div>
-  )
+  );
 }

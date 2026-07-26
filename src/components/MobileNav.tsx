@@ -1,14 +1,14 @@
-import type { Page } from '../types'
-import { navItemsForRole } from '../lib/nav'
+import type { Page } from '../types';
+import { navItemsForRole } from '../lib/nav';
 
 interface MobileNavProps {
-  page: Page
-  onNavigate: (page: Page) => void
-  userRole?: string
+  page: Page;
+  onNavigate: (page: Page) => void;
+  userRole?: string;
 }
 
 export function MobileNav({ page, onNavigate, userRole }: MobileNavProps) {
-  const items = navItemsForRole(userRole)
+  const items = navItemsForRole(userRole);
 
   return (
     <nav
@@ -17,7 +17,7 @@ export function MobileNav({ page, onNavigate, userRole }: MobileNavProps) {
     >
       <div className="mx-auto flex max-w-lg">
         {items.map((item) => {
-          const active = page === item.id
+          const active = page === item.id;
           return (
             <button
               key={item.id}
@@ -36,9 +36,9 @@ export function MobileNav({ page, onNavigate, userRole }: MobileNavProps) {
               </span>
               {item.short}
             </button>
-          )
+          );
         })}
       </div>
     </nav>
-  )
+  );
 }

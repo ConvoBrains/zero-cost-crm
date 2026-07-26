@@ -5,76 +5,76 @@ import {
   HeadObjectCommand,
   PutObjectCommand,
   S3Client,
-} from '@aws-sdk/client-s3'
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
-import { config } from './config.js'
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { config } from './config.js';
 
-const ALLOWED_EXT = new Set(['mp3', 'm4a', 'wav', 'webm', 'ogg', 'mp4', 'aac'])
-export const MAX_RECORDING_BYTES = 50 * 1024 * 1024
+const ALLOWED_EXT = new Set(['mp3', 'm4a', 'wav', 'webm', 'ogg', 'mp4', 'aac']);
+export const MAX_RECORDING_BYTES = 50 * 1024 * 1024;
 
 function bucket(): string {
-  const b = config.aws.bucket
+  const b = config.aws.bucket;
   if (!b) {
     throw new Error(
-      'AWS_S3_BUCKET is required for call recordings. Set it in your environment (see .env.example).',
-    )
+      'AWS_S3_BUCKET is required for call recordings. Set it in your environment (see .env.example).'
+    );
   }
-  return b
+  return b;
 }
 
 function region(): string {
-  const r = config.aws.region
+  const r = config.aws.region;
   if (!r) {
     throw new Error(
-      'AWS_REGION is required for call recordings. Set it in your environment (see .env.example).',
-    )
+      'AWS_REGION is required for call recordings. Set it in your environment (see .env.example).'
+    );
   }
-  return r
+  return r;
 }
 
-let client: S3Client | null = null
+let client: S3Client | null = null;
 
 function s3(): S3Client {
   if (!client) {
-    const accessKeyId = config.aws.accessKeyId
-    const secretAccessKey = config.aws.secretAccessKey
+    const accessKeyId = config.aws.accessKeyId;
+    const secretAccessKey = config.aws.secretAccessKey;
     if (!accessKeyId || !secretAccessKey) {
-      throw new Error('Missing AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY')
+      throw new Error('Missing AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY');
     }
     client = new S3Client({
       region: region(),
       credentials: { accessKeyId, secretAccessKey },
-    })
+    });
   }
-  return client
+  return client;
 }
 
 export function normalizeExt(raw: string): string | null {
-  const ext = raw.toLowerCase().replace(/^\./, '')
-  return ALLOWED_EXT.has(ext) ? ext : null
+  const ext = raw.toLowerCase().replace(/^\./, '');
+  return ALLOWED_EXT.has(ext) ? ext : null;
 }
 
 export function stagingKey(conversationId: string, ext: string): string {
-  return `${conversationId}_staging.${ext}`
+  return `${conversationId}_staging.${ext}`;
 }
 
 export function formatS3Timestamp(d: Date): string {
-  const p = (n: number, w = 2) => String(n).padStart(w, '0')
-  return `${d.getUTCFullYear()}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}-${p(d.getUTCHours())}${p(d.getUTCMinutes())}${p(d.getUTCSeconds())}-${p(d.getUTCMilliseconds(), 3)}`
+  const p = (n: number, w = 2) => String(n).padStart(w, '0');
+  return `${d.getUTCFullYear()}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}-${p(d.getUTCHours())}${p(d.getUTCMinutes())}${p(d.getUTCSeconds())}-${p(d.getUTCMilliseconds(), 3)}`;
 }
 
 export function finalKey(conversationId: string, ext: string, calledAt: Date): string {
-  return `${conversationId}_${formatS3Timestamp(calledAt)}.${ext}`
+  return `${conversationId}_${formatS3Timestamp(calledAt)}.${ext}`;
 }
 
 export function objectUrl(key: string): string {
-  return `https://${bucket()}.s3.${region()}.amazonaws.com/${key}`
+  return `https://${bucket()}.s3.${region()}.amazonaws.com/${key}`;
 }
 
 export function keyFromUrl(url: string): string {
-  const prefix = `https://${bucket()}.s3.${region()}.amazonaws.com/`
-  if (!url.startsWith(prefix)) throw new Error('Invalid s3_url for bucket')
-  return url.slice(prefix.length)
+  const prefix = `https://${bucket()}.s3.${region()}.amazonaws.com/`;
+  if (!url.startsWith(prefix)) throw new Error('Invalid s3_url for bucket');
+  return url.slice(prefix.length);
 }
 
 export async function presignPut(key: string, contentType: string): Promise<string> {
@@ -82,17 +82,17 @@ export async function presignPut(key: string, contentType: string): Promise<stri
     Bucket: bucket(),
     Key: key,
     ContentType: contentType,
-  })
-  return getSignedUrl(s3(), cmd, { expiresIn: 900 })
+  });
+  return getSignedUrl(s3(), cmd, { expiresIn: 900 });
 }
 
 export async function presignGet(key: string): Promise<string> {
-  const cmd = new GetObjectCommand({ Bucket: bucket(), Key: key })
-  return getSignedUrl(s3(), cmd, { expiresIn: 3600 })
+  const cmd = new GetObjectCommand({ Bucket: bucket(), Key: key });
+  return getSignedUrl(s3(), cmd, { expiresIn: 3600 });
 }
 
 export async function headObject(key: string) {
-  return s3().send(new HeadObjectCommand({ Bucket: bucket(), Key: key }))
+  return s3().send(new HeadObjectCommand({ Bucket: bucket(), Key: key }));
 }
 
 export async function copyToFinal(staging: string, final: string) {
@@ -101,30 +101,30 @@ export async function copyToFinal(staging: string, final: string) {
       Bucket: bucket(),
       CopySource: `${bucket()}/${staging}`,
       Key: final,
-    }),
-  )
+    })
+  );
 }
 
 export async function deleteObject(key: string) {
-  await s3().send(new DeleteObjectCommand({ Bucket: bucket(), Key: key }))
+  await s3().send(new DeleteObjectCommand({ Bucket: bucket(), Key: key }));
 }
 
 export function contentTypeForExt(ext: string): string {
   switch (ext) {
     case 'mp3':
-      return 'audio/mpeg'
+      return 'audio/mpeg';
     case 'm4a':
     case 'mp4':
-      return 'audio/mp4'
+      return 'audio/mp4';
     case 'wav':
-      return 'audio/wav'
+      return 'audio/wav';
     case 'webm':
-      return 'audio/webm'
+      return 'audio/webm';
     case 'ogg':
-      return 'audio/ogg'
+      return 'audio/ogg';
     case 'aac':
-      return 'audio/aac'
+      return 'audio/aac';
     default:
-      return 'application/octet-stream'
+      return 'application/octet-stream';
   }
 }

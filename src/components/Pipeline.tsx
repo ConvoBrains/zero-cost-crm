@@ -10,11 +10,11 @@ import {
   useDraggable,
   type DragEndEvent,
   type DragStartEvent,
-} from '@dnd-kit/core'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import type { KeyboardEvent } from 'react'
-import type { Company, Contact, PipelineFilters, PipelineView, Stage } from '../types'
-import type { CrmStore } from '../hooks/useCrmStore'
+} from '@dnd-kit/core';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { KeyboardEvent } from 'react';
+import type { Company, Contact, PipelineFilters, PipelineView, Stage } from '../types';
+import type { CrmStore } from '../hooks/useCrmStore';
 import {
   DEFAULT_PIPELINE_FILTERS,
   PIPELINE_DATE_RANGE_OPTIONS,
@@ -25,30 +25,30 @@ import {
   pipelineFiltersAreActive,
   stageAccent,
   statusColor,
-} from '../lib/views'
-import { buildCardBadges, buildChampionTrail, findChampion, istToday } from '../lib/championCard'
-import { logViewEvent } from '../lib/activity'
-import { CompanyForm } from './CompanyForm'
-import { FilterChip, FilterDropdown, Modal, SearchInput, btnPrimary, inputClass } from './ui'
+} from '../lib/views';
+import { buildCardBadges, buildChampionTrail, findChampion, istToday } from '../lib/championCard';
+import { logViewEvent } from '../lib/activity';
+import { CompanyForm } from './CompanyForm';
+import { FilterChip, FilterDropdown, Modal, SearchInput, btnPrimary, inputClass } from './ui';
 
 interface PipelineProps {
-  store: CrmStore
-  stages: string[]
-  discoveryQuestions?: import('../types').DiscoveryQuestion[]
-  openCompanyId?: string | null
-  onOpenCompanyIdConsumed?: () => void
-  onEditingCompanyChange?: (companyId: string | null) => void
+  store: CrmStore;
+  stages: string[];
+  discoveryQuestions?: import('../types').DiscoveryQuestion[];
+  openCompanyId?: string | null;
+  onOpenCompanyIdConsumed?: () => void;
+  onEditingCompanyChange?: (companyId: string | null) => void;
 }
 
 function resolveDropStage(
   overId: string | number,
   companies: Company[],
-  stages: readonly string[],
+  stages: readonly string[]
 ): Stage | null {
-  const id = String(overId)
-  if (stages.includes(id)) return id
-  const target = companies.find((c) => c.id === id)
-  return target?.stage ?? null
+  const id = String(overId);
+  if (stages.includes(id)) return id;
+  const target = companies.find((c) => c.id === id);
+  return target?.stage ?? null;
 }
 
 function CompanyCard({
@@ -58,14 +58,14 @@ function CompanyCard({
   dragging,
   onOpen,
 }: {
-  company: Company
-  contacts: Contact[]
-  today: string
-  dragging?: boolean
-  onOpen?: () => void
+  company: Company;
+  contacts: Contact[];
+  today: string;
+  dragging?: boolean;
+  onOpen?: () => void;
 }) {
-  const badges = buildCardBadges(company, contacts, today)
-  const trail = buildChampionTrail(findChampion(contacts, company.id))
+  const badges = buildCardBadges(company, contacts, today);
+  const trail = buildChampionTrail(findChampion(contacts, company.id));
 
   return (
     <div
@@ -115,9 +115,7 @@ function CompanyCard({
               className="mt-2 space-y-0.5"
             >
               <p className="text-[11px] font-medium text-teal-800">{trail.header}</p>
-              {trail.note ? (
-                <p className="text-[10px] text-stone-500">{trail.note}</p>
-              ) : null}
+              {trail.note ? <p className="text-[10px] text-stone-500">{trail.note}</p> : null}
               {trail.followUp ? (
                 <p className="text-[10px] text-stone-400">{trail.followUp}</p>
               ) : null}
@@ -149,7 +147,7 @@ function CompanyCard({
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function DraggableCard({
@@ -158,19 +156,19 @@ function DraggableCard({
   today,
   onOpen,
 }: {
-  company: Company
-  contacts: Contact[]
-  today: string
-  onOpen: () => void
+  company: Company;
+  contacts: Contact[];
+  today: string;
+  onOpen: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: company.id,
     data: { type: 'company', company },
-  })
+  });
 
   const style = transform
     ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
-    : undefined
+    : undefined;
 
   return (
     <div
@@ -188,7 +186,7 @@ function DraggableCard({
         onOpen={onOpen}
       />
     </div>
-  )
+  );
 }
 
 function KanbanColumn({
@@ -198,13 +196,13 @@ function KanbanColumn({
   today,
   onOpen,
 }: {
-  stage: Stage
-  companies: Company[]
-  store: CrmStore
-  today: string
-  onOpen: (c: Company) => void
+  stage: Stage;
+  companies: Company[];
+  store: CrmStore;
+  today: string;
+  onOpen: (c: Company) => void;
 }) {
-  const { setNodeRef, isOver } = useDroppable({ id: stage, data: { type: 'column', stage } })
+  const { setNodeRef, isOver } = useDroppable({ id: stage, data: { type: 'column', stage } });
 
   return (
     <div
@@ -214,9 +212,7 @@ function KanbanColumn({
       }`}
     >
       <div className="flex items-center justify-between px-3 py-2.5">
-        <h3 className="text-xs font-semibold tracking-wide text-stone-700 uppercase">
-          {stage}
-        </h3>
+        <h3 className="text-xs font-semibold tracking-wide text-stone-700 uppercase">{stage}</h3>
         <span className="rounded-none bg-stone-100 px-2 py-0.5 text-[10px] font-semibold text-stone-500">
           {companies.length}
         </span>
@@ -236,7 +232,7 @@ function KanbanColumn({
         ) : null}
       </div>
     </div>
-  )
+  );
 }
 
 export function Pipeline({
@@ -247,162 +243,160 @@ export function Pipeline({
   onOpenCompanyIdConsumed,
   onEditingCompanyChange,
 }: PipelineProps) {
-  const [view, setView] = useState<PipelineView>('All Companies')
-  const [filters, setFilters] = useState<PipelineFilters>(DEFAULT_PIPELINE_FILTERS)
-  const [searchDraft, setSearchDraft] = useState('')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [suggestOpen, setSuggestOpen] = useState(false)
-  const [highlight, setHighlight] = useState(0)
-  const [insightsOpen, setInsightsOpen] = useState(true)
-  const [editing, setEditing] = useState<Company | null>(null)
-  const [creating, setCreating] = useState(false)
-  const [activeId, setActiveId] = useState<string | null>(null)
-  const searchWrapRef = useRef<HTMLDivElement>(null)
+  const [view, setView] = useState<PipelineView>('All Companies');
+  const [filters, setFilters] = useState<PipelineFilters>(DEFAULT_PIPELINE_FILTERS);
+  const [searchDraft, setSearchDraft] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [highlight, setHighlight] = useState(0);
+  const [insightsOpen, setInsightsOpen] = useState(true);
+  const [editing, setEditing] = useState<Company | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const searchWrapRef = useRef<HTMLDivElement>(null);
 
   const openCompany = (c: Company) => {
-    setEditing(c)
-    onEditingCompanyChange?.(c.id)
-    logViewEvent('company.opened', c.id, c.companyName)
-    setSuggestOpen(false)
-    setSearchDraft('')
-    setSearchQuery('')
-  }
+    setEditing(c);
+    onEditingCompanyChange?.(c.id);
+    logViewEvent('company.opened', c.id, c.companyName);
+    setSuggestOpen(false);
+    setSearchDraft('');
+    setSearchQuery('');
+  };
 
   const closeEditing = () => {
-    setEditing(null)
-    onEditingCompanyChange?.(null)
-  }
+    setEditing(null);
+    onEditingCompanyChange?.(null);
+  };
 
   useEffect(() => {
-    if (!openCompanyId) return
-    const company = store.companies.find((c) => c.id === openCompanyId)
+    if (!openCompanyId) return;
+    const company = store.companies.find((c) => c.id === openCompanyId);
     if (company) {
-      setEditing(company)
-      logViewEvent('company.opened', company.id, company.companyName)
+      setEditing(company);
+      logViewEvent('company.opened', company.id, company.companyName);
     }
-    onOpenCompanyIdConsumed?.()
-  }, [openCompanyId, store.companies, onOpenCompanyIdConsumed])
+    onOpenCompanyIdConsumed?.();
+  }, [openCompanyId, store.companies, onOpenCompanyIdConsumed]);
 
   useEffect(() => {
-    const id = window.setTimeout(() => setSearchQuery(searchDraft), 200)
-    return () => window.clearTimeout(id)
-  }, [searchDraft])
+    const id = window.setTimeout(() => setSearchQuery(searchDraft), 200);
+    return () => window.clearTimeout(id);
+  }, [searchDraft]);
 
   useEffect(() => {
-    if (!suggestOpen) return
+    if (!suggestOpen) return;
     const onDoc = (e: MouseEvent) => {
-      if (!searchWrapRef.current?.contains(e.target as Node)) setSuggestOpen(false)
-    }
-    const timer = window.setTimeout(() => document.addEventListener('mousedown', onDoc), 0)
+      if (!searchWrapRef.current?.contains(e.target as Node)) setSuggestOpen(false);
+    };
+    const timer = window.setTimeout(() => document.addEventListener('mousedown', onDoc), 0);
     return () => {
-      window.clearTimeout(timer)
-      document.removeEventListener('mousedown', onDoc)
-    }
-  }, [suggestOpen])
+      window.clearTimeout(timer);
+      document.removeEventListener('mousedown', onDoc);
+    };
+  }, [suggestOpen]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 8 } }),
-  )
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 8 } })
+  );
 
   const filtered = useMemo(
     () => applyPipelineFilters(store.companies, view, filters),
-    [store.companies, view, filters],
-  )
+    [store.companies, view, filters]
+  );
 
   const suggestions = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase()
-    if (!q) return []
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return [];
     return filtered
       .filter((c) => c.companyName.toLowerCase().includes(q))
       .sort((a, b) => a.companyName.localeCompare(b.companyName))
-      .slice(0, 12)
-  }, [filtered, searchQuery])
+      .slice(0, 12);
+  }, [filtered, searchQuery]);
 
   useEffect(() => {
-    setHighlight(0)
-  }, [searchQuery])
+    setHighlight(0);
+  }, [searchQuery]);
 
   const byStage = useMemo(() => {
-    const map = new Map<Stage, Company[]>()
-    for (const s of stages) map.set(s, [])
+    const map = new Map<Stage, Company[]>();
+    for (const s of stages) map.set(s, []);
     for (const c of filtered) {
-      const list = map.get(c.stage)
-      if (list) list.push(c)
+      const list = map.get(c.stage);
+      if (list) list.push(c);
       else {
-        map.set(c.stage, [c])
+        map.set(c.stage, [c]);
       }
     }
-    return map
-  }, [filtered, stages])
+    return map;
+  }, [filtered, stages]);
 
   const boardStages = useMemo(() => {
-    const extra = [...byStage.keys()].filter((s) => !stages.includes(s))
-    return [...stages, ...extra]
-  }, [byStage, stages])
+    const extra = [...byStage.keys()].filter((s) => !stages.includes(s));
+    return [...stages, ...extra];
+  }, [byStage, stages]);
 
   const insights = useMemo(
     () => buildPipelineInsights(filtered, store.contacts, stages),
-    [filtered, store.contacts, stages],
-  )
+    [filtered, store.contacts, stages]
+  );
 
-  const activeCompany = activeId
-    ? store.companies.find((c) => c.id === activeId) ?? null
-    : null
+  const activeCompany = activeId ? (store.companies.find((c) => c.id === activeId) ?? null) : null;
 
-  const today = istToday()
-  const filtersActive = pipelineFiltersAreActive(filters)
+  const today = istToday();
+  const filtersActive = pipelineFiltersAreActive(filters);
   const dateLabel =
-    PIPELINE_DATE_RANGE_OPTIONS.find((o) => o.value === filters.dateRange)?.label ?? 'All Time'
+    PIPELINE_DATE_RANGE_OPTIONS.find((o) => o.value === filters.dateRange)?.label ?? 'All Time';
 
   const viewCounts = useMemo(() => {
-    const map = new Map<PipelineView, number>()
+    const map = new Map<PipelineView, number>();
     for (const v of PIPELINE_VIEWS) {
-      map.set(v, applyPipelineFilters(store.companies, v, filters).length)
+      map.set(v, applyPipelineFilters(store.companies, v, filters).length);
     }
-    return map
-  }, [store.companies, filters])
+    return map;
+  }, [store.companies, filters]);
 
-  const onDragStart = (e: DragStartEvent) => setActiveId(String(e.active.id))
+  const onDragStart = (e: DragStartEvent) => setActiveId(String(e.active.id));
 
   const onDragEnd = (e: DragEndEvent) => {
-    setActiveId(null)
-    const { active, over } = e
-    if (!over) return
-    const companyId = String(active.id)
-    const stage = resolveDropStage(over.id, store.companies, boardStages)
-    if (!stage) return
+    setActiveId(null);
+    const { active, over } = e;
+    if (!over) return;
+    const companyId = String(active.id);
+    const stage = resolveDropStage(over.id, store.companies, boardStages);
+    if (!stage) return;
 
-    const company = store.companies.find((c) => c.id === companyId)
+    const company = store.companies.find((c) => c.id === companyId);
     if (company && company.stage !== stage) {
-      void store.moveCompanyStage(companyId, stage)
+      void store.moveCompanyStage(companyId, stage);
     }
-  }
+  };
 
   const pickSuggestion = (company: Company) => {
-    openCompany(company)
-  }
+    openCompany(company);
+  };
 
   const onSearchKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape') {
-      setSuggestOpen(false)
-      setSearchDraft('')
-      setSearchQuery('')
-      return
+      setSuggestOpen(false);
+      setSearchDraft('');
+      setSearchQuery('');
+      return;
     }
-    if (!suggestOpen || suggestions.length === 0) return
+    if (!suggestOpen || suggestions.length === 0) return;
     if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      setHighlight((i) => (i + 1) % suggestions.length)
+      e.preventDefault();
+      setHighlight((i) => (i + 1) % suggestions.length);
     } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      setHighlight((i) => (i - 1 + suggestions.length) % suggestions.length)
+      e.preventDefault();
+      setHighlight((i) => (i - 1 + suggestions.length) % suggestions.length);
     } else if (e.key === 'Enter') {
-      e.preventDefault()
-      const pick = suggestions[highlight]
-      if (pick) pickSuggestion(pick)
+      e.preventDefault();
+      const pick = suggestions[highlight];
+      if (pick) pickSuggestion(pick);
     }
-  }
+  };
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
@@ -429,8 +423,8 @@ export function Pipeline({
             data-testid="pipeline-search"
             value={searchDraft}
             onChange={(v) => {
-              setSearchDraft(v)
-              setSuggestOpen(true)
+              setSearchDraft(v);
+              setSuggestOpen(true);
             }}
             onFocus={() => setSuggestOpen(true)}
             onKeyDown={onSearchKeyDown}
@@ -616,8 +610,8 @@ export function Pipeline({
                 Conversion
               </p>
               <p className="text-xs text-stone-600">
-                Discovery {insights.conversion.toDiscovery}% · Demo{' '}
-                {insights.conversion.toDemo}% · Won {insights.conversion.toWon}%
+                Discovery {insights.conversion.toDiscovery}% · Demo {insights.conversion.toDemo}% ·
+                Won {insights.conversion.toWon}%
               </p>
             </div>
 
@@ -685,11 +679,7 @@ export function Pipeline({
         <DragOverlay>
           {activeCompany ? (
             <div className="w-[min(72vw,16rem)] rotate-1 sm:w-64">
-              <CompanyCard
-                company={activeCompany}
-                contacts={store.contacts}
-                today={today}
-              />
+              <CompanyCard company={activeCompany} contacts={store.contacts} today={today} />
             </div>
           ) : null}
         </DragOverlay>
@@ -722,5 +712,5 @@ export function Pipeline({
         ) : null}
       </Modal>
     </div>
-  )
+  );
 }

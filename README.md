@@ -72,13 +72,13 @@ cp testing/functional/.env.testing.example testing/functional/.env.testing  # de
 
 Important variables (see [`.env.example`](.env.example)):
 
-| Variable | Purpose |
-| -------- | ------- |
-| `DATABASE_URL` | Postgres connection string |
-| `JWT_SECRET` | **Required** — long random secret |
+| Variable               | Purpose                                                          |
+| ---------------------- | ---------------------------------------------------------------- |
+| `DATABASE_URL`         | Postgres connection string                                       |
+| `JWT_SECRET`           | **Required** — long random secret                                |
 | `ALLOWED_EMAIL_DOMAIN` | Login allow-list (`convobrains.com`, comma list, or `*` for any) |
-| `CORS_ORIGINS` | Allowed browser origins (comma-separated) |
-| `AWS_*` | Optional — required only for call-recording uploads |
+| `CORS_ORIGINS`         | Allowed browser origins (comma-separated)                        |
+| `AWS_*`                | Optional — required only for call-recording uploads              |
 
 ---
 
@@ -114,9 +114,9 @@ Skip it if you need enterprise CPQ, multi-currency ERP integrations, or a full m
 
 Keep the **code** generic. Put company-specific values in env or the database:
 
-| What | Where |
-| ---- | ----- |
-| Postgres / JWT / email domain / S3 / CORS | Server `.env` (`DATABASE_URL`, `JWT_SECRET`, `ALLOWED_EMAIL_DOMAIN`, …) |
+| What                                                | Where                                                                             |
+| --------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Postgres / JWT / email domain / S3 / CORS           | Server `.env` (`DATABASE_URL`, `JWT_SECRET`, `ALLOWED_EMAIL_DOMAIN`, …)           |
 | Brand name, logo, pipeline stages, contact statuses | DB `app_settings` — edit in **Settings** (founder/admin) or `PATCH /api/settings` |
 | Champion status → pipeline stage map (`championStatusToStage`) | **API / SQL only** today — `PATCH /api/settings` or [`sql/examples/convobrains-settings.sql`](sql/examples/convobrains-settings.sql) |
 | Discovery questions on the company form (`discoveryQuestions`) | **API / SQL only** today — same as above (not editable in the Settings UI yet) |
@@ -264,6 +264,6 @@ npm test
 ---
 
 **Built by [ConvoBrains](https://www.convobrains.com)**  
-*Turn conversations into intelligence.*
+_Turn conversations into intelligence._
 
 [Book a demo](https://www.convobrains.com/contact) · [support@convobrains.com](mailto:support@convobrains.com) · [LinkedIn](https://www.linkedin.com/company/convobrains/)

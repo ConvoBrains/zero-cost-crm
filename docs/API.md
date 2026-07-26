@@ -6,11 +6,11 @@ Unless noted, endpoints require `Authorization: Bearer <jwt>`.
 
 ## Public
 
-| Method | Path | Description |
-| ------ | ---- | ----------- |
-| `GET` | `/api/health` | Liveness `{ ok: true }` |
-| `GET` | `/api/config` | Public instance config: email policy + branding, stages, contactStatuses, championStatusToStage, discoveryQuestions |
-| `PATCH` | `/api/settings` | Admin/founder: update branding + stages + contactStatuses (+ optional champion map / discoveryQuestions) |
+| Method  | Path            | Description                                                                                                         |
+| ------- | --------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `GET`   | `/api/health`   | Liveness `{ ok: true }`                                                                                             |
+| `GET`   | `/api/config`   | Public instance config: email policy + branding, stages, contactStatuses, championStatusToStage, discoveryQuestions |
+| `PATCH` | `/api/settings` | Admin/founder: update branding + stages + contactStatuses (+ optional champion map / discoveryQuestions)            |
 
 ### Settings UI vs API-only
 
@@ -53,59 +53,59 @@ curl -s -X PATCH http://localhost:4000/api/settings \
 
 ## Auth
 
-| Method | Path | Description |
-| ------ | ---- | ----------- |
-| `POST` | `/api/auth/login` | `{ email, password }` → `{ token, user }` (rate limited) |
-| `POST` | `/api/auth/logout` | End session `{ reason? }` |
-| `POST` | `/api/auth/heartbeat` | Touch active session |
-| `GET` | `/api/auth/me` | Current user |
+| Method | Path                  | Description                                              |
+| ------ | --------------------- | -------------------------------------------------------- |
+| `POST` | `/api/auth/login`     | `{ email, password }` → `{ token, user }` (rate limited) |
+| `POST` | `/api/auth/logout`    | End session `{ reason? }`                                |
+| `POST` | `/api/auth/heartbeat` | Touch active session                                     |
+| `GET`  | `/api/auth/me`        | Current user                                             |
 
 ## Users (admin / founder)
 
-| Method | Path | Description |
-| ------ | ---- | ----------- |
-| `GET` | `/api/users/roles` | Allowed roles |
-| `GET` | `/api/users` | List users |
-| `POST` | `/api/users` | Create user `{ name, email, password, role }` |
+| Method | Path               | Description                                   |
+| ------ | ------------------ | --------------------------------------------- |
+| `GET`  | `/api/users/roles` | Allowed roles                                 |
+| `GET`  | `/api/users`       | List users                                    |
+| `POST` | `/api/users`       | Create user `{ name, email, password, role }` |
 
 ## CRM
 
-| Method | Path | Description |
-| ------ | ---- | ----------- |
-| `GET` | `/api/bootstrap` | Companies + contacts |
-| `GET` | `/api/metrics` | Dashboard counters |
-| `POST` | `/api/companies` | Create company |
-| `PATCH` | `/api/companies/:id` | Update company |
-| `DELETE` | `/api/companies/:id` | Delete (admin) |
-| `POST` | `/api/contacts` | Create contact |
-| `PATCH` | `/api/contacts/:id` | Update contact |
-| `DELETE` | `/api/contacts/:id` | Delete (admin) |
-| `POST` | `/api/import/prospects` | Bulk import `{ rows: ProspectRow[] }` |
+| Method   | Path                    | Description                           |
+| -------- | ----------------------- | ------------------------------------- |
+| `GET`    | `/api/bootstrap`        | Companies + contacts                  |
+| `GET`    | `/api/metrics`          | Dashboard counters                    |
+| `POST`   | `/api/companies`        | Create company                        |
+| `PATCH`  | `/api/companies/:id`    | Update company                        |
+| `DELETE` | `/api/companies/:id`    | Delete (admin)                        |
+| `POST`   | `/api/contacts`         | Create contact                        |
+| `PATCH`  | `/api/contacts/:id`     | Update contact                        |
+| `DELETE` | `/api/contacts/:id`     | Delete (admin)                        |
+| `POST`   | `/api/import/prospects` | Bulk import `{ rows: ProspectRow[] }` |
 
 ## Conversations (recordings)
 
 Requires AWS env vars. See `.env.example`.
 
-| Method | Path | Description |
-| ------ | ---- | ----------- |
-| `POST` | `/api/conversations/presign` | Start upload |
-| `POST` | `/api/conversations/:id/complete` | Finalize upload |
-| `GET` | `/api/conversations` | List (`contactId` / `companyId` query) |
-| `GET` | `/api/conversations/:id/play` | Presigned play URL |
-| `DELETE` | `/api/conversations/:id` | Delete (admin) |
+| Method   | Path                              | Description                            |
+| -------- | --------------------------------- | -------------------------------------- |
+| `POST`   | `/api/conversations/presign`      | Start upload                           |
+| `POST`   | `/api/conversations/:id/complete` | Finalize upload                        |
+| `GET`    | `/api/conversations`              | List (`contactId` / `companyId` query) |
+| `GET`    | `/api/conversations/:id/play`     | Presigned play URL                     |
+| `DELETE` | `/api/conversations/:id`          | Delete (admin)                         |
 
 ## Activity (admin / founder)
 
-| Method | Path | Description |
-| ------ | ---- | ----------- |
-| `GET` | `/api/activity/sdrs` | SDR roster |
-| `GET` | `/api/activity/targets` | Daily targets |
-| `PATCH` | `/api/activity/targets` | Update targets |
-| `POST` | `/api/activity/events` | Client-side activity event |
-| `GET` | `/api/activity/overview` | Manager overview |
-| `GET` | `/api/activity/timeline` | Event timeline |
-| `GET` | `/api/activity/company/:id/history` | Company progress (company + linked contact events) |
-| `GET` | `/api/activity/lead/:entityType/:id` | Lead-centric activity |
+| Method  | Path                                 | Description                                        |
+| ------- | ------------------------------------ | -------------------------------------------------- |
+| `GET`   | `/api/activity/sdrs`                 | SDR roster                                         |
+| `GET`   | `/api/activity/targets`              | Daily targets                                      |
+| `PATCH` | `/api/activity/targets`              | Update targets                                     |
+| `POST`  | `/api/activity/events`               | Client-side activity event                         |
+| `GET`   | `/api/activity/overview`             | Manager overview                                   |
+| `GET`   | `/api/activity/timeline`             | Event timeline                                     |
+| `GET`   | `/api/activity/company/:id/history`  | Company progress (company + linked contact events) |
+| `GET`   | `/api/activity/lead/:entityType/:id` | Lead-centric activity                              |
 
 Deep-link (SPA): `/?page=pipeline&companyId=<uuid>` opens Sales Pipeline with that company dialog.
 

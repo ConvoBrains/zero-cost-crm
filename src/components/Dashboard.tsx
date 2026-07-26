@@ -1,13 +1,13 @@
-import type { CrmStore } from '../hooks/useCrmStore'
-import type { Page } from '../types'
-import { btnPrimary, btnGhost } from './ui'
-import { ConvobrainsBridge } from './ConvobrainsBridge'
+import type { CrmStore } from '../hooks/useCrmStore';
+import type { Page } from '../types';
+import { btnPrimary, btnGhost } from './ui';
+import { ConvobrainsBridge } from './ConvobrainsBridge';
 
 interface DashboardProps {
-  store: CrmStore
-  onNavigate: (page: Page) => void
-  canManageUsers?: boolean
-  brandName?: string
+  store: CrmStore;
+  onNavigate: (page: Page) => void;
+  canManageUsers?: boolean;
+  brandName?: string;
 }
 
 export function Dashboard({
@@ -16,8 +16,8 @@ export function Dashboard({
   canManageUsers,
   brandName = 'Zero Cost CRM',
 }: DashboardProps) {
-  const { metrics } = store
-  const today = new Date().toISOString().slice(0, 10)
+  const { metrics } = store;
+  const today = new Date().toISOString().slice(0, 10);
 
   const summary = [
     { label: 'Total Companies', value: metrics.totalCompanies },
@@ -25,7 +25,7 @@ export function Dashboard({
     { label: 'Active Opportunities', value: metrics.activeOpportunities },
     { label: 'Deals Won', value: metrics.closedWon },
     { label: 'Deals Lost', value: metrics.closedLost },
-  ]
+  ];
 
   const panels = [
     {
@@ -64,9 +64,9 @@ export function Dashboard({
       blurb: 'Where deals died — dig into why next',
       action: () => onNavigate('pipeline'),
     },
-  ]
+  ];
 
-  const dueToday = store.companies.filter((c) => c.nextFollowUp === today)
+  const dueToday = store.companies.filter((c) => c.nextFollowUp === today);
 
   return (
     <div className="space-y-8">
@@ -79,8 +79,8 @@ export function Dashboard({
             SDR Dashboard
           </h1>
           <p className="mt-2 max-w-xl text-sm text-stone-500">
-            Start here each day. Clear follow-ups, work the pipeline, update contacts after
-            every call — then coach from the activity board.
+            Start here each day. Clear follow-ups, work the pipeline, update contacts after every
+            call — then coach from the activity board.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -183,7 +183,11 @@ export function Dashboard({
         </ol>
       </section>
 
-      {metrics.closedLost > 0 ? <ConvobrainsBridge variant="lost" /> : <ConvobrainsBridge variant="panel" />}
+      {metrics.closedLost > 0 ? (
+        <ConvobrainsBridge variant="lost" />
+      ) : (
+        <ConvobrainsBridge variant="panel" />
+      )}
     </div>
-  )
+  );
 }

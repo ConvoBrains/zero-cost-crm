@@ -1,30 +1,30 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
-import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react';
 
 interface ModalProps {
-  open: boolean
-  title: string
-  onClose: () => void
-  children: ReactNode
-  wide?: boolean
+  open: boolean;
+  title: string;
+  onClose: () => void;
+  children: ReactNode;
+  wide?: boolean;
 }
 
 export function Modal({ open, title, onClose, children, wide }: ModalProps) {
-  const titleId = useId()
-  const onCloseRef = useRef(onClose)
-  onCloseRef.current = onClose
+  const titleId = useId();
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
-    if (!open) return
+    if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCloseRef.current()
-    }
-    document.addEventListener('keydown', onKeyDown)
-    return () => document.removeEventListener('keydown', onKeyDown)
-  }, [open])
+      if (e.key === 'Escape') onCloseRef.current();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open]);
 
-  if (!open) return null
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto sm:items-start sm:p-8">
@@ -60,13 +60,13 @@ export function Modal({ open, title, onClose, children, wide }: ModalProps) {
         <div className="max-h-[min(85dvh,40rem)] overflow-y-auto px-4 py-4 sm:px-5">{children}</div>
       </div>
     </div>
-  )
+  );
 }
 
 interface FieldProps {
-  label: string
-  children: ReactNode
-  className?: string
+  label: string;
+  children: ReactNode;
+  className?: string;
 }
 
 export function Field({ label, children, className = '' }: FieldProps) {
@@ -75,25 +75,25 @@ export function Field({ label, children, className = '' }: FieldProps) {
       <span className="font-medium text-stone-600">{label}</span>
       {children}
     </label>
-  )
+  );
 }
 
 export const inputClass =
-  'w-full rounded-none border border-[var(--color-line)] bg-white px-3 py-2.5 text-base text-stone-900 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15 sm:text-sm'
+  'w-full rounded-none border border-[var(--color-line)] bg-white px-3 py-2.5 text-base text-stone-900 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15 sm:text-sm';
 
 export const btnPrimary =
-  'inline-flex items-center justify-center rounded-none bg-teal-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-800 disabled:opacity-50'
+  'inline-flex items-center justify-center rounded-none bg-teal-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-800 disabled:opacity-50';
 
 export const btnGhost =
-  'inline-flex items-center justify-center rounded-none border border-[var(--color-line)] bg-white px-3 py-2 text-sm font-medium text-stone-700 transition hover:bg-stone-50'
+  'inline-flex items-center justify-center rounded-none border border-[var(--color-line)] bg-white px-3 py-2 text-sm font-medium text-stone-700 transition hover:bg-stone-50';
 
 interface SearchInputProps {
-  value: string
-  onChange: (value: string) => void
-  placeholder?: string
-  'data-testid'?: string
-  onKeyDown?: (e: ReactKeyboardEvent<HTMLInputElement>) => void
-  onFocus?: () => void
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  'data-testid'?: string;
+  onKeyDown?: (e: ReactKeyboardEvent<HTMLInputElement>) => void;
+  onFocus?: () => void;
 }
 
 export function SearchInput({
@@ -119,31 +119,31 @@ export function SearchInput({
         onChange={(e) => onChange(e.target.value)}
         onFocus={onFocus}
         onKeyDown={(e) => {
-          if (e.key === 'Escape') onChange('')
-          onKeyDown?.(e)
+          if (e.key === 'Escape') onChange('');
+          onKeyDown?.(e);
         }}
         placeholder={placeholder}
         aria-label={placeholder}
         className={`${inputClass} pl-9`}
       />
     </div>
-  )
+  );
 }
 
 interface FilterOption {
-  value: string
-  label: string
+  value: string;
+  label: string;
 }
 
 interface FilterDropdownProps {
-  label: string
-  value: string | string[]
-  options: FilterOption[]
-  multi?: boolean
-  searchable?: boolean
-  active?: boolean
-  onChange: (value: string | string[]) => void
-  'data-testid'?: string
+  label: string;
+  value: string | string[];
+  options: FilterOption[];
+  multi?: boolean;
+  searchable?: boolean;
+  active?: boolean;
+  onChange: (value: string | string[]) => void;
+  'data-testid'?: string;
 }
 
 export function FilterDropdown({
@@ -156,25 +156,25 @@ export function FilterDropdown({
   onChange,
   'data-testid': testId,
 }: FilterDropdownProps) {
-  const [open, setOpen] = useState(false)
-  const [query, setQuery] = useState('')
-  const [panelStyle, setPanelStyle] = useState<CSSProperties>({})
-  const rootRef = useRef<HTMLDivElement>(null)
-  const buttonRef = useRef<HTMLButtonElement>(null)
-  const panelRef = useRef<HTMLDivElement>(null)
-  const selected = Array.isArray(value) ? value : [String(value)]
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [panelStyle, setPanelStyle] = useState<CSSProperties>({});
+  const rootRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const selected = Array.isArray(value) ? value : [String(value)];
 
   const updatePosition = () => {
-    const btn = buttonRef.current
-    if (!btn) return
-    const rect = btn.getBoundingClientRect()
-    const width = Math.max(rect.width, 256)
-    const spaceBelow = window.innerHeight - rect.bottom
-    const openUp = spaceBelow < 280 && rect.top > spaceBelow
-    const maxHeight = Math.min(256, openUp ? rect.top - 12 : spaceBelow - 12)
-    let left = rect.left
+    const btn = buttonRef.current;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const width = Math.max(rect.width, 256);
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const openUp = spaceBelow < 280 && rect.top > spaceBelow;
+    const maxHeight = Math.min(256, openUp ? rect.top - 12 : spaceBelow - 12);
+    let left = rect.left;
     if (left + width > window.innerWidth - 8) {
-      left = Math.max(8, window.innerWidth - width - 8)
+      left = Math.max(8, window.innerWidth - width - 8);
     }
     setPanelStyle({
       position: 'fixed',
@@ -182,75 +182,73 @@ export function FilterDropdown({
       width,
       maxHeight: Math.max(120, maxHeight),
       zIndex: 80,
-      ...(openUp
-        ? { bottom: window.innerHeight - rect.top + 4 }
-        : { top: rect.bottom + 4 }),
-    })
-  }
+      ...(openUp ? { bottom: window.innerHeight - rect.top + 4 } : { top: rect.bottom + 4 }),
+    });
+  };
 
   useLayoutEffect(() => {
-    if (!open) return
-    updatePosition()
-  }, [open, options.length, query])
+    if (!open) return;
+    updatePosition();
+  }, [open, options.length, query]);
 
   useEffect(() => {
-    if (!open) return
+    if (!open) return;
     const onDoc = (e: MouseEvent) => {
-      const target = e.target as Node
-      if (rootRef.current?.contains(target)) return
-      if (panelRef.current?.contains(target)) return
-      setOpen(false)
-    }
+      const target = e.target as Node;
+      if (rootRef.current?.contains(target)) return;
+      if (panelRef.current?.contains(target)) return;
+      setOpen(false);
+    };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
-    }
-    const onReposition = () => updatePosition()
+      if (e.key === 'Escape') setOpen(false);
+    };
+    const onReposition = () => updatePosition();
     // Defer outside-close so the opening click never immediately closes the panel.
     const timer = window.setTimeout(() => {
-      document.addEventListener('mousedown', onDoc)
-    }, 0)
-    document.addEventListener('keydown', onKey)
-    window.addEventListener('resize', onReposition)
-    window.addEventListener('scroll', onReposition, true)
+      document.addEventListener('mousedown', onDoc);
+    }, 0);
+    document.addEventListener('keydown', onKey);
+    window.addEventListener('resize', onReposition);
+    window.addEventListener('scroll', onReposition, true);
     return () => {
-      window.clearTimeout(timer)
-      document.removeEventListener('mousedown', onDoc)
-      document.removeEventListener('keydown', onKey)
-      window.removeEventListener('resize', onReposition)
-      window.removeEventListener('scroll', onReposition, true)
-    }
-  }, [open])
+      window.clearTimeout(timer);
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+      window.removeEventListener('resize', onReposition);
+      window.removeEventListener('scroll', onReposition, true);
+    };
+  }, [open]);
 
   useEffect(() => {
-    if (!open) setQuery('')
-  }, [open])
+    if (!open) setQuery('');
+  }, [open]);
 
   const filtered = searchable
     ? options.filter((o) => o.label.toLowerCase().includes(query.trim().toLowerCase()))
-    : options
+    : options;
 
   const summary = (() => {
     if (multi) {
-      if (selected.length === 0) return 'All'
+      if (selected.length === 0) return 'All';
       if (selected.length === 1) {
-        return options.find((o) => o.value === selected[0])?.label ?? '1 selected'
+        return options.find((o) => o.value === selected[0])?.label ?? '1 selected';
       }
-      return `${selected.length} selected`
+      return `${selected.length} selected`;
     }
-    return options.find((o) => o.value === (value as string))?.label ?? 'All'
-  })()
+    return options.find((o) => o.value === (value as string))?.label ?? 'All';
+  })();
 
   const toggle = (optValue: string) => {
     if (multi) {
       const next = selected.includes(optValue)
         ? selected.filter((v) => v !== optValue)
-        : [...selected, optValue]
-      onChange(next)
-      return
+        : [...selected, optValue];
+      onChange(next);
+      return;
     }
-    onChange(optValue)
-    setOpen(false)
-  }
+    onChange(optValue);
+    setOpen(false);
+  };
 
   const panel =
     open && typeof document !== 'undefined'
@@ -279,7 +277,7 @@ export function FilterDropdown({
               <p className="px-3 py-2 text-xs text-stone-400">No matches</p>
             ) : (
               filtered.map((opt) => {
-                const isOn = selected.includes(opt.value)
+                const isOn = selected.includes(opt.value);
                 return (
                   <button
                     key={opt.value || '__all__'}
@@ -305,13 +303,13 @@ export function FilterDropdown({
                     ) : null}
                     <span className="min-w-0 truncate">{opt.label}</span>
                   </button>
-                )
+                );
               })
             )}
           </div>,
-          document.body,
+          document.body
         )
-      : null
+      : null;
 
   return (
     <div ref={rootRef} className="relative shrink-0">
@@ -322,9 +320,9 @@ export function FilterDropdown({
         aria-expanded={open}
         aria-haspopup="listbox"
         onClick={(e) => {
-          e.preventDefault()
-          e.stopPropagation()
-          setOpen((v) => !v)
+          e.preventDefault();
+          e.stopPropagation();
+          setOpen((v) => !v);
         }}
         className={`inline-flex items-center gap-1.5 rounded-none px-3 py-1.5 text-xs font-medium transition ${
           active
@@ -340,12 +338,12 @@ export function FilterDropdown({
       </button>
       {panel}
     </div>
-  )
+  );
 }
 
 interface FilterChipProps {
-  label: string
-  onClear: () => void
+  label: string;
+  onClear: () => void;
 }
 
 export function FilterChip({ label, onClear }: FilterChipProps) {
@@ -361,5 +359,5 @@ export function FilterChip({ label, onClear }: FilterChipProps) {
         ×
       </button>
     </span>
-  )
+  );
 }

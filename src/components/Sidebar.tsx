@@ -1,16 +1,16 @@
-import type { Page } from '../types'
-import { navItemsForRole } from '../lib/nav'
-import { ConvobrainsBridge } from './ConvobrainsBridge'
+import type { Page } from '../types';
+import { navItemsForRole } from '../lib/nav';
+import { ConvobrainsBridge } from './ConvobrainsBridge';
 
 interface SidebarProps {
-  page: Page
-  onNavigate: (page: Page) => void
-  onLogout: () => void
-  userName: string
-  userRole?: string
-  brandName?: string
-  logoUrl?: string
-  className?: string
+  page: Page;
+  onNavigate: (page: Page) => void;
+  onLogout: () => void;
+  userName: string;
+  userRole?: string;
+  brandName?: string;
+  logoUrl?: string;
+  className?: string;
 }
 
 export function Sidebar({
@@ -23,18 +23,14 @@ export function Sidebar({
   logoUrl = '/convobrains-logo.png',
   className = '',
 }: SidebarProps) {
-  const items = navItemsForRole(userRole)
+  const items = navItemsForRole(userRole);
 
   return (
     <aside
       className={`flex min-h-0 w-56 shrink-0 flex-col overflow-hidden border-r border-[var(--color-line)] bg-[var(--color-panel)] ${className}`}
     >
       <div className="shrink-0 border-b border-[var(--color-line)] px-5 py-4">
-        <img
-          src={logoUrl}
-          alt={brandName}
-          className="h-16 w-full object-contain"
-        />
+        <img src={logoUrl} alt={brandName} className="h-16 w-full object-contain" />
         <p className="mt-2 text-center text-[10px] font-semibold tracking-[0.14em] text-stone-500 uppercase">
           {brandName}
         </p>
@@ -42,26 +38,22 @@ export function Sidebar({
 
       <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain p-3">
         {items.map((item) => {
-          const active = page === item.id
+          const active = page === item.id;
           return (
             <button
               key={item.id}
               type="button"
               onClick={() => onNavigate(item.id)}
               className={`rounded-none px-3 py-2.5 text-left transition ${
-                active
-                  ? 'bg-teal-700 text-white'
-                  : 'text-stone-700 hover:bg-stone-100'
+                active ? 'bg-teal-700 text-white' : 'text-stone-700 hover:bg-stone-100'
               }`}
             >
               <span className="block text-sm font-semibold">{item.label}</span>
-              <span
-                className={`block text-[11px] ${active ? 'text-teal-100' : 'text-stone-400'}`}
-              >
+              <span className={`block text-[11px] ${active ? 'text-teal-100' : 'text-stone-400'}`}>
                 {item.hint}
               </span>
             </button>
-          )
+          );
         })}
       </nav>
 
@@ -79,5 +71,5 @@ export function Sidebar({
         </button>
       </div>
     </aside>
-  )
+  );
 }

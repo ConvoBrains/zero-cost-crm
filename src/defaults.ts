@@ -3,12 +3,11 @@
  * and optional env (`BRAND_NAME`, `ALLOWED_EMAIL_DOMAIN`, etc.).
  */
 
-export const DEFAULT_BRAND_NAME = 'Zero Cost CRM'
+export const DEFAULT_BRAND_NAME = 'Zero Cost CRM';
 
-export const DEFAULT_BRAND_TAGLINE =
-  'Track what happens. ConvoBrains explains why.'
+export const DEFAULT_BRAND_TAGLINE = 'Track what happens. ConvoBrains explains why.';
 
-export const DEFAULT_LOGO_URL = '/convobrains-logo.png'
+export const DEFAULT_LOGO_URL = '/convobrains-logo.png';
 
 export const DEFAULT_STAGES = [
   'Lead Added',
@@ -24,7 +23,7 @@ export const DEFAULT_STAGES = [
   'Closed Won',
   'Closed Lost',
   'Not Interested',
-] as const
+] as const;
 
 export const DEFAULT_CONTACT_STATUSES = [
   'Not Contacted',
@@ -37,7 +36,7 @@ export const DEFAULT_CONTACT_STATUSES = [
   'No Answer',
   'Follow-up Required',
   'Rejected',
-] as const
+] as const;
 
 /** Champion contact status → pipeline stage (forward-only auto-move). */
 export const DEFAULT_CHAMPION_STATUS_TO_STAGE: Record<string, string | null> = {
@@ -51,17 +50,16 @@ export const DEFAULT_CHAMPION_STATUS_TO_STAGE: Record<string, string | null> = {
   'No Answer': null,
   'Follow-up Required': 'Follow-up',
   Rejected: 'Not Interested',
-}
+};
 
 /** Instance discovery questionnaire. Empty = hide Discovery section. */
-export type DiscoveryInputType = 'text' | 'textarea' | 'number'
+export type DiscoveryInputType = 'text' | 'textarea' | 'number';
 
 export interface DiscoveryQuestion {
-  id: string
-  section: string
-  prompt: string
-  input: DiscoveryInputType
+  id: string;
+  section: string;
+  prompt: string;
+  input: DiscoveryInputType;
 }
 
-export const DEFAULT_DISCOVERY_QUESTIONS: DiscoveryQuestion[] = []
-
+export const DEFAULT_DISCOVERY_QUESTIONS: DiscoveryQuestion[] = [];

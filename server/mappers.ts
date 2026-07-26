@@ -1,26 +1,26 @@
-import type { Company, Contact, Conversation } from '../src/types.js'
+import type { Company, Contact, Conversation } from '../src/types.js';
 
 function pgDateToIso(val: unknown): string | null {
-  if (val == null) return null
+  if (val == null) return null;
   if (val instanceof Date) {
-    const y = val.getFullYear()
-    const m = String(val.getMonth() + 1).padStart(2, '0')
-    const d = String(val.getDate()).padStart(2, '0')
-    return `${y}-${m}-${d}`
+    const y = val.getFullYear();
+    const m = String(val.getMonth() + 1).padStart(2, '0');
+    const d = String(val.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
-  const s = String(val)
-  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10)
-  return null
+  const s = String(val);
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  return null;
 }
 
 export function mapCompany(row: Record<string, unknown>): Company {
-  const answersRaw = row.discovery_answers
-  const discoveryAnswers: Record<string, string> = {}
+  const answersRaw = row.discovery_answers;
+  const discoveryAnswers: Record<string, string> = {};
   if (answersRaw && typeof answersRaw === 'object' && !Array.isArray(answersRaw)) {
     for (const [k, v] of Object.entries(answersRaw as Record<string, unknown>)) {
-      if (typeof v === 'string') discoveryAnswers[k] = v
-      else if (v == null) continue
-      else discoveryAnswers[k] = String(v)
+      if (typeof v === 'string') discoveryAnswers[k] = v;
+      else if (v == null) continue;
+      else discoveryAnswers[k] = String(v);
     }
   }
   return {
@@ -44,7 +44,7 @@ export function mapCompany(row: Record<string, unknown>): Company {
     linkedInCompany: String(row.linkedin_company ?? ''),
     discoveryAnswers,
     createdAt: pgDateToIso(row.created_at) ?? '',
-  }
+  };
 }
 
 export function mapContact(row: Record<string, unknown>): Contact {
@@ -62,16 +62,16 @@ export function mapContact(row: Record<string, unknown>): Contact {
     nextFollowUp: pgDateToIso(row.next_follow_up),
     notes: String(row.notes ?? ''),
     createdAt: pgDateToIso(row.created_at) ?? '',
-  }
+  };
 }
 
 function pgTimestampToIso(val: unknown): string | null {
-  if (val == null) return null
-  if (val instanceof Date) return val.toISOString()
-  const s = String(val)
-  if (!s) return null
-  const d = new Date(s)
-  return Number.isNaN(d.getTime()) ? null : d.toISOString()
+  if (val == null) return null;
+  if (val instanceof Date) return val.toISOString();
+  const s = String(val);
+  if (!s) return null;
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
 
 export function mapConversation(row: Record<string, unknown>): Conversation {
@@ -87,5 +87,5 @@ export function mapConversation(row: Record<string, unknown>): Conversation {
     calledAt: pgTimestampToIso(row.called_at) ?? '',
     s3Url: String(row.s3_url ?? ''),
     notes: String(row.notes ?? ''),
-  }
+  };
 }

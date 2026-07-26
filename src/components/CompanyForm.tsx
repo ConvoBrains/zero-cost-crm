@@ -1,22 +1,22 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import type { Company, DiscoveryQuestion } from '../types'
-import { INDUSTRIES, INTENTS } from '../types'
-import { DEFAULT_STAGES } from '../defaults'
-import type { CrmStore } from '../hooks/useCrmStore'
-import { Field, inputClass, btnPrimary, btnGhost } from './ui'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import type { Company, DiscoveryQuestion } from '../types';
+import { INDUSTRIES, INTENTS } from '../types';
+import { DEFAULT_STAGES } from '../defaults';
+import type { CrmStore } from '../hooks/useCrmStore';
+import { Field, inputClass, btnPrimary, btnGhost } from './ui';
 import {
   activityDetailLines,
   eventTypeLabel,
   fetchCompanyHistory,
   type CompanyHistoryEvent,
-} from '../lib/activity'
+} from '../lib/activity';
 
 interface CompanyFormProps {
-  store: CrmStore
-  stages?: string[]
-  discoveryQuestions?: DiscoveryQuestion[]
-  initial?: Company | null
-  onDone: () => void
+  store: CrmStore;
+  stages?: string[];
+  discoveryQuestions?: DiscoveryQuestion[];
+  initial?: Company | null;
+  onDone: () => void;
 }
 
 function formatEventTime(iso: string): string {
@@ -24,25 +24,25 @@ function formatEventTime(iso: string): string {
     return new Intl.DateTimeFormat(undefined, {
       dateStyle: 'medium',
       timeStyle: 'short',
-    }).format(new Date(iso))
+    }).format(new Date(iso));
   } catch {
-    return iso
+    return iso;
   }
 }
 
 function groupQuestions(questions: DiscoveryQuestion[]) {
-  const sections: Array<{ section: string; items: DiscoveryQuestion[] }> = []
-  const index = new Map<string, number>()
+  const sections: Array<{ section: string; items: DiscoveryQuestion[] }> = [];
+  const index = new Map<string, number>();
   for (const q of questions) {
-    const existing = index.get(q.section)
+    const existing = index.get(q.section);
     if (existing == null) {
-      index.set(q.section, sections.length)
-      sections.push({ section: q.section, items: [q] })
+      index.set(q.section, sections.length);
+      sections.push({ section: q.section, items: [q] });
     } else {
-      sections[existing]!.items.push(q)
+      sections[existing]!.items.push(q);
     }
   }
-  return sections
+  return sections;
 }
 
 export function CompanyForm({
@@ -52,9 +52,7 @@ export function CompanyForm({
   initial,
   onDone,
 }: CompanyFormProps) {
-  const contactOptions = initial
-    ? store.contacts.filter((t) => t.companyId === initial.id)
-    : []
+  const contactOptions = initial ? store.contacts.filter((t) => t.companyId === initial.id) : [];
 
   const [form, setForm] = useState({
     companyName: initial?.companyName ?? '',
@@ -72,66 +70,60 @@ export function CompanyForm({
     sourceLink: initial?.sourceLink ?? '',
     companyWebsite: initial?.companyWebsite ?? '',
     linkedInCompany: initial?.linkedInCompany ?? '',
-  })
-  const [discoveryAnswers, setDiscoveryAnswers] = useState<Record<string, string>>(
-    () => ({ ...(initial?.discoveryAnswers ?? {}) }),
-  )
+  });
+  const [discoveryAnswers, setDiscoveryAnswers] = useState<Record<string, string>>(() => ({
+    ...(initial?.discoveryAnswers ?? {}),
+  }));
 
-  const [history, setHistory] = useState<CompanyHistoryEvent[]>([])
-  const [historyLoading, setHistoryLoading] = useState(false)
-  const [historyError, setHistoryError] = useState<string | null>(null)
-  const historyEndRef = useRef<HTMLDivElement | null>(null)
+  const [history, setHistory] = useState<CompanyHistoryEvent[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const historyEndRef = useRef<HTMLDivElement | null>(null);
 
-  const discoverySections = useMemo(
-    () => groupQuestions(discoveryQuestions),
-    [discoveryQuestions],
-  )
+  const discoverySections = useMemo(() => groupQuestions(discoveryQuestions), [discoveryQuestions]);
 
   useEffect(() => {
-    if (!initial?.id) return
-    let cancelled = false
-    setHistoryLoading(true)
-    setHistoryError(null)
+    if (!initial?.id) return;
+    let cancelled = false;
+    setHistoryLoading(true);
+    setHistoryError(null);
     void fetchCompanyHistory(initial.id)
       .then((data) => {
-        if (cancelled) return
-        setHistory(data.events)
+        if (cancelled) return;
+        setHistory(data.events);
       })
       .catch((err: unknown) => {
-        if (cancelled) return
-        setHistoryError(err instanceof Error ? err.message : 'Failed to load history')
+        if (cancelled) return;
+        setHistoryError(err instanceof Error ? err.message : 'Failed to load history');
       })
       .finally(() => {
-        if (!cancelled) setHistoryLoading(false)
-      })
+        if (!cancelled) setHistoryLoading(false);
+      });
     return () => {
-      cancelled = true
-    }
-  }, [initial?.id])
+      cancelled = true;
+    };
+  }, [initial?.id]);
 
   useEffect(() => {
-    if (!history.length) return
-    historyEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-  }, [history])
+    if (!history.length) return;
+    historyEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [history]);
 
-  const set = (key: string, value: string) =>
-    setForm((f) => ({ ...f, [key]: value }))
+  const set = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }));
 
   const setAnswer = (id: string, value: string) =>
-    setDiscoveryAnswers((prev) => ({ ...prev, [id]: value }))
+    setDiscoveryAnswers((prev) => ({ ...prev, [id]: value }));
 
   const submit = async (e: FormEvent) => {
-    e.preventDefault()
-    if (!form.companyName.trim()) return
+    e.preventDefault();
+    if (!form.companyName.trim()) return;
 
     const payload = {
       companyName: form.companyName.trim(),
       stage: form.stage,
       industry: form.industry as Company['industry'],
       location: form.location,
-      estimatedCallVolume: form.estimatedCallVolume
-        ? Number(form.estimatedCallVolume)
-        : null,
+      estimatedCallVolume: form.estimatedCallVolume ? Number(form.estimatedCallVolume) : null,
       employeeCount: form.employeeCount ? Number(form.employeeCount) : null,
       intent: form.intent as Company['intent'],
       offeredPrice: form.offeredPrice ? Number(form.offeredPrice) : null,
@@ -143,19 +135,19 @@ export function CompanyForm({
       companyWebsite: form.companyWebsite,
       linkedInCompany: form.linkedInCompany,
       discoveryAnswers,
-    }
+    };
 
     if (initial) {
-      await store.updateCompany(initial.id, payload)
+      await store.updateCompany(initial.id, payload);
     } else {
-      await store.addCompany(payload)
+      await store.addCompany(payload);
     }
-    onDone()
-  }
+    onDone();
+  };
 
   const assignedToDisplay = initial
     ? initial.assignedTo || 'Unassigned'
-    : 'Will be assigned to you'
+    : 'Will be assigned to you';
 
   return (
     <form onSubmit={submit} className="space-y-4">
@@ -393,7 +385,7 @@ export function CompanyForm({
           ) : (
             <ol className="max-h-64 space-y-2 overflow-y-auto border border-stone-200 bg-stone-50/80 p-3">
               {history.map((ev) => {
-                const details = activityDetailLines(ev)
+                const details = activityDetailLines(ev);
                 return (
                   <li key={ev.id} className="text-sm text-stone-700">
                     <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -417,7 +409,7 @@ export function CompanyForm({
                       ))}
                     </div>
                   </li>
-                )
+                );
               })}
               <div ref={historyEndRef} />
             </ol>
@@ -432,8 +424,8 @@ export function CompanyForm({
             className="text-sm text-rose-600 hover:underline"
             onClick={async () => {
               if (confirm(`Delete ${initial.companyName}?`)) {
-                await store.deleteCompany(initial.id)
-                onDone()
+                await store.deleteCompany(initial.id);
+                onDone();
               }
             }}
           >
@@ -452,5 +444,5 @@ export function CompanyForm({
         </div>
       </div>
     </form>
-  )
+  );
 }
