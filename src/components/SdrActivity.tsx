@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   eventTypeLabel,
   fetchOverview,
@@ -8,18 +8,18 @@ import {
   type ActivityOverview,
   type ActivitySdr,
   type TimelineEvent,
-} from '../lib/activity'
-import { DayActivityStrip } from './DayActivityStrip'
-import { btnGhost, inputClass } from './ui'
+} from '../lib/activity';
+import { DayActivityStrip } from './DayActivityStrip';
+import { btnGhost, inputClass } from './ui';
 
 function fmtTime(iso: string | null) {
-  if (!iso) return '—'
+  if (!iso) return '—';
   return new Intl.DateTimeFormat('en-IN', {
     timeZone: 'Asia/Kolkata',
     hour: '2-digit',
     minute: '2-digit',
     hour12: true,
-  }).format(new Date(iso))
+  }).format(new Date(iso));
 }
 
 function fmtDay(iso: string) {
@@ -29,7 +29,7 @@ function fmtDay(iso: string) {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
-  }).format(new Date(iso))
+  }).format(new Date(iso));
 }
 
 function dayKeyIst(iso: string) {
@@ -38,11 +38,11 @@ function dayKeyIst(iso: string) {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-  }).format(new Date(iso))
+  }).format(new Date(iso));
 }
 
 function ProgressBar({ value, max, label }: { value: number; max: number; label: string }) {
-  const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0
+  const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
   return (
     <div>
       <div className="mb-1 flex justify-between text-sm">
@@ -52,10 +52,13 @@ function ProgressBar({ value, max, label }: { value: number; max: number; label:
         </span>
       </div>
       <div className="h-2 overflow-hidden rounded-none bg-stone-100">
-        <div className="h-full rounded-none bg-teal-700 transition-all" style={{ width: `${pct}%` }} />
+        <div
+          className="h-full rounded-none bg-teal-700 transition-all"
+          style={{ width: `${pct}%` }}
+        />
       </div>
     </div>
-  )
+  );
 }
 
 function Metric({ label, value }: { label: string; value: string | number }) {
@@ -64,32 +67,32 @@ function Metric({ label, value }: { label: string; value: string | number }) {
       <p className="text-[11px] font-semibold tracking-wide text-stone-500 uppercase">{label}</p>
       <p className="mt-1 font-[family-name:var(--font-display)] text-2xl text-stone-900">{value}</p>
     </div>
-  )
+  );
 }
 
 function ActivityFeed({ events, multiDay }: { events: TimelineEvent[]; multiDay: boolean }) {
   const groups = useMemo(() => {
-    if (!multiDay) return [{ key: 'all', label: null as string | null, events }]
-    const map = new Map<string, TimelineEvent[]>()
+    if (!multiDay) return [{ key: 'all', label: null as string | null, events }];
+    const map = new Map<string, TimelineEvent[]>();
     for (const e of events) {
-      const key = dayKeyIst(e.createdAt)
-      const list = map.get(key) ?? []
-      list.push(e)
-      map.set(key, list)
+      const key = dayKeyIst(e.createdAt);
+      const list = map.get(key) ?? [];
+      list.push(e);
+      map.set(key, list);
     }
     return [...map.entries()].map(([key, evs]) => ({
       key,
       label: fmtDay(`${key}T12:00:00+05:30`),
       events: evs,
-    }))
-  }, [events, multiDay])
+    }));
+  }, [events, multiDay]);
 
   if (events.length === 0) {
     return (
       <p className="rounded-none border border-dashed border-[var(--color-line)] bg-stone-50 px-4 py-8 text-center text-sm text-stone-500">
         No activity logged for this user / date range.
       </p>
-    )
+    );
   }
 
   return (
@@ -122,59 +125,56 @@ function ActivityFeed({ events, multiDay }: { events: TimelineEvent[]; multiDay:
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 export function SdrActivity() {
-  const [sdrs, setSdrs] = useState<ActivitySdr[]>([])
-  const [userId, setUserId] = useState('all')
-  const today = todayIstIso()
-  const [from, setFrom] = useState(today)
-  const [to, setTo] = useState(today)
-  const [search, setSearch] = useState('')
-  const [searchApplied, setSearchApplied] = useState('')
-  const [overview, setOverview] = useState<ActivityOverview | null>(null)
-  const [events, setEvents] = useState<TimelineEvent[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [sdrs, setSdrs] = useState<ActivitySdr[]>([]);
+  const [userId, setUserId] = useState('all');
+  const today = todayIstIso();
+  const [from, setFrom] = useState(today);
+  const [to, setTo] = useState(today);
+  const [search, setSearch] = useState('');
+  const [searchApplied, setSearchApplied] = useState('');
+  const [overview, setOverview] = useState<ActivityOverview | null>(null);
+  const [events, setEvents] = useState<TimelineEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     void fetchSdrs()
       .then(({ sdrs: list }) => setSdrs(list.filter((s) => s.role === 'sdr')))
-      .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load agents'))
-  }, [])
+      .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load agents'));
+  }, []);
 
   const load = useCallback(async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
     try {
-      const opts = { from, to, userId, q: searchApplied }
-      const [ov, tl] = await Promise.all([fetchOverview(opts), fetchTimeline(opts)])
-      setOverview(ov)
-      setEvents(tl.events)
+      const opts = { from, to, userId, q: searchApplied };
+      const [ov, tl] = await Promise.all([fetchOverview(opts), fetchTimeline(opts)]);
+      setOverview(ov);
+      setEvents(tl.events);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load activity')
-      setOverview(null)
-      setEvents([])
+      setError(e instanceof Error ? e.message : 'Failed to load activity');
+      setOverview(null);
+      setEvents([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [from, to, userId, searchApplied])
+  }, [from, to, userId, searchApplied]);
 
   useEffect(() => {
-    void load()
-  }, [load])
+    void load();
+  }, [load]);
 
-  const m = overview?.metrics
-  const session = overview?.session
-  const progress = overview?.progress
-  const targets = overview?.targets
-  const single = userId !== 'all'
-  const singleDay = from === to
-  const stripEvents = useMemo(
-    () => (singleDay ? [...events].reverse() : []),
-    [events, singleDay],
-  )
+  const m = overview?.metrics;
+  const session = overview?.session;
+  const progress = overview?.progress;
+  const targets = overview?.targets;
+  const single = userId !== 'all';
+  const singleDay = from === to;
+  const stripEvents = useMemo(() => (singleDay ? [...events].reverse() : []), [events, singleDay]);
 
   return (
     <div className="space-y-6">
@@ -210,9 +210,9 @@ export function SdrActivity() {
               className={inputClass}
               value={from}
               onChange={(e) => {
-                const v = e.target.value
-                setFrom(v)
-                if (v > to) setTo(v)
+                const v = e.target.value;
+                setFrom(v);
+                if (v > to) setTo(v);
               }}
             />
           </label>
@@ -223,9 +223,9 @@ export function SdrActivity() {
               className={inputClass}
               value={to}
               onChange={(e) => {
-                const v = e.target.value
-                setTo(v)
-                if (v < from) setFrom(v)
+                const v = e.target.value;
+                setTo(v);
+                if (v < from) setFrom(v);
               }}
             />
           </label>
@@ -238,7 +238,7 @@ export function SdrActivity() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') setSearchApplied(search.trim())
+                if (e.key === 'Enter') setSearchApplied(search.trim());
               }}
             />
           </label>
@@ -259,9 +259,7 @@ export function SdrActivity() {
       {error ? (
         <p className="rounded-none bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
       ) : null}
-      {loading && !overview ? (
-        <p className="text-sm text-stone-500">Loading…</p>
-      ) : null}
+      {loading && !overview ? <p className="text-sm text-stone-500">Loading…</p> : null}
 
       {overview && m && session && progress && targets ? (
         <>
@@ -384,5 +382,5 @@ export function SdrActivity() {
         </div>
       </section>
     </div>
-  )
+  );
 }

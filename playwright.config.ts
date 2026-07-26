@@ -1,6 +1,6 @@
-import { defineConfig, devices } from '@playwright/test'
-import { existsSync, readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { defineConfig, devices } from '@playwright/test';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 const FORCE_FROM_FILE = new Set([
   'DATABASE_URL',
@@ -11,61 +11,59 @@ const FORCE_FROM_FILE = new Set([
   'ALLOWED_EMAIL_DOMAIN',
   'CORS_ORIGINS',
   'PORT',
-])
+]);
 
 /** Load testing/functional/.env.testing for the API webServer (DB keys win over shell). */
 function loadTestingEnv(): Record<string, string> {
-  const env: Record<string, string> = {}
+  const env: Record<string, string> = {};
   for (const [k, v] of Object.entries(process.env)) {
-    if (typeof v === 'string') env[k] = v
+    if (typeof v === 'string') env[k] = v;
   }
 
-  const path = resolve(process.cwd(), 'testing/functional/.env.testing')
+  const path = resolve(process.cwd(), 'testing/functional/.env.testing');
   if (existsSync(path)) {
     for (const line of readFileSync(path, 'utf8').split('\n')) {
-      const t = line.trim()
-      if (!t || t.startsWith('#')) continue
-      const i = t.indexOf('=')
-      if (i < 0) continue
-      const key = t.slice(0, i).trim()
-      let val = t.slice(i + 1).trim()
+      const t = line.trim();
+      if (!t || t.startsWith('#')) continue;
+      const i = t.indexOf('=');
+      if (i < 0) continue;
+      const key = t.slice(0, i).trim();
+      let val = t.slice(i + 1).trim();
       if (
         (val.startsWith('"') && val.endsWith('"')) ||
         (val.startsWith("'") && val.endsWith("'"))
       ) {
-        val = val.slice(1, -1)
+        val = val.slice(1, -1);
       }
-      if (FORCE_FROM_FILE.has(key) || !env[key]) env[key] = val
+      if (FORCE_FROM_FILE.has(key) || !env[key]) env[key] = val;
     }
   }
 
-  env.NODE_ENV = 'test'
-  env.ALLOW_ACTIVITY_SEED ??= '1'
-  env.JWT_SECRET ??= 'testing-jwt-secret-not-for-prod'
-  env.DB_SSL ??= 'false'
-  env.ALLOWED_EMAIL_DOMAIN ??= 'convobrains.com'
-  env.PORT ??= '4000'
-  env.DATABASE_URL ??=
-    'postgresql://crm_test:crm_test_local_only@127.0.0.1:5434/brains_crm_test'
-  env.DB_URL_DEV = env.DATABASE_URL
-  env.CORS_ORIGINS ??=
-    'http://127.0.0.1:5173,http://localhost:5173,http://localhost:4000'
+  env.NODE_ENV = 'test';
+  env.ALLOW_ACTIVITY_SEED ??= '1';
+  env.JWT_SECRET ??= 'testing-jwt-secret-not-for-prod';
+  env.DB_SSL ??= 'false';
+  env.ALLOWED_EMAIL_DOMAIN ??= 'convobrains.com';
+  env.PORT ??= '4000';
+  env.DATABASE_URL ??= 'postgresql://crm_test:crm_test_local_only@127.0.0.1:5434/brains_crm_test';
+  env.DB_URL_DEV = env.DATABASE_URL;
+  env.CORS_ORIGINS ??= 'http://127.0.0.1:5173,http://localhost:5173,http://localhost:4000';
 
   // Fail closed: never point Playwright API at a non-test DB
-  const url = new URL(env.DATABASE_URL.replace(/^postgresql\+asyncpg:/, 'postgresql:'))
-  const host = url.hostname
-  const db = url.pathname.replace(/^\//, '')
-  const allowedHosts = new Set(['localhost', '127.0.0.1', 'crm-test-db'])
+  const url = new URL(env.DATABASE_URL.replace(/^postgresql\+asyncpg:/, 'postgresql:'));
+  const host = url.hostname;
+  const db = url.pathname.replace(/^\//, '');
+  const allowedHosts = new Set(['localhost', '127.0.0.1', 'crm-test-db']);
   if (!allowedHosts.has(host) || !db.includes('_test')) {
     throw new Error(
-      `playwright: refusing DATABASE_URL host=${host} db=${db} (must be local *_test)`,
-    )
+      `playwright: refusing DATABASE_URL host=${host} db=${db} (must be local *_test)`
+    );
   }
 
-  return env
+  return env;
 }
 
-const testingEnv = loadTestingEnv()
+const testingEnv = loadTestingEnv();
 
 export default defineConfig({
   testDir: './testing/e2e',
@@ -99,4 +97,4 @@ export default defineConfig({
       timeout: 120_000,
     },
   ],
-})
+});

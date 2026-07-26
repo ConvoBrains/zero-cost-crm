@@ -1,17 +1,17 @@
-import { useState, type FormEvent } from 'react'
-import type { Contact, Stage } from '../types'
-import { DEFAULT_CONTACT_STATUSES, DEFAULT_STAGES } from '../defaults'
-import type { CrmStore } from '../hooks/useCrmStore'
-import { Field, inputClass, btnPrimary, btnGhost } from './ui'
-import { ConversationPanel } from './ConversationPanel'
+import { useState, type FormEvent } from 'react';
+import type { Contact, Stage } from '../types';
+import { DEFAULT_CONTACT_STATUSES, DEFAULT_STAGES } from '../defaults';
+import type { CrmStore } from '../hooks/useCrmStore';
+import { Field, inputClass, btnPrimary, btnGhost } from './ui';
+import { ConversationPanel } from './ConversationPanel';
 
 interface ContactFormProps {
-  store: CrmStore
-  contactStatuses?: string[]
-  stages?: string[]
-  initial?: Contact | null
-  defaultCompanyId?: string | null
-  onDone: () => void
+  store: CrmStore;
+  contactStatuses?: string[];
+  stages?: string[];
+  initial?: Contact | null;
+  defaultCompanyId?: string | null;
+  onDone: () => void;
 }
 
 export function ContactForm({
@@ -34,31 +34,30 @@ export function ContactForm({
     lastContacted: initial?.lastContacted ?? '',
     nextFollowUp: initial?.nextFollowUp ?? '',
     notes: initial?.notes ?? '',
-  })
-  const [stageBusy, setStageBusy] = useState(false)
+  });
+  const [stageBusy, setStageBusy] = useState(false);
 
-  const set = (key: string, value: string | boolean) =>
-    setForm((f) => ({ ...f, [key]: value }))
+  const set = (key: string, value: string | boolean) => setForm((f) => ({ ...f, [key]: value }));
 
   const linkedCompany = form.companyId
     ? store.companies.find((c) => c.id === form.companyId)
-    : undefined
+    : undefined;
 
   const onCompanyStageChange = async (stage: string) => {
-    if (!form.companyId || !linkedCompany || stage === linkedCompany.stage) return
-    setStageBusy(true)
+    if (!form.companyId || !linkedCompany || stage === linkedCompany.stage) return;
+    setStageBusy(true);
     try {
       await store.moveCompanyStage(form.companyId, stage as Stage, {
         stageChangeSource: 'contact_form',
-      })
+      });
     } finally {
-      setStageBusy(false)
+      setStageBusy(false);
     }
-  }
+  };
 
   const submit = async (e: FormEvent) => {
-    e.preventDefault()
-    if (!form.contactName.trim()) return
+    e.preventDefault();
+    if (!form.contactName.trim()) return;
 
     const payload = {
       contactName: form.contactName.trim(),
@@ -72,15 +71,15 @@ export function ContactForm({
       lastContacted: form.lastContacted || null,
       nextFollowUp: form.nextFollowUp || null,
       notes: form.notes,
-    }
+    };
 
     if (initial) {
-      await store.updateContact(initial.id, payload)
+      await store.updateContact(initial.id, payload);
     } else {
-      await store.addContact(payload)
+      await store.addContact(payload);
     }
-    onDone()
-  }
+    onDone();
+  };
 
   return (
     <form onSubmit={submit} className="space-y-4">
@@ -116,8 +115,8 @@ export function ContactForm({
               type="button"
               className={btnGhost}
               onClick={() => {
-                const url = `${window.location.origin}/?page=pipeline&companyId=${encodeURIComponent(form.companyId)}`
-                window.open(url, '_blank', 'noopener,noreferrer')
+                const url = `${window.location.origin}/?page=pipeline&companyId=${encodeURIComponent(form.companyId)}`;
+                window.open(url, '_blank', 'noopener,noreferrer');
               }}
             >
               Open company
@@ -255,8 +254,8 @@ export function ContactForm({
             className="text-sm text-rose-600 hover:underline"
             onClick={async () => {
               if (confirm(`Delete ${initial.contactName}?`)) {
-                await store.deleteContact(initial.id)
-                onDone()
+                await store.deleteContact(initial.id);
+                onDone();
               }
             }}
           >
@@ -275,5 +274,5 @@ export function ContactForm({
         </div>
       </div>
     </form>
-  )
+  );
 }

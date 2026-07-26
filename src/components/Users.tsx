@@ -1,57 +1,56 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import type { CrmUser, UserRole } from '../types'
-import { USER_ROLES } from '../types'
-import { api } from '../lib/api'
-import { Field, inputClass, btnPrimary, btnGhost } from './ui'
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import type { CrmUser, UserRole } from '../types';
+import { USER_ROLES } from '../types';
+import { api } from '../lib/api';
+import { Field, inputClass, btnPrimary, btnGhost } from './ui';
 
 function roleLabel(role: string) {
-  if (role === 'sdr') return 'SDR'
-  return role.charAt(0).toUpperCase() + role.slice(1)
+  if (role === 'sdr') return 'SDR';
+  return role.charAt(0).toUpperCase() + role.slice(1);
 }
 
 export function Users() {
-  const [users, setUsers] = useState<CrmUser[]>([])
-  const [roles, setRoles] = useState<readonly string[]>(USER_ROLES)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
+  const [users, setUsers] = useState<CrmUser[]>([]);
+  const [roles, setRoles] = useState<readonly string[]>(USER_ROLES);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     name: '',
     email: '',
     password: '',
     role: 'sdr' as UserRole,
-  })
+  });
 
   const load = useCallback(async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
     try {
       const [usersRes, rolesRes] = await Promise.all([
         api<{ users: CrmUser[] }>('/api/users'),
         api<{ roles: string[] }>('/api/users/roles'),
-      ])
-      setUsers(usersRes.users)
-      if (rolesRes.roles?.length) setRoles(rolesRes.roles)
+      ]);
+      setUsers(usersRes.users);
+      if (rolesRes.roles?.length) setRoles(rolesRes.roles);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load users.')
+      setError(e instanceof Error ? e.message : 'Failed to load users.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    void load()
-  }, [load])
+    void load();
+  }, [load]);
 
-  const set = (key: keyof typeof form, value: string) =>
-    setForm((f) => ({ ...f, [key]: value }))
+  const set = (key: keyof typeof form, value: string) => setForm((f) => ({ ...f, [key]: value }));
 
   const submit = async (e: FormEvent) => {
-    e.preventDefault()
-    setSubmitting(true)
-    setError(null)
-    setSuccess(null)
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    setSuccess(null);
     try {
       const { user } = await api<{ user: CrmUser }>('/api/users', {
         method: 'POST',
@@ -61,16 +60,16 @@ export function Users() {
           password: form.password,
           role: form.role,
         }),
-      })
-      setUsers((prev) => [...prev, user].sort((a, b) => a.name.localeCompare(b.name)))
-      setForm({ name: '', email: '', password: '', role: 'sdr' })
-      setSuccess(`Created ${user.name} (${roleLabel(user.role)}).`)
+      });
+      setUsers((prev) => [...prev, user].sort((a, b) => a.name.localeCompare(b.name)));
+      setForm({ name: '', email: '', password: '', role: 'sdr' });
+      setSuccess(`Created ${user.name} (${roleLabel(user.role)}).`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create user.')
+      setError(err instanceof Error ? err.message : 'Failed to create user.');
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   return (
     <div className="space-y-8">
@@ -87,9 +86,7 @@ export function Users() {
       </header>
 
       <section className="rounded-none border border-[var(--color-line)] bg-[var(--color-panel)] p-5">
-        <h2 className="font-[family-name:var(--font-display)] text-2xl text-stone-900">
-          Add user
-        </h2>
+        <h2 className="font-[family-name:var(--font-display)] text-2xl text-stone-900">Add user</h2>
         <p className="mt-1 text-sm text-stone-500">
           Email domain rules are controlled by ALLOWED_EMAIL_DOMAIN on the server.
         </p>
@@ -150,9 +147,9 @@ export function Users() {
               type="button"
               className={btnGhost}
               onClick={() => {
-                setForm({ name: '', email: '', password: '', role: 'sdr' })
-                setError(null)
-                setSuccess(null)
+                setForm({ name: '', email: '', password: '', role: 'sdr' });
+                setError(null);
+                setSuccess(null);
               }}
             >
               Clear
@@ -210,5 +207,5 @@ export function Users() {
         )}
       </section>
     </div>
-  )
+  );
 }

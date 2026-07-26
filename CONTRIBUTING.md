@@ -24,9 +24,13 @@ Useful commands:
 make help                 # list all make targets
 make setup && make dev    # install deps, start Postgres + demo data, run app
 npm run lint              # oxlint
+npm run format            # Prettier write
+npm run format:check      # Prettier check (also in local npm run ci)
 npm test                  # unit tests
-npm run ci                # lint + unit + build (what local CI-lite runs)
+npm run ci                # lint + format:check + unit + build
 ```
+
+**Format:** Prettier is the project formatter (see `.prettierrc`). Run `npm run format` before you push. Local `npm run ci` includes `format:check`. GitHub Actions does not yet run `format:check` in the unit job (workflow update pending); until then, treat format check as required for local and PR readiness.
 
 ---
 
@@ -44,12 +48,12 @@ If you’re new to open source, start with labels **`first-timers-only`**, **`go
 
 Create a branch from an up-to-date `main`:
 
-| Prefix | Use for |
-|--------|---------|
-| `feat/` | New feature |
-| `fix/` | Bug fix |
-| `docs/` | Documentation only |
-| `test/` | Tests only |
+| Prefix   | Use for                |
+| -------- | ---------------------- |
+| `feat/`  | New feature            |
+| `fix/`   | Bug fix                |
+| `docs/`  | Documentation only     |
+| `test/`  | Tests only             |
 | `chore/` | Tooling, deps, cleanup |
 
 Examples: `docs/expand-contributing`, `fix/pipeline-filter-crash`, `feat/export-audit-log`.
@@ -66,6 +70,7 @@ git checkout -b docs/your-short-description
 
 - **Language:** TypeScript + React (Vite frontend, Express API).
 - **Lint:** run `npm run lint` (oxlint) before you push.
+- **Format:** run `npm run format` / `npm run format:check` (Prettier).
 - Prefer small, focused changes. Avoid drive-by refactors unrelated to the issue.
 - **No secrets or real PII** in code, commits, or screenshots.
 - Schema changes belong in `sql/schema.sql` (see [ARCHITECTURE](docs/ARCHITECTURE.md)).
@@ -75,21 +80,22 @@ git checkout -b docs/your-short-description
 
 ## Testing
 
-| What you changed | What to run | Where tests live |
-|------------------|-------------|------------------|
-| Shared helpers / pure logic | `npm test` | `testing/unit/` (`src/lib` → unit tests) |
-| API or DB behavior | `npm run test:api:prep && npm run test:api` (Docker DB) | `testing/functional/api/` |
-| UI flows | `make test-e2e` (Docker + Playwright) | `testing/e2e/` |
-| Docs only | Note “docs-only” in the PR | — |
+| What you changed            | What to run                                             | Where tests live                         |
+| --------------------------- | ------------------------------------------------------- | ---------------------------------------- |
+| Shared helpers / pure logic | `npm test`                                              | `testing/unit/` (`src/lib` → unit tests) |
+| API or DB behavior          | `npm run test:api:prep && npm run test:api` (Docker DB) | `testing/functional/api/`                |
+| UI flows                    | `make test-e2e` (Docker + Playwright)                   | `testing/e2e/`                           |
+| Docs only                   | Note “docs-only” in the PR                              | —                                        |
 
 Always run at least:
 
 ```bash
 npm ci && npm test          # unit (always for code changes)
 npm run lint
+npm run format:check
 ```
 
-When behavior changes, **add or update tests**. GitHub CI also runs API + e2e; local `npm run ci` is lint + unit + build only.
+When behavior changes, **add or update tests**. GitHub CI also runs API + e2e; local `npm run ci` is lint + format:check + unit + build.
 
 ```bash
 npm run test:api:prep && npm run test:api   # API tests (needs Docker DB)
@@ -127,6 +133,7 @@ Keep the subject short; put detail in the body if needed.
 - [ ] `npm test` (and `npm run test:api` / `make test-e2e` if API/UI flows changed)
 - [ ] New/updated tests for behavior changes (or marked docs-only)
 - [ ] `npm run lint` clean
+- [ ] `npm run format:check` clean
 - [ ] No secrets / PII
 - [ ] CI green
 
@@ -136,19 +143,19 @@ Keep PRs focused. One issue → one PR when possible.
 
 ## Issue labels (glossary)
 
-| Label | Meaning |
-|-------|---------|
-| `good first issue` | Good for newcomers |
-| `first-timers-only` | Reserved for first-time open source contributors |
-| `help wanted` | Maintainers want community help |
-| `easy` / `medium` / `hard` | Scope / difficulty |
-| `documentation` | Docs-only or docs-primary work |
-| `frontend` | UI / React / Tailwind |
-| `backend` | API / Express / DB |
-| `testing` | Tests and CI quality |
-| `bug` / `enhancement` | Broken behavior vs new capability |
-| `a11y` | Accessibility |
-| `security` | Security hardening (see also SECURITY.md) |
+| Label                      | Meaning                                          |
+| -------------------------- | ------------------------------------------------ |
+| `good first issue`         | Good for newcomers                               |
+| `first-timers-only`        | Reserved for first-time open source contributors |
+| `help wanted`              | Maintainers want community help                  |
+| `easy` / `medium` / `hard` | Scope / difficulty                               |
+| `documentation`            | Docs-only or docs-primary work                   |
+| `frontend`                 | UI / React / Tailwind                            |
+| `backend`                  | API / Express / DB                               |
+| `testing`                  | Tests and CI quality                             |
+| `bug` / `enhancement`      | Broken behavior vs new capability                |
+| `a11y`                     | Accessibility                                    |
+| `security`                 | Security hardening (see also SECURITY.md)        |
 
 Issue templates live in [`.github/ISSUE_TEMPLATE/`](.github/ISSUE_TEMPLATE/).
 

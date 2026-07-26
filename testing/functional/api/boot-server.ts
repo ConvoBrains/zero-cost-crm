@@ -1,3 +1,3 @@
-import { startApi } from './helpers'
+import { startApi } from './helpers';
 
-await startApi()
+await startApi();

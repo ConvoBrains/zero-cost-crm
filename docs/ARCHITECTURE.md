@@ -23,18 +23,18 @@ In production (`NODE_ENV=production`), Express also serves the built SPA from `d
 
 ## Major modules
 
-| Path | Role |
-| ---- | ---- |
-| `src/` | React UI (dashboard, pipeline, contacts, import, activity, users) |
-| `server/app.ts` | HTTP routes, auth, CRM CRUD, import |
-| `server/activity*.ts` | SDR sessions, events, manager overview |
-| `server/conversations.ts` | Recording upload/presign/play |
-| `server/config.ts` | Environment validation |
-| `sql/schema.sql` | Idempotent Postgres schema (+ `app_settings`) |
-| `server/settings.ts` | Load/update instance branding & lists |
-| `testing/unit/` | Unit tests |
-| `testing/functional/` | Test DB + API tests |
-| `testing/e2e/` | UI e2e (Playwright) |
+| Path                      | Role                                                              |
+| ------------------------- | ----------------------------------------------------------------- |
+| `src/`                    | React UI (dashboard, pipeline, contacts, import, activity, users) |
+| `server/app.ts`           | HTTP routes, auth, CRM CRUD, import                               |
+| `server/activity*.ts`     | SDR sessions, events, manager overview                            |
+| `server/conversations.ts` | Recording upload/presign/play                                     |
+| `server/config.ts`        | Environment validation                                            |
+| `sql/schema.sql`          | Idempotent Postgres schema (+ `app_settings`)                     |
+| `server/settings.ts`      | Load/update instance branding & lists                             |
+| `testing/unit/`           | Unit tests                                                        |
+| `testing/functional/`     | Test DB + API tests                                               |
+| `testing/e2e/`            | UI e2e (Playwright)                                               |
 
 ## Data model (ER sketch)
 

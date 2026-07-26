@@ -2,9 +2,9 @@
 
 ## Supported versions
 
-| Version | Supported |
-| ------- | --------- |
-| `main` (latest) | Yes |
+| Version            | Supported   |
+| ------------------ | ----------- |
+| `main` (latest)    | Yes         |
 | Older tags / forks | Best effort |
 
 ## Reporting a vulnerability

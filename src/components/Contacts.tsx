@@ -1,11 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
-import type {
-  Contact,
-  ContactFilters,
-  ContactSortKey,
-  SortDirection,
-} from '../types'
-import type { CrmStore } from '../hooks/useCrmStore'
+import { useEffect, useMemo, useState } from 'react';
+import type { Contact, ContactFilters, ContactSortKey, SortDirection } from '../types';
+import type { CrmStore } from '../hooks/useCrmStore';
 import {
   CONTACT_DATE_RANGE_OPTIONS,
   CONTACT_QUEUE_OPTIONS,
@@ -14,19 +9,19 @@ import {
   buildContactInsights,
   contactFiltersAreActive,
   statusColor,
-} from '../lib/views'
-import { logViewEvent } from '../lib/activity'
-import { ContactForm } from './ContactForm'
-import { FilterChip, FilterDropdown, Modal, SearchInput, btnPrimary } from './ui'
+} from '../lib/views';
+import { logViewEvent } from '../lib/activity';
+import { ContactForm } from './ContactForm';
+import { FilterChip, FilterDropdown, Modal, SearchInput, btnPrimary } from './ui';
 
 interface ContactsProps {
-  store: CrmStore
-  contactStatuses?: string[]
-  stages?: string[]
+  store: CrmStore;
+  contactStatuses?: string[];
+  stages?: string[];
 }
 
 function formatAddedDate(iso: string): string {
-  return iso.slice(0, 10) || '—'
+  return iso.slice(0, 10) || '—';
 }
 
 function ContactRow({
@@ -35,10 +30,10 @@ function ContactRow({
   stage,
   onEdit,
 }: {
-  contact: Contact
-  companyName: string
-  stage: string
-  onEdit: () => void
+  contact: Contact;
+  companyName: string;
+  stage: string;
+  onEdit: () => void;
 }) {
   return (
     <button
@@ -78,7 +73,7 @@ function ContactRow({
         <span className="text-xs text-stone-400">Added {formatAddedDate(contact.createdAt)}</span>
       </div>
     </button>
-  )
+  );
 }
 
 function SortHeader({
@@ -88,13 +83,13 @@ function SortHeader({
   direction,
   onSort,
 }: {
-  label: string
-  sortKey: ContactSortKey
-  activeKey: ContactSortKey
-  direction: SortDirection
-  onSort: (key: ContactSortKey) => void
+  label: string;
+  sortKey: ContactSortKey;
+  activeKey: ContactSortKey;
+  direction: SortDirection;
+  onSort: (key: ContactSortKey) => void;
 }) {
-  const active = activeKey === sortKey
+  const active = activeKey === sortKey;
   return (
     <th className="px-4 py-3 font-semibold">
       <button
@@ -106,123 +101,118 @@ function SortHeader({
         {active ? <span aria-hidden>{direction === 'asc' ? '↑' : '↓'}</span> : null}
       </button>
     </th>
-  )
+  );
 }
 
 export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
-  const [filters, setFilters] = useState<ContactFilters>(DEFAULT_CONTACT_FILTERS)
-  const [searchDraft, setSearchDraft] = useState('')
-  const [editing, setEditing] = useState<Contact | null>(null)
-  const [creating, setCreating] = useState(false)
-  const [insightsOpen, setInsightsOpen] = useState(true)
-  const [sortKey, setSortKey] = useState<ContactSortKey>('contactName')
-  const [sortDir, setSortDir] = useState<SortDirection>('asc')
+  const [filters, setFilters] = useState<ContactFilters>(DEFAULT_CONTACT_FILTERS);
+  const [searchDraft, setSearchDraft] = useState('');
+  const [editing, setEditing] = useState<Contact | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [insightsOpen, setInsightsOpen] = useState(true);
+  const [sortKey, setSortKey] = useState<ContactSortKey>('contactName');
+  const [sortDir, setSortDir] = useState<SortDirection>('asc');
 
   useEffect(() => {
     const id = window.setTimeout(() => {
-      setFilters((f) => (f.search === searchDraft ? f : { ...f, search: searchDraft }))
-    }, 200)
-    return () => window.clearTimeout(id)
-  }, [searchDraft])
+      setFilters((f) => (f.search === searchDraft ? f : { ...f, search: searchDraft }));
+    }, 200);
+    return () => window.clearTimeout(id);
+  }, [searchDraft]);
 
   const openContact = (c: Contact) => {
-    setEditing(c)
-    logViewEvent('contact.opened', c.id, c.contactName)
-  }
+    setEditing(c);
+    logViewEvent('contact.opened', c.id, c.contactName);
+  };
 
   const patchFilters = (patch: Partial<ContactFilters>) => {
-    setFilters((f) => ({ ...f, ...patch }))
-  }
+    setFilters((f) => ({ ...f, ...patch }));
+  };
 
   const clearFilters = () => {
-    setSearchDraft('')
-    setFilters({ ...DEFAULT_CONTACT_FILTERS, queue: 'all' })
-  }
+    setSearchDraft('');
+    setFilters({ ...DEFAULT_CONTACT_FILTERS, queue: 'all' });
+  };
 
   const statusOptions = useMemo(
     () => (contactStatuses ?? []).map((s) => ({ value: s, label: s })),
-    [contactStatuses],
-  )
+    [contactStatuses]
+  );
 
-  const stageOptions = useMemo(
-    () => (stages ?? []).map((s) => ({ value: s, label: s })),
-    [stages],
-  )
+  const stageOptions = useMemo(() => (stages ?? []).map((s) => ({ value: s, label: s })), [stages]);
 
   const companyOptions = useMemo(
     () =>
       [...store.companies]
         .sort((a, b) => a.companyName.localeCompare(b.companyName))
         .map((c) => ({ value: c.id, label: c.companyName })),
-    [store.companies],
-  )
+    [store.companies]
+  );
 
   const filtered = useMemo(
     () => applyContactFilters(store.contacts, store.companies, filters),
-    [store.contacts, store.companies, filters],
-  )
+    [store.contacts, store.companies, filters]
+  );
 
   const sorted = useMemo(() => {
-    const list = [...filtered]
-    const mul = sortDir === 'asc' ? 1 : -1
+    const list = [...filtered];
+    const mul = sortDir === 'asc' ? 1 : -1;
     list.sort((a, b) => {
-      let cmp = 0
+      let cmp = 0;
       switch (sortKey) {
         case 'contactName':
-          cmp = a.contactName.localeCompare(b.contactName)
-          break
+          cmp = a.contactName.localeCompare(b.contactName);
+          break;
         case 'companyName': {
-          const an = store.getCompany(a.companyId)?.companyName ?? ''
-          const bn = store.getCompany(b.companyId)?.companyName ?? ''
-          cmp = an.localeCompare(bn)
-          break
+          const an = store.getCompany(a.companyId)?.companyName ?? '';
+          const bn = store.getCompany(b.companyId)?.companyName ?? '';
+          cmp = an.localeCompare(bn);
+          break;
         }
         case 'contactStatus':
-          cmp = a.contactStatus.localeCompare(b.contactStatus)
-          break
+          cmp = a.contactStatus.localeCompare(b.contactStatus);
+          break;
         case 'stage': {
-          const as = store.getCompany(a.companyId)?.stage ?? ''
-          const bs = store.getCompany(b.companyId)?.stage ?? ''
-          cmp = as.localeCompare(bs)
-          break
+          const as = store.getCompany(a.companyId)?.stage ?? '';
+          const bs = store.getCompany(b.companyId)?.stage ?? '';
+          cmp = as.localeCompare(bs);
+          break;
         }
         case 'nextFollowUp':
-          cmp = (a.nextFollowUp ?? '9999-12-31').localeCompare(b.nextFollowUp ?? '9999-12-31')
-          break
+          cmp = (a.nextFollowUp ?? '9999-12-31').localeCompare(b.nextFollowUp ?? '9999-12-31');
+          break;
         case 'createdAt':
-          cmp = a.createdAt.localeCompare(b.createdAt)
-          break
+          cmp = a.createdAt.localeCompare(b.createdAt);
+          break;
         default:
-          cmp = a.contactName.localeCompare(b.contactName)
+          cmp = a.contactName.localeCompare(b.contactName);
       }
-      if (cmp !== 0) return cmp * mul
-      return a.contactName.localeCompare(b.contactName)
-    })
-    return list
-  }, [filtered, sortKey, sortDir, store])
+      if (cmp !== 0) return cmp * mul;
+      return a.contactName.localeCompare(b.contactName);
+    });
+    return list;
+  }, [filtered, sortKey, sortDir, store]);
 
   const insights = useMemo(
     () => buildContactInsights(filtered, store.companies),
-    [filtered, store.companies],
-  )
+    [filtered, store.companies]
+  );
 
-  const filtersActive = contactFiltersAreActive(filters)
+  const filtersActive = contactFiltersAreActive(filters);
 
   const onSort = (key: ContactSortKey) => {
     if (sortKey === key) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
     } else {
-      setSortKey(key)
-      setSortDir(key === 'createdAt' ? 'desc' : 'asc')
+      setSortKey(key);
+      setSortDir(key === 'createdAt' ? 'desc' : 'asc');
     }
-  }
+  };
 
-  const queueLabel =
-    CONTACT_QUEUE_OPTIONS.find((o) => o.value === filters.queue)?.label ?? 'All'
+  const queueLabel = CONTACT_QUEUE_OPTIONS.find((o) => o.value === filters.queue)?.label ?? 'All';
   const dateLabel =
-    CONTACT_DATE_RANGE_OPTIONS.find((o) => o.value === filters.dateRange)?.label ?? 'All Time'
-  const companyLabel =
-    companyOptions.find((o) => o.value === filters.companyId)?.label ?? null
+    CONTACT_DATE_RANGE_OPTIONS.find((o) => o.value === filters.dateRange)?.label ?? 'All Time';
+  const companyLabel = companyOptions.find((o) => o.value === filters.companyId)?.label ?? null;
 
   return (
     <div className="space-y-4">
@@ -285,9 +275,7 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
           options={[{ value: '', label: 'All companies' }, ...companyOptions]}
           searchable
           active={!!filters.companyId}
-          onChange={(v) =>
-            patchFilters({ companyId: !v || v === '' ? null : (v as string) })
-          }
+          onChange={(v) => patchFilters({ companyId: !v || v === '' ? null : (v as string) })}
         />
         <FilterDropdown
           data-testid="contact-filter-stage"
@@ -318,21 +306,22 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
             <FilterChip
               label={`Search: ${filters.search.trim()}`}
               onClear={() => {
-                setSearchDraft('')
-                patchFilters({ search: '' })
+                setSearchDraft('');
+                patchFilters({ search: '' });
               }}
             />
           ) : null}
           {filters.queue !== 'all' ? (
-            <FilterChip label={`Queue: ${queueLabel}`} onClear={() => patchFilters({ queue: 'all' })} />
+            <FilterChip
+              label={`Queue: ${queueLabel}`}
+              onClear={() => patchFilters({ queue: 'all' })}
+            />
           ) : null}
           {filters.statuses.map((s) => (
             <FilterChip
               key={s}
               label={`Status: ${s}`}
-              onClear={() =>
-                patchFilters({ statuses: filters.statuses.filter((x) => x !== s) })
-              }
+              onClear={() => patchFilters({ statuses: filters.statuses.filter((x) => x !== s) })}
             />
           ))}
           {companyLabel ? (
@@ -345,9 +334,7 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
             <FilterChip
               key={s}
               label={`Stage: ${s}`}
-              onClear={() =>
-                patchFilters({ stages: filters.stages.filter((x) => x !== s) })
-              }
+              onClear={() => patchFilters({ stages: filters.stages.filter((x) => x !== s) })}
             />
           ))}
           {filters.championOnly ? (
@@ -490,7 +477,7 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
 
       <div className="space-y-3 md:hidden">
         {sorted.map((t) => {
-          const company = store.getCompany(t.companyId)
+          const company = store.getCompany(t.companyId);
           return (
             <ContactRow
               key={t.id}
@@ -499,10 +486,12 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
               stage={company?.stage ?? ''}
               onEdit={() => openContact(t)}
             />
-          )
+          );
         })}
         {sorted.length === 0 ? (
-          <p className="py-10 text-center text-sm text-stone-400">No contacts match these filters.</p>
+          <p className="py-10 text-center text-sm text-stone-400">
+            No contacts match these filters.
+          </p>
         ) : null}
       </div>
 
@@ -559,7 +548,7 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
             </thead>
             <tbody>
               {sorted.map((t) => {
-                const company = store.getCompany(t.companyId)
+                const company = store.getCompany(t.companyId);
                 return (
                   <tr
                     key={t.id}
@@ -575,13 +564,9 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
                           </span>
                         ) : null}
                       </div>
-                      {t.email ? (
-                        <p className="text-[11px] text-stone-400">{t.email}</p>
-                      ) : null}
+                      {t.email ? <p className="text-[11px] text-stone-400">{t.email}</p> : null}
                     </td>
-                    <td className="px-4 py-3 text-stone-600">
-                      {company?.companyName ?? '—'}
-                    </td>
+                    <td className="px-4 py-3 text-stone-600">{company?.companyName ?? '—'}</td>
                     <td className="px-4 py-3 text-stone-600">{t.role || '—'}</td>
                     <td className="px-4 py-3">
                       <span
@@ -593,11 +578,9 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
                     <td className="px-4 py-3 text-stone-600">{company?.stage ?? '—'}</td>
                     <td className="px-4 py-3 text-stone-600">{t.phone || '—'}</td>
                     <td className="px-4 py-3 text-stone-500">{t.nextFollowUp || '—'}</td>
-                    <td className="px-4 py-3 text-stone-500">
-                      {formatAddedDate(t.createdAt)}
-                    </td>
+                    <td className="px-4 py-3 text-stone-500">{formatAddedDate(t.createdAt)}</td>
                   </tr>
-                )
+                );
               })}
               {sorted.length === 0 ? (
                 <tr>
@@ -638,5 +621,5 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
         ) : null}
       </Modal>
     </div>
-  )
+  );
 }

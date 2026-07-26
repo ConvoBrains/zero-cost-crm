@@ -59,6 +59,7 @@ This runs (crm-role safe — full `schema.sql` may fail on postgres-owned indexe
 3. Prints counts: users / companies / contacts / brand / status count
 
 **Note:** `companies_stage_check` stays (postgres-owned). Default stages already match, so pipeline is fine.
+
 ## 4. Run locally
 
 ```bash

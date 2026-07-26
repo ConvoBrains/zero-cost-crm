@@ -1,21 +1,21 @@
-import { useCallback, useEffect, useState } from 'react'
-import type { Conversation, Stage } from '../types'
-import { DEFAULT_STAGES } from '../defaults'
-import type { CrmStore } from '../hooks/useCrmStore'
+import { useCallback, useEffect, useState } from 'react';
+import type { Conversation, Stage } from '../types';
+import { DEFAULT_STAGES } from '../defaults';
+import type { CrmStore } from '../hooks/useCrmStore';
 import {
   deleteConversation,
   getPlayUrl,
   listConversations,
   uploadConversationRecording,
-} from '../lib/conversations'
-import { Field, inputClass, btnGhost, btnPrimary } from './ui'
-import { ConvobrainsBridge } from './ConvobrainsBridge'
+} from '../lib/conversations';
+import { Field, inputClass, btnGhost, btnPrimary } from './ui';
+import { ConvobrainsBridge } from './ConvobrainsBridge';
 
 interface ConversationPanelProps {
-  store: CrmStore
-  contactId: string
-  companyId: string | null
-  stages?: string[]
+  store: CrmStore;
+  contactId: string;
+  companyId: string | null;
+  stages?: string[];
 }
 
 function formatCalledAt(iso: string): string {
@@ -23,9 +23,9 @@ function formatCalledAt(iso: string): string {
     return new Date(iso).toLocaleString(undefined, {
       dateStyle: 'medium',
       timeStyle: 'short',
-    })
+    });
   } catch {
-    return iso
+    return iso;
   }
 }
 
@@ -35,89 +35,89 @@ export function ConversationPanel({
   companyId,
   stages = [...DEFAULT_STAGES],
 }: ConversationPanelProps) {
-  const company = companyId ? store.getCompany(companyId) : null
+  const company = companyId ? store.getCompany(companyId) : null;
   const [stageAtCall, setStageAtCall] = useState<Stage>(
-    company?.stage ?? stages[0] ?? 'Lead Added',
-  )
-  const [notes, setNotes] = useState('')
-  const [file, setFile] = useState<File | null>(null)
-  const [uploading, setUploading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [items, setItems] = useState<Conversation[]>([])
-  const [loading, setLoading] = useState(true)
-  const [playingId, setPlayingId] = useState<string | null>(null)
-  const [playUrl, setPlayUrl] = useState<string | null>(null)
+    company?.stage ?? stages[0] ?? 'Lead Added'
+  );
+  const [notes, setNotes] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [items, setItems] = useState<Conversation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const [playUrl, setPlayUrl] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const rows = await listConversations({ contactId })
-      setItems(rows)
+      const rows = await listConversations({ contactId });
+      setItems(rows);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load recordings')
+      setError(e instanceof Error ? e.message : 'Failed to load recordings');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [contactId])
+  }, [contactId]);
 
   useEffect(() => {
-    void refresh()
-  }, [refresh])
+    void refresh();
+  }, [refresh]);
 
   useEffect(() => {
-    if (company?.stage) setStageAtCall(company.stage)
-  }, [company?.stage])
+    if (company?.stage) setStageAtCall(company.stage);
+  }, [company?.stage]);
 
   const upload = async () => {
     if (!file) {
-      setError('Choose an audio file first')
-      return
+      setError('Choose an audio file first');
+      return;
     }
-    setUploading(true)
-    setError(null)
+    setUploading(true);
+    setError(null);
     try {
-      await uploadConversationRecording(contactId, stageAtCall, file, notes || undefined)
-      setFile(null)
-      setNotes('')
-      await refresh()
+      await uploadConversationRecording(contactId, stageAtCall, file, notes || undefined);
+      setFile(null);
+      setNotes('');
+      await refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Upload failed')
+      setError(e instanceof Error ? e.message : 'Upload failed');
     } finally {
-      setUploading(false)
+      setUploading(false);
     }
-  }
+  };
 
   const play = async (id: string) => {
     try {
-      const url = await getPlayUrl(id)
-      setPlayingId(id)
-      setPlayUrl(url)
+      const url = await getPlayUrl(id);
+      setPlayingId(id);
+      setPlayUrl(url);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Playback failed')
+      setError(e instanceof Error ? e.message : 'Playback failed');
     }
-  }
+  };
 
   const remove = async (id: string) => {
-    if (!confirm('Delete this recording?')) return
+    if (!confirm('Delete this recording?')) return;
     try {
-      await deleteConversation(id)
+      await deleteConversation(id);
       if (playingId === id) {
-        setPlayingId(null)
-        setPlayUrl(null)
+        setPlayingId(null);
+        setPlayUrl(null);
       }
-      await refresh()
+      await refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Delete failed')
+      setError(e instanceof Error ? e.message : 'Delete failed');
     }
-  }
+  };
 
   return (
     <div className="space-y-4 rounded-none border border-[var(--color-line)] bg-stone-50/50 p-4">
       <div>
         <h3 className="text-sm font-semibold text-stone-800">Call recordings</h3>
         <p className="mt-1 text-xs text-stone-500">
-          Set the company stage for this call before uploading. Time is saved automatically when
-          the file reaches storage.
+          Set the company stage for this call before uploading. Time is saved automatically when the
+          file reaches storage.
         </p>
       </div>
 
@@ -183,7 +183,10 @@ export function ConversationPanel({
         ) : (
           <ul className="divide-y divide-[var(--color-line)] rounded-none border border-[var(--color-line)] bg-white">
             {items.map((c) => (
-              <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
+              <li
+                key={c.id}
+                className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5"
+              >
                 <div className="min-w-0 text-xs">
                   <p className="font-medium text-stone-800">{formatCalledAt(c.calledAt)}</p>
                   <p className="text-stone-500">
@@ -213,5 +216,5 @@ export function ConversationPanel({
 
       <ConvobrainsBridge variant="panel" />
     </div>
-  )
+  );
 }

@@ -1,14 +1,32 @@
-import type { Page } from '../types'
+import type { Page } from '../types';
 
-export const NAV_ITEMS: { id: Page; label: string; hint: string; short: string; adminOnly?: boolean }[] = [
+export const NAV_ITEMS: {
+  id: Page;
+  label: string;
+  hint: string;
+  short: string;
+  adminOnly?: boolean;
+}[] = [
   { id: 'dashboard', label: 'Dashboard', hint: 'Today at a glance', short: 'Home' },
   { id: 'import', label: 'Import Leads', hint: 'Paste daily table', short: 'Import' },
   { id: 'pipeline', label: 'Sales Pipeline', hint: 'Companies · Kanban', short: 'Pipeline' },
   { id: 'contacts', label: 'Contacts', hint: 'People at companies', short: 'Contacts' },
-  { id: 'activity', label: 'SDR Activity', hint: 'Calls · sessions · targets', short: 'Activity', adminOnly: true },
+  {
+    id: 'activity',
+    label: 'SDR Activity',
+    hint: 'Calls · sessions · targets',
+    short: 'Activity',
+    adminOnly: true,
+  },
   { id: 'users', label: 'Users', hint: 'Add team accounts', short: 'Users', adminOnly: true },
-  { id: 'settings', label: 'Settings', hint: 'Brand · stages · statuses', short: 'Settings', adminOnly: true },
-]
+  {
+    id: 'settings',
+    label: 'Settings',
+    hint: 'Brand · stages · statuses',
+    short: 'Settings',
+    adminOnly: true,
+  },
+];
 
 export const PAGE_TITLE: Record<Page, string> = {
   dashboard: 'Dashboard',
@@ -18,8 +36,8 @@ export const PAGE_TITLE: Record<Page, string> = {
   activity: 'SDR Activity',
   users: 'Users',
   settings: 'Settings',
-}
+};
 
 export function navItemsForRole(role?: string) {
-  return NAV_ITEMS.filter((item) => !item.adminOnly || role === 'admin' || role === 'founder')
+  return NAV_ITEMS.filter((item) => !item.adminOnly || role === 'admin' || role === 'founder');
 }

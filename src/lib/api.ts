@@ -1,34 +1,34 @@
 export class ApiError extends Error {
-  status: number
+  status: number;
   constructor(status: number, message: string) {
-    super(message)
-    this.status = status
+    super(message);
+    this.status = status;
   }
 }
 
-const AUTH_KEY = 'zcrm-token'
-const LEGACY_AUTH_KEY = 'convobrains-crm-token'
+const AUTH_KEY = 'zcrm-token';
+const LEGACY_AUTH_KEY = 'convobrains-crm-token';
 
-let authToken: string | null = null
+let authToken: string | null = null;
 
 export function getStoredToken(): string | null {
-  if (authToken) return authToken
+  if (authToken) return authToken;
   try {
-    return localStorage.getItem(AUTH_KEY) ?? localStorage.getItem(LEGACY_AUTH_KEY)
+    return localStorage.getItem(AUTH_KEY) ?? localStorage.getItem(LEGACY_AUTH_KEY);
   } catch {
-    return null
+    return null;
   }
 }
 
 export function setAuthToken(token: string | null) {
-  authToken = token
+  authToken = token;
   try {
     if (token) {
-      localStorage.setItem(AUTH_KEY, token)
-      localStorage.removeItem(LEGACY_AUTH_KEY)
+      localStorage.setItem(AUTH_KEY, token);
+      localStorage.removeItem(LEGACY_AUTH_KEY);
     } else {
-      localStorage.removeItem(AUTH_KEY)
-      localStorage.removeItem(LEGACY_AUTH_KEY)
+      localStorage.removeItem(AUTH_KEY);
+      localStorage.removeItem(LEGACY_AUTH_KEY);
     }
   } catch {
     /* ignore */
@@ -39,15 +39,15 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(init?.headers as Record<string, string> | undefined),
-  }
-  const token = getStoredToken()
-  if (token) headers.Authorization = `Bearer ${token}`
+  };
+  const token = getStoredToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(path, { ...init, headers })
+  const res = await fetch(path, { ...init, headers });
   if (!res.ok) {
-    const body = (await res.json().catch(() => ({}))) as { error?: string }
-    throw new ApiError(res.status, body.error ?? res.statusText)
+    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new ApiError(res.status, body.error ?? res.statusText);
   }
-  if (res.status === 204) return undefined as T
-  return res.json() as Promise<T>
+  if (res.status === 204) return undefined as T;
+  return res.json() as Promise<T>;
 }

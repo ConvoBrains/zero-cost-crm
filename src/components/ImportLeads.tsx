@@ -1,29 +1,29 @@
-import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
-import ExcelJS from 'exceljs'
-import type { CrmStore } from '../hooks/useCrmStore'
-import type { ProspectRow } from '../types'
+import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
+import ExcelJS from 'exceljs';
+import type { CrmStore } from '../hooks/useCrmStore';
+import type { ProspectRow } from '../types';
 import {
   PROSPECT_TEMPLATE_CSV,
   parseProspectMatrix,
   parseProspectPaste,
   previewByCompany,
-} from '../lib/importProspects'
-import { Field, btnPrimary, btnGhost, inputClass } from './ui'
+} from '../lib/importProspects';
+import { Field, btnPrimary, btnGhost, inputClass } from './ui';
 
 interface ImportLeadsProps {
-  store: CrmStore
+  store: CrmStore;
 }
 
 const EXAMPLE = `Company\tProspect Name\tJob Title\tEmail\tPhone\tLocation\tEmployees\tIndustry
 Acme Bio Labs\tAlex Example\tHead of Operations\talex@acme-bio.example\t+1 555 010 1001\tAustin, USA\t180\tResearchBiotechnology
-Northwind Health\tJordan Sample\tCo-Founder & CEO\tjordan@northwind-health.example\t+1 555 010 1002\tChicago, USA\t230\tHospital & Health Care`
+Northwind Health\tJordan Sample\tCo-Founder & CEO\tjordan@northwind-health.example\t+1 555 010 1002\tChicago, USA\t230\tHospital & Health Care`;
 
-type Mode = 'single' | 'bulk'
+type Mode = 'single' | 'bulk';
 
 type ImportResult = {
-  message: string
-  ok: boolean
-}
+  message: string;
+  ok: boolean;
+};
 
 const emptySingle = {
   company: '',
@@ -34,67 +34,67 @@ const emptySingle = {
   location: '',
   employees: '',
   industry: '',
-}
+};
 
 function formatResult(result: {
-  companiesCreated: number
-  companiesUpdated: number
-  contactsCreated: number
-  contactsSkipped: number
+  companiesCreated: number;
+  companiesUpdated: number;
+  contactsCreated: number;
+  contactsSkipped: number;
 }) {
-  return `Done. ${result.companiesCreated} new companies, ${result.companiesUpdated} existing companies updated, ${result.contactsCreated} contacts added, ${result.contactsSkipped} duplicates skipped.`
+  return `Done. ${result.companiesCreated} new companies, ${result.companiesUpdated} existing companies updated, ${result.contactsCreated} contacts added, ${result.contactsSkipped} duplicates skipped.`;
 }
 
 export function ImportLeads({ store }: ImportLeadsProps) {
-  const [mode, setMode] = useState<Mode>('bulk')
-  const [text, setText] = useState('')
-  const [fileName, setFileName] = useState<string | null>(null)
-  const [fileRows, setFileRows] = useState<ProspectRow[]>([])
-  const [fileErrors, setFileErrors] = useState<string[]>([])
-  const [single, setSingle] = useState(emptySingle)
-  const [lastResult, setLastResult] = useState<ImportResult | null>(null)
-  const [busy, setBusy] = useState(false)
+  const [mode, setMode] = useState<Mode>('bulk');
+  const [text, setText] = useState('');
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [fileRows, setFileRows] = useState<ProspectRow[]>([]);
+  const [fileErrors, setFileErrors] = useState<string[]>([]);
+  const [single, setSingle] = useState(emptySingle);
+  const [lastResult, setLastResult] = useState<ImportResult | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const pasted = useMemo(() => {
-    if (!text.trim()) return { rows: [] as ProspectRow[], errors: [] as string[] }
-    return parseProspectPaste(text)
-  }, [text])
+    if (!text.trim()) return { rows: [] as ProspectRow[], errors: [] as string[] };
+    return parseProspectPaste(text);
+  }, [text]);
 
-  const bulkRows = fileRows.length > 0 ? fileRows : pasted.rows
-  const bulkErrors = fileRows.length > 0 ? fileErrors : pasted.errors
-  const byCompany = useMemo(() => previewByCompany(bulkRows), [bulkRows])
+  const bulkRows = fileRows.length > 0 ? fileRows : pasted.rows;
+  const bulkErrors = fileRows.length > 0 ? fileErrors : pasted.errors;
+  const byCompany = useMemo(() => previewByCompany(bulkRows), [bulkRows]);
 
   const runBulkImport = async () => {
     if (bulkRows.length === 0) {
       setLastResult({
         message: 'Nothing to import — paste rows or upload a file first.',
         ok: false,
-      })
-      return
+      });
+      return;
     }
-    setBusy(true)
+    setBusy(true);
     try {
-      const result = await store.importProspects(bulkRows)
-      setLastResult({ message: formatResult(result), ok: true })
-      setText('')
-      setFileName(null)
-      setFileRows([])
-      setFileErrors([])
+      const result = await store.importProspects(bulkRows);
+      setLastResult({ message: formatResult(result), ok: true });
+      setText('');
+      setFileName(null);
+      setFileRows([]);
+      setFileErrors([]);
     } catch (e) {
       setLastResult({
         message: e instanceof Error ? e.message : 'Import failed',
         ok: false,
-      })
+      });
     } finally {
-      setBusy(false)
+      setBusy(false);
     }
-  }
+  };
 
   const runSingleImport = async (e: FormEvent) => {
-    e.preventDefault()
-    if (!single.company.trim() || !single.prospectName.trim()) return
-    setBusy(true)
-    setLastResult(null)
+    e.preventDefault();
+    if (!single.company.trim() || !single.prospectName.trim()) return;
+    setBusy(true);
+    setLastResult(null);
     try {
       const row: ProspectRow = {
         company: single.company.trim(),
@@ -103,88 +103,88 @@ export function ImportLeads({ store }: ImportLeadsProps) {
         email: single.email.trim().toLowerCase(),
         phone: single.phone.trim(),
         location: single.location.trim(),
-        employees: single.employees ? Number(single.employees.replace(/[^0-9]/g, '')) || null : null,
+        employees: single.employees
+          ? Number(single.employees.replace(/[^0-9]/g, '')) || null
+          : null,
         industry: single.industry.trim(),
-      }
-      const result = await store.importProspects([row])
-      setLastResult({ message: formatResult(result), ok: true })
-      setSingle(emptySingle)
+      };
+      const result = await store.importProspects([row]);
+      setLastResult({ message: formatResult(result), ok: true });
+      setSingle(emptySingle);
     } catch (err) {
       setLastResult({
         message: err instanceof Error ? err.message : 'Import failed',
         ok: false,
-      })
+      });
     } finally {
-      setBusy(false)
+      setBusy(false);
     }
-  }
+  };
 
   const onFile = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (!file) return
-    setLastResult(null)
-    setText('')
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setLastResult(null);
+    setText('');
     try {
-      const buf = await file.arrayBuffer()
-      const name = file.name.toLowerCase()
-      let matrix: unknown[][] = []
+      const buf = await file.arrayBuffer();
+      const name = file.name.toLowerCase();
+      let matrix: unknown[][] = [];
 
       if (name.endsWith('.csv') || name.endsWith('.tsv') || name.endsWith('.txt')) {
-        const text = new TextDecoder('utf-8').decode(buf)
+        const text = new TextDecoder('utf-8').decode(buf);
         matrix = text
           .replace(/\r\n/g, '\n')
           .replace(/\r/g, '\n')
           .split('\n')
           .filter((line) => line.trim().length > 0)
           .map((line) =>
-            line.includes('\t') ? line.split('\t') : line.split(',').map((c) => c.trim()),
-          )
+            line.includes('\t') ? line.split('\t') : line.split(',').map((c) => c.trim())
+          );
       } else {
-        const wb = new ExcelJS.Workbook()
-        await wb.xlsx.load(buf)
-        const sheet = wb.worksheets[0]
+        const wb = new ExcelJS.Workbook();
+        await wb.xlsx.load(buf);
+        const sheet = wb.worksheets[0];
         if (!sheet) {
-          setFileRows([])
-          setFileErrors(['No sheet found in file.'])
-          setFileName(file.name)
-          return
+          setFileRows([]);
+          setFileErrors(['No sheet found in file.']);
+          setFileName(file.name);
+          return;
         }
         sheet.eachRow({ includeEmpty: false }, (row) => {
-          const values = row.values
+          const values = row.values;
           // exceljs row.values is 1-indexed
           const cells = Array.isArray(values)
             ? values.slice(1).map((v) => (v == null ? '' : String(v)))
-            : []
-          matrix.push(cells)
-        })
+            : [];
+          matrix.push(cells);
+        });
       }
 
-      const parsed = parseProspectMatrix(matrix)
-      setFileRows(parsed.rows)
-      setFileErrors(parsed.errors)
-      setFileName(file.name)
+      const parsed = parseProspectMatrix(matrix);
+      setFileRows(parsed.rows);
+      setFileErrors(parsed.errors);
+      setFileName(file.name);
     } catch {
-      setFileRows([])
-      setFileErrors(['Could not read file. Use .csv or .xlsx.'])
-      setFileName(file.name)
+      setFileRows([]);
+      setFileErrors(['Could not read file. Use .csv or .xlsx.']);
+      setFileName(file.name);
     }
-  }
+  };
 
   const downloadTemplate = () => {
-    const blob = new Blob([PROSPECT_TEMPLATE_CSV], { type: 'text/csv;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'leads-template.csv'
-    a.click()
-    URL.revokeObjectURL(url)
-  }
+    const blob = new Blob([PROSPECT_TEMPLATE_CSV], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'leads-template.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const resultBannerClass = (ok: boolean) =>
-    ok
-      ? 'bg-emerald-50 text-emerald-800'
-      : 'bg-rose-50 text-rose-800'
+    ok ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-800';
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -208,9 +208,7 @@ export function ImportLeads({ store }: ImportLeadsProps) {
         <button
           type="button"
           className={`flex-1 rounded-none px-3 py-2 text-sm font-medium transition ${
-            mode === 'single'
-              ? 'bg-white text-stone-900'
-              : 'text-stone-500 hover:text-stone-800'
+            mode === 'single' ? 'bg-white text-stone-900' : 'text-stone-500 hover:text-stone-800'
           }`}
           onClick={() => setMode('single')}
         >
@@ -219,9 +217,7 @@ export function ImportLeads({ store }: ImportLeadsProps) {
         <button
           type="button"
           className={`flex-1 rounded-none px-3 py-2 text-sm font-medium transition ${
-            mode === 'bulk'
-              ? 'bg-white text-stone-900'
-              : 'text-stone-500 hover:text-stone-800'
+            mode === 'bulk' ? 'bg-white text-stone-900' : 'text-stone-500 hover:text-stone-800'
           }`}
           onClick={() => setMode('bulk')}
         >
@@ -336,11 +332,11 @@ export function ImportLeads({ store }: ImportLeadsProps) {
               className={`${inputClass} mt-2 min-h-[220px] font-mono text-xs leading-relaxed`}
               value={text}
               onChange={(e) => {
-                setText(e.target.value)
-                setFileName(null)
-                setFileRows([])
-                setFileErrors([])
-                setLastResult(null)
+                setText(e.target.value);
+                setFileName(null);
+                setFileRows([]);
+                setFileErrors([]);
+                setLastResult(null);
               }}
               placeholder={EXAMPLE}
               spellCheck={false}
@@ -361,11 +357,11 @@ export function ImportLeads({ store }: ImportLeadsProps) {
                 type="button"
                 className={btnGhost}
                 onClick={() => {
-                  setText('')
-                  setFileName(null)
-                  setFileRows([])
-                  setFileErrors([])
-                  setLastResult(null)
+                  setText('');
+                  setFileName(null);
+                  setFileRows([]);
+                  setFileErrors([]);
+                  setLastResult(null);
                 }}
               >
                 Clear
@@ -374,11 +370,11 @@ export function ImportLeads({ store }: ImportLeadsProps) {
                 type="button"
                 className={btnGhost}
                 onClick={() => {
-                  setText(EXAMPLE)
-                  setFileName(null)
-                  setFileRows([])
-                  setFileErrors([])
-                  setLastResult(null)
+                  setText(EXAMPLE);
+                  setFileName(null);
+                  setFileRows([]);
+                  setFileErrors([]);
+                  setLastResult(null);
                 }}
               >
                 Load example format
@@ -395,7 +391,9 @@ export function ImportLeads({ store }: ImportLeadsProps) {
             ) : null}
 
             {lastResult && mode === 'bulk' ? (
-              <p className={`mt-3 rounded-none px-3 py-2 text-sm ${resultBannerClass(lastResult.ok)}`}>
+              <p
+                className={`mt-3 rounded-none px-3 py-2 text-sm ${resultBannerClass(lastResult.ok)}`}
+              >
                 {lastResult.message}
               </p>
             ) : null}
@@ -417,5 +415,5 @@ export function ImportLeads({ store }: ImportLeadsProps) {
         </>
       )}
     </div>
-  )
+  );
 }

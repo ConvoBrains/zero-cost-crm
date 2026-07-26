@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config'
+import { defineConfig } from 'vitest/config';
 
 // Separate from vite.config.ts — Vitest’s Vite types clash with Vite 8 plugins in tsc.
 export default defineConfig({
@@ -6,4 +6,4 @@ export default defineConfig({
     environment: 'node',
     include: ['testing/unit/**/*.test.ts'],
   },
-})
+});
