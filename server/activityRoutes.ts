@@ -425,6 +425,70 @@ export function registerActivityRoutes(app: Express) {
     })
   })
 
+  app.get('/api/activity/export', requireAuth, requireAdmin, async (req, res) => {
+    const format = String(req.query.format ?? 'json').toLowerCase()
+    if (format !== 'csv' && format !== 'json') {
+      res.status(400).json({ error: 'format must be csv or json' })
+      return
+    }
+    const userFilter = parseUserFilter(req)
+    if (!userFilter) {
+      res.status(400).json({ error: 'userId query required (uuid or all)' })
+      return
+    }
+    const { from, to, start, end } = parseDateRange(req)
+    const allUsers = await listSdrUsers()
+    const selected =
+      userFilter === 'all' ? allUsers.filter((u) => u.role === 'sdr') : allUsers.filter((u) => u.id === userFilter)
+    const userIds = selected.map((u) => u.id)
+    const events = await loadEvents(userIds, start, end, '')
+
+    if (format === 'csv') {
+      const header = 'id,user_id,user_name,event_type,entity_type,entity_id,summary,created_at\n'
+      const rows = events
+        .map((e) => {
+          const escape = (v: unknown) => {
+            const s = String(v ?? '')
+            return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s
+          }
+          return [
+            escape(e.id),
+            escape(e.user_id),
+            escape(e.user_name),
+            escape(e.event_type),
+            escape(e.entity_type),
+            escape(e.entity_id),
+            escape(e.summary),
+            escape(new Date(String(e.created_at)).toISOString()),
+          ].join(',')
+        })
+        .join('\n')
+      const filename = `activity_export_${from}_${to}.csv`
+      res.setHeader('Content-Type', 'text/csv')
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
+      res.send(header + rows)
+    } else {
+      const filename = `activity_export_${from}_${to}.json`
+      res.setHeader('Content-Type', 'application/json')
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
+      res.json({
+        from,
+        to,
+        exportedAt: new Date().toISOString(),
+        events: events.map((e) => ({
+          id: String(e.id),
+          userId: String(e.user_id),
+          userName: String(e.user_name),
+          eventType: String(e.event_type),
+          entityType: String(e.entity_type),
+          entityId: e.entity_id ? String(e.entity_id) : null,
+          summary: String(e.summary),
+          createdAt: new Date(String(e.created_at)).toISOString(),
+        })),
+      })
+    }
+  })
+
   app.get('/api/activity/timeline', requireAuth, requireAdmin, async (req, res) => {
     const userFilter = parseUserFilter(req)
     if (!userFilter) {

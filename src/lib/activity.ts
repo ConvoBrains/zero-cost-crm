@@ -201,3 +201,18 @@ export function activityDetailLines(ev: {
   if (lines.length === 0 && ev.summary) lines.push(ev.summary)
   return lines
 }
+
+export function buildExportUrl(opts: {
+  from: string
+  to: string
+  userId: string
+  format: 'csv' | 'json'
+}): string {
+  const q = new URLSearchParams({
+    from: opts.from,
+    to: opts.to,
+    userId: opts.userId,
+    format: opts.format,
+  })
+  return `/api/activity/export?${q}`
+}

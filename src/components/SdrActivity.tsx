@@ -5,6 +5,7 @@ import {
   fetchSdrs,
   fetchTimeline,
   todayIstIso,
+  buildExportUrl,
   type ActivityOverview,
   type ActivitySdr,
   type TimelineEvent,
@@ -253,6 +254,30 @@ export function SdrActivity() {
           <button type="button" className={btnGhost} onClick={() => void load()} disabled={loading}>
             Refresh
           </button>
+          <span className="flex items-center gap-1">
+            <button
+              type="button"
+              className={btnGhost}
+              onClick={() => {
+                const url = buildExportUrl({ from, to, userId, format: 'csv' })
+                window.open(url, '_blank')
+              }}
+              disabled={loading}
+            >
+              CSV
+            </button>
+            <button
+              type="button"
+              className={btnGhost}
+              onClick={() => {
+                const url = buildExportUrl({ from, to, userId, format: 'json' })
+                window.open(url, '_blank')
+              }}
+              disabled={loading}
+            >
+              JSON
+            </button>
+          </span>
         </div>
       </header>
 
