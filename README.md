@@ -118,9 +118,11 @@ Keep the **code** generic. Put company-specific values in env or the database:
 | --------------------------------------------------- | --------------------------------------------------------------------------------- |
 | Postgres / JWT / email domain / S3 / CORS           | Server `.env` (`DATABASE_URL`, `JWT_SECRET`, `ALLOWED_EMAIL_DOMAIN`, …)           |
 | Brand name, logo, pipeline stages, contact statuses | DB `app_settings` — edit in **Settings** (founder/admin) or `PATCH /api/settings` |
-| Optional first-boot brand                           | `BRAND_NAME`, `BRAND_TAGLINE`, `BRAND_LOGO_URL` in env (seeded once)              |
+| Champion status → pipeline stage map (`championStatusToStage`) | **API / SQL only** today — `PATCH /api/settings` or [`sql/examples/convobrains-settings.sql`](sql/examples/convobrains-settings.sql) |
+| Discovery questions on the company form (`discoveryQuestions`) | **API / SQL only** today — same as above (not editable in the Settings UI yet) |
+| Optional first-boot brand | `BRAND_NAME`, `BRAND_TAGLINE`, `BRAND_LOGO_URL` in env (seeded once) |
 
-Example Convobrains status list: [`sql/examples/convobrains-settings.sql`](sql/examples/convobrains-settings.sql).
+Settings UI covers branding + stages + contact statuses. The champion sync map and discovery questions still go through the API (or the SQL example). See [`docs/API.md`](docs/API.md#settings-ui-vs-api-only) for a `PATCH` example.
 
 ---
 
