@@ -12,6 +12,45 @@ Unless noted, endpoints require `Authorization: Bearer <jwt>`.
 | `GET` | `/api/config` | Public instance config: email policy + branding, stages, contactStatuses, championStatusToStage, discoveryQuestions |
 | `PATCH` | `/api/settings` | Admin/founder: update branding + stages + contactStatuses (+ optional champion map / discoveryQuestions) |
 
+### Settings UI vs API-only
+
+The **Settings** page in the app can edit:
+
+- `brandName`, `brandTagline`, `logoUrl`
+- `stages` (pipeline)
+- `contactStatuses`
+
+These two are **not** on that page yet (easy to miss — they’re not broken, just API/SQL only):
+
+| Field | Purpose |
+| ----- | ------- |
+| `championStatusToStage` | When a champion’s contact status changes, optionally move the company to a pipeline stage |
+| `discoveryQuestions` | Extra questions shown on the company form (`id`, `section`, `prompt`, `input`) |
+
+Change them with `PATCH /api/settings` (founder/admin JWT) or seed via [`sql/examples/convobrains-settings.sql`](../sql/examples/convobrains-settings.sql).
+
+```bash
+curl -s -X PATCH http://localhost:4000/api/settings \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "championStatusToStage": {
+      "Connected - Booked a Discovery Call": "Discovery Call Done",
+      "Interested": "Follow-up"
+    },
+    "discoveryQuestions": [
+      {
+        "id": "budget",
+        "section": "Discovery",
+        "prompt": "Rough annual budget?",
+        "input": "text"
+      }
+    ]
+  }'
+```
+
+`GET /api/config` returns the current map and questions (no auth) so the SPA can use them.
+
 ## Auth
 
 | Method | Path | Description |

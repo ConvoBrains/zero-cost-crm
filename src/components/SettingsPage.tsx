@@ -72,6 +72,23 @@ export function SettingsPage({ config, onSaved }: SettingsPageProps) {
           Branding and pipeline lists are stored in the database so Zero Cost CRM stays
           generic. Email domain and database URL stay in server env.
         </p>
+        <p className="mt-2 text-xs text-stone-500">
+          Champion status → stage mapping and discovery questions aren&apos;t on this
+          screen yet — update them with{' '}
+          <code className="rounded bg-stone-100 px-1 py-0.5 text-[11px]">
+            PATCH /api/settings
+          </code>{' '}
+          or see{' '}
+          <a
+            className="underline decoration-stone-300 underline-offset-2 hover:text-stone-700"
+            href="https://github.com/ConvoBrains/zero-cost-crm/blob/main/docs/API.md#settings-ui-vs-api-only"
+            target="_blank"
+            rel="noreferrer"
+          >
+            docs/API.md
+          </a>
+          .
+        </p>
       </div>
 
       <form
