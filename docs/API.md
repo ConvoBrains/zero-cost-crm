@@ -65,6 +65,7 @@ Requires AWS env vars. See `.env.example`.
 | `POST` | `/api/activity/events` | Client-side activity event |
 | `GET` | `/api/activity/overview` | Manager overview |
 | `GET` | `/api/activity/timeline` | Event timeline |
+| `GET` | `/api/activity/export` | Export activity events as CSV or JSON. Query: `format=csv|json`, `from`, `to`, `userId`. Admin/founder only. |
 | `GET` | `/api/activity/company/:id/history` | Company progress (company + linked contact events) |
 | `GET` | `/api/activity/lead/:entityType/:id` | Lead-centric activity |
 
