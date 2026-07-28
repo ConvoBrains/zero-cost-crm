@@ -20,7 +20,8 @@ interface ContactsProps {
   stages?: string[];
 }
 
-function formatAddedDate(iso: string): string {
+function formatIsoDate(iso: string | null | undefined): string {
+  if (!iso) return '—';
   return iso.slice(0, 10) || '—';
 }
 
@@ -70,7 +71,12 @@ function ContactRow({
         {contact.nextFollowUp ? (
           <span className="text-xs text-amber-700">Follow-up {contact.nextFollowUp}</span>
         ) : null}
-        <span className="text-xs text-stone-400">Added {formatAddedDate(contact.createdAt)}</span>
+        {contact.lastContacted ? (
+          <span className="text-xs text-stone-500">
+            Last {formatIsoDate(contact.lastContacted)}
+          </span>
+        ) : null}
+        <span className="text-xs text-stone-400">Added {formatIsoDate(contact.createdAt)}</span>
       </div>
     </button>
   );
@@ -181,6 +187,9 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
         case 'nextFollowUp':
           cmp = (a.nextFollowUp ?? '9999-12-31').localeCompare(b.nextFollowUp ?? '9999-12-31');
           break;
+        case 'lastContacted':
+          cmp = (a.lastContacted ?? '0000-01-01').localeCompare(b.lastContacted ?? '0000-01-01');
+          break;
         case 'createdAt':
           cmp = a.createdAt.localeCompare(b.createdAt);
           break;
@@ -205,13 +214,16 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
     } else {
       setSortKey(key);
-      setSortDir(key === 'createdAt' ? 'desc' : 'asc');
+      setSortDir(key === 'createdAt' || key === 'lastContacted' ? 'desc' : 'asc');
     }
   };
 
   const queueLabel = CONTACT_QUEUE_OPTIONS.find((o) => o.value === filters.queue)?.label ?? 'All';
   const dateLabel =
     CONTACT_DATE_RANGE_OPTIONS.find((o) => o.value === filters.dateRange)?.label ?? 'All Time';
+  const lastContactedLabel =
+    CONTACT_DATE_RANGE_OPTIONS.find((o) => o.value === filters.lastContactedRange)?.label ??
+    'All Time';
   const companyLabel = companyOptions.find((o) => o.value === filters.companyId)?.label ?? null;
 
   return (
@@ -247,6 +259,16 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
           options={CONTACT_DATE_RANGE_OPTIONS}
           active={filters.dateRange !== 'all'}
           onChange={(v) => patchFilters({ dateRange: v as ContactFilters['dateRange'] })}
+        />
+        <FilterDropdown
+          data-testid="contact-last-contacted-range"
+          label="Last contacted"
+          value={filters.lastContactedRange}
+          options={CONTACT_DATE_RANGE_OPTIONS}
+          active={filters.lastContactedRange !== 'all'}
+          onChange={(v) =>
+            patchFilters({ lastContactedRange: v as ContactFilters['lastContactedRange'] })
+          }
         />
       </div>
 
@@ -347,6 +369,12 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
             <FilterChip
               label={`Added: ${dateLabel}`}
               onClear={() => patchFilters({ dateRange: 'all' })}
+            />
+          ) : null}
+          {filters.lastContactedRange !== 'all' ? (
+            <FilterChip
+              label={`Last contacted: ${lastContactedLabel}`}
+              onClear={() => patchFilters({ lastContactedRange: 'all' })}
             />
           ) : null}
           <button
@@ -497,7 +525,7 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
 
       <div className="hidden overflow-hidden rounded-none border border-[var(--color-line)] bg-[var(--color-panel)] md:block">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[960px] text-left text-sm">
+          <table className="w-full min-w-[1080px] text-left text-sm">
             <thead>
               <tr className="border-b border-[var(--color-line)] bg-stone-50/80 text-[11px] tracking-wide text-stone-500">
                 <SortHeader
@@ -533,6 +561,13 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
                 <SortHeader
                   label="Follow-up"
                   sortKey="nextFollowUp"
+                  activeKey={sortKey}
+                  direction={sortDir}
+                  onSort={onSort}
+                />
+                <SortHeader
+                  label="Last contacted"
+                  sortKey="lastContacted"
                   activeKey={sortKey}
                   direction={sortDir}
                   onSort={onSort}
@@ -578,13 +613,14 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
                     <td className="px-4 py-3 text-stone-600">{company?.stage ?? '—'}</td>
                     <td className="px-4 py-3 text-stone-600">{t.phone || '—'}</td>
                     <td className="px-4 py-3 text-stone-500">{t.nextFollowUp || '—'}</td>
-                    <td className="px-4 py-3 text-stone-500">{formatAddedDate(t.createdAt)}</td>
+                    <td className="px-4 py-3 text-stone-500">{formatIsoDate(t.lastContacted)}</td>
+                    <td className="px-4 py-3 text-stone-500">{formatIsoDate(t.createdAt)}</td>
                   </tr>
                 );
               })}
               {sorted.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-sm text-stone-400">
+                  <td colSpan={9} className="px-4 py-10 text-center text-sm text-stone-400">
                     No contacts match these filters.
                   </td>
                 </tr>

@@ -101,6 +101,7 @@ export const DEFAULT_CONTACT_FILTERS: ContactFilters = {
   stages: [],
   championOnly: false,
   dateRange: 'all',
+  lastContactedRange: 'all',
 };
 
 export const CONTACT_QUEUE_OPTIONS: { value: ContactFilters['queue']; label: string }[] = [
@@ -187,7 +188,8 @@ function matchesQueue(contact: Contact, queue: ContactFilters['queue']): boolean
 
 /**
  * Composable Contacts-page filter (search + queue + status + company + stage +
- * champion + createdAt date range). Companies are required for search/stage joins.
+ * champion + createdAt + lastContacted date ranges). Companies are required for
+ * search/stage joins.
  */
 export function applyContactFilters(
   contacts: Contact[],
@@ -197,6 +199,7 @@ export function applyContactFilters(
   const companyById = new Map(companies.map((c) => [c.id, c]));
   const search = filters.search.trim().toLowerCase();
   const dateStart = dateRangeStartIso(filters.dateRange);
+  const lastContactedStart = dateRangeStartIso(filters.lastContactedRange);
 
   return contacts.filter((contact) => {
     if (!matchesQueue(contact, filters.queue)) return false;
@@ -210,6 +213,10 @@ export function applyContactFilters(
     if (filters.championOnly && !contact.champion) return false;
 
     if (dateStart && createdAtDate(contact.createdAt) < dateStart) return false;
+
+    if (lastContactedStart) {
+      if (!contact.lastContacted || contact.lastContacted < lastContactedStart) return false;
+    }
 
     const company = contact.companyId ? companyById.get(contact.companyId) : undefined;
 
@@ -314,7 +321,8 @@ export function contactFiltersAreActive(filters: ContactFilters): boolean {
     filters.companyId !== null ||
     filters.stages.length > 0 ||
     filters.championOnly ||
-    filters.dateRange !== 'all'
+    filters.dateRange !== 'all' ||
+    filters.lastContactedRange !== 'all'
   );
 }
 
