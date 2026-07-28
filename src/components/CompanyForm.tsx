@@ -10,6 +10,7 @@ import {
   fetchCompanyHistory,
   type CompanyHistoryEvent,
 } from '../lib/activity';
+import { normalizeOptionalUrl } from '../lib/urls';
 
 interface CompanyFormProps {
   store: CrmStore;
@@ -131,9 +132,9 @@ export function CompanyForm({
       lastContacted: form.lastContacted || null,
       nextFollowUp: form.nextFollowUp || null,
       notes: form.notes,
-      sourceLink: form.sourceLink,
-      companyWebsite: form.companyWebsite,
-      linkedInCompany: form.linkedInCompany,
+      sourceLink: form.sourceLink.trim(),
+      companyWebsite: normalizeOptionalUrl(form.companyWebsite),
+      linkedInCompany: normalizeOptionalUrl(form.linkedInCompany),
       discoveryAnswers,
     };
 
@@ -287,31 +288,35 @@ export function CompanyForm({
 
         <Field label="Company Website">
           <input
-            type="url"
+            type="text"
+            inputMode="url"
+            autoComplete="url"
             className={inputClass}
             value={form.companyWebsite}
             onChange={(e) => set('companyWebsite', e.target.value)}
-            placeholder="https://"
+            placeholder="simplilearn.com or https://…"
           />
         </Field>
 
         <Field label="LinkedIn Company">
           <input
-            type="url"
+            type="text"
+            inputMode="url"
+            autoComplete="url"
             className={inputClass}
             value={form.linkedInCompany}
             onChange={(e) => set('linkedInCompany', e.target.value)}
-            placeholder="https://"
+            placeholder="linkedin.com/company/… or https://…"
           />
         </Field>
 
         <Field label="Source Link" className="sm:col-span-2">
           <input
-            type="url"
+            type="text"
             className={inputClass}
             value={form.sourceLink}
             onChange={(e) => set('sourceLink', e.target.value)}
-            placeholder="https://"
+            placeholder="URL or import tag"
           />
         </Field>
 

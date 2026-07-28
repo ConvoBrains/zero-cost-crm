@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import type { Contact, Stage } from '../types';
 import { DEFAULT_CONTACT_STATUSES, DEFAULT_STAGES } from '../defaults';
 import type { CrmStore } from '../hooks/useCrmStore';
+import { normalizeOptionalUrl } from '../lib/urls';
 import { Field, inputClass, btnPrimary, btnGhost } from './ui';
 import { ConversationPanel } from './ConversationPanel';
 
@@ -65,7 +66,7 @@ export function ContactForm({
       role: form.role,
       phone: form.phone,
       email: form.email,
-      linkedInProfile: form.linkedInProfile,
+      linkedInProfile: normalizeOptionalUrl(form.linkedInProfile),
       contactStatus: form.contactStatus,
       champion: form.champion,
       lastContacted: form.lastContacted || null,
@@ -202,11 +203,13 @@ export function ContactForm({
 
         <Field label="LinkedIn Profile" className="sm:col-span-2">
           <input
-            type="url"
+            type="text"
+            inputMode="url"
+            autoComplete="url"
             className={inputClass}
             value={form.linkedInProfile}
             onChange={(e) => set('linkedInProfile', e.target.value)}
-            placeholder="https://"
+            placeholder="linkedin.com/in/… or https://…"
           />
         </Field>
 
