@@ -93,11 +93,17 @@ export type PipelineView =
 export type ContactQueue =
   'all' | 'to-call-today' | 'follow-up-today' | 'overdue' | 'didnt-pick-yesterday';
 
-/** Time window applied to `contact.createdAt` for the Contacts page filter bar + lead insights. */
+/** Time window applied to `contact.createdAt` / `contact.lastContacted` for Contacts filters. */
 export type ContactDateRange = 'all' | 'this-week' | 'this-month' | 'last-30-days';
 
 export type ContactSortKey =
-  'contactName' | 'companyName' | 'contactStatus' | 'stage' | 'nextFollowUp' | 'createdAt';
+  | 'contactName'
+  | 'companyName'
+  | 'contactStatus'
+  | 'stage'
+  | 'nextFollowUp'
+  | 'lastContacted'
+  | 'createdAt';
 
 export type SortDirection = 'asc' | 'desc';
 
@@ -109,7 +115,10 @@ export interface ContactFilters {
   companyId: string | null;
   stages: string[];
   championOnly: boolean;
+  /** Filters on `contact.createdAt` (Added date). */
   dateRange: ContactDateRange;
+  /** Filters on `contact.lastContacted`. Null dates are excluded when not `'all'`. */
+  lastContactedRange: ContactDateRange;
 }
 
 /** Time window applied to `company.createdAt` for Sales Pipeline board + progress insights. */

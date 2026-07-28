@@ -72,4 +72,18 @@ test.describe('Contacts search + filters + insights (issue #41)', () => {
     await expect(page.getByTestId('contact-clear-filters')).toBeVisible();
     await expect(page.getByTestId('insight-total')).toBeVisible();
   });
+
+  test('last contacted filter and column are available', async ({ page }) => {
+    await loginAsFounder(page);
+    await navTo(page, 'Contacts');
+    await showAllContacts(page);
+
+    await expect(
+      page.locator('main table thead').getByRole('button', { name: /Last contacted/i })
+    ).toBeVisible();
+    await page.getByTestId('contact-last-contacted-range').click();
+    await page.getByRole('option', { name: 'This Week', exact: true }).click();
+    await expect(page.getByTestId('contact-clear-filters')).toBeVisible();
+    await expect(page.getByText('Last contacted: This Week')).toBeVisible();
+  });
 });

@@ -62,6 +62,7 @@ const baseFilters = (): ContactFilters => ({
   stages: [],
   championOnly: false,
   dateRange: 'all',
+  lastContactedRange: 'all',
 });
 
 describe('filterCompanies', () => {
@@ -223,6 +224,36 @@ describe('applyContactFilters', () => {
       dateRange: 'last-30-days',
     });
     expect(result.map((c) => c.id)).toEqual(['r1']);
+  });
+
+  it('filters by lastContacted date range and excludes nulls', () => {
+    const today = todayIso();
+    const recent = contact({
+      id: 'lc1',
+      companyId: 'c1',
+      contactName: 'Recent Call',
+      contactStatus: "Didn't Pick",
+      lastContacted: today,
+    });
+    const old = contact({
+      id: 'lc2',
+      companyId: 'c1',
+      contactName: 'Old Call',
+      contactStatus: "Didn't Pick",
+      lastContacted: '2020-01-01',
+    });
+    const never = contact({
+      id: 'lc3',
+      companyId: 'c1',
+      contactName: 'Never Called',
+      contactStatus: 'Not Contacted',
+      lastContacted: null,
+    });
+    const result = applyContactFilters([recent, old, never], companies, {
+      ...baseFilters(),
+      lastContactedRange: 'last-30-days',
+    });
+    expect(result.map((c) => c.id)).toEqual(['lc1']);
   });
 });
 
