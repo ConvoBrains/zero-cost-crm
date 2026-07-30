@@ -241,7 +241,20 @@ components:
 
 #_____________________ Security _____________________
 
-security:
+    HeartBeatResponse:
+      type: object
+      required:
+        - ok
+        - lastActiveAt
+      properties:
+        ok:
+          type: boolean
+          example: true
+        lastActiveAt:
+          type: string
+          format: date-time
+
+security: #as mentioned in API.md, all endpoints require auth
   - bearerAuth: []
 #_____________________ Paths ______________________
 paths:
@@ -358,6 +371,18 @@ paths:
       responses:
         "204":
           description: Successful logout.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/auth/heartbeat:
+    post:
+      summary: Touch active session.
+      responses:
+        "200":
+          description: Session is valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeartBeatResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
 
