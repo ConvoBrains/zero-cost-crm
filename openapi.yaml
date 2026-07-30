@@ -96,11 +96,13 @@ components:
         allowAnyEmailDomain:
           type: boolean
 
-
+security:
+  - bearerAuth: []
 
 paths:
   /api/health:
     get:
+      security: []
       summary: Health check endpoint
       responses:
         "200":
@@ -119,6 +121,8 @@ paths:
 
   /api/config:
     get:
+      security: []
+
       summary: Public instance configuration
       responses:
         "200":
