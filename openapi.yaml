@@ -385,6 +385,24 @@ paths:
                 $ref: "#/components/schemas/HeartBeatResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /api/auth/me:
+    get:
+      summary: Current user
+      responses:
+        "200":
+          description: Contains current user object.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - user
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
 
 
 
