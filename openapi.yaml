@@ -340,3 +340,26 @@ paths:
           $ref: "#/components/responses/InvalidCredentials"
         "429":
           $ref: "#/components/responses/TooManyRequests"
+  /api/auth/logout:
+    post:
+      summary: End session
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  enum:
+                    - idle
+                    - expired
+                    - manual
+      responses:
+        "204":
+          description: Successful logout.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+
+
