@@ -95,6 +95,76 @@ components:
             type: string
         allowAnyEmailDomain:
           type: boolean
+    SettingsPatch:
+      type: object
+      properties:
+        brandName:
+          type: string
+        brandTagline:
+          type: string
+        logoUrl:
+          type: string
+        stages:
+          type: array
+          items:
+            type: string
+        contactStatuses:
+          type: array
+          items:
+            type: string
+        championStatusToStage:
+          type: object
+          additionalProperties:
+            type:
+              - string
+              - "null"
+        discoveryQuestions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscoveryQuestion"
+    SettingsResponse:
+      type: object
+      required:
+        - brandName
+        - brandTagline
+        - logoUrl
+        - stages
+        - contactStatuses
+        - championStatusToStage
+        - discoveryQuestions
+        - updatedAt
+      properties:
+        brandName:
+          type: string
+        brandTagline:
+          type: string
+        logoUrl:
+          type: string
+        stages:
+          type: array
+          items:
+            type: string
+        contactStatuses:
+          type: array
+          items:
+            type: string
+        championStatusToStage:
+          type: object
+          additionalProperties:
+            type:
+              - string
+              - "null"
+        discoveryQuestions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscoveryQuestion"
+        updatedAt:
+          type:
+            - string
+            - "null"
+
+
+
 
 security:
   - bearerAuth: []
@@ -118,11 +188,9 @@ paths:
                     type: boolean
                     description: Indicates whether the API server is healthy.
                     example: true
-
   /api/config:
     get:
       security: []
-
       summary: Public instance configuration
       responses:
         "200":
@@ -133,6 +201,41 @@ paths:
                 $ref: "#/components/schemas/ConfigResponse"
         "500":
           description: Failed to load config
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/settings:
+    patch:
+      summary: Update application settings.
+      description: Requires an authenticated admin user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsPatch"
+      responses:
+        "200":
+          description: Application settings updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsResponse"
+        "400":
+          description: Application settings failed. (Invalid settings)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing, Invalid or Expired Bearer token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Missing Admin privileges.
           content:
             application/json:
               schema:
