@@ -5,19 +5,66 @@ info:
   version: 1.1.0
 #___________________________Components________________________
 components:
+  responses:
+    BadRequest:
+      description: Invalid request.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    TooManyRequests:
+      description: Too many requests. Please try again later.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Missing, invalid, or expired bearer token.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    InvalidCredentials:
+      description: Invalid email or password.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: Insufficient permissions.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
   schemas:
-    ErrorResponse:
+    User:
       type: object
       required:
-        - error
+        - id
+        - email
+        - name
+        - role
       properties:
-        error:
+        id:
           type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          type: string
+          enum:
+            - founder
+            - sdr
+            - admin
     DiscoveryQuestion:
       type: object
       required:
@@ -38,6 +85,15 @@ components:
             - text
             - textarea
             - number
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+
     ConfigResponse:
       type: object
       required:
@@ -86,6 +142,7 @@ components:
             type: string
         allowAnyEmailDomain:
           type: boolean
+
     SettingsPatch:
       type: object
       properties:
@@ -153,11 +210,44 @@ components:
           type:
             - string
             - "null"
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          description: User email address.
+          format: email
+          example: alice@example.com
+        password:
+          type: string
+          format: password
+          description: User password.
+    LoginResponse:
+      type: object
+      required:
+        - token
+        - user
+      properties:
+        token:
+          type: string
+          description: JWT bearer token
+        user:
+          $ref: "#/components/schemas/User"
+
+
 #_____________________ Security _____________________
+
 security:
   - bearerAuth: []
 #_____________________ Paths ______________________
 paths:
+  #=========================
+  # PUBLIC ENDPOINTS
+  #=========================
   /api/health:
     get:
       security: []
@@ -217,14 +307,36 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
-          description: Missing, Invalid or Expired Bearer token.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/Unauthorized"
         "403":
-          description: Missing Admin privileges.
+          $ref: "#/components/responses/Forbidden"
+  #=========================
+  # AUTH ENDPOINTS
+  #=========================
+  /api/auth/login:
+    post:
+      security: []
+      summary: User login.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Successful user login.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          description: Email address is not allowed.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/InvalidCredentials"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
