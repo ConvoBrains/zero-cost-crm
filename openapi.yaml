@@ -1,0 +1,135 @@
+openapi: 3.1.0
+
+info:
+  title: Zero Cost CRM API
+  version: 1.1.0
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+
+    DiscoveryQuestion:
+      type: object
+      required:
+        - id
+        - section
+        - prompt
+        - input
+      properties:
+        id:
+          type: string
+        section:
+          type: string
+        prompt:
+          type: string
+        input:
+          type: string
+          enum:
+            - text
+            - textarea
+            - number
+
+    ConfigResponse:
+      type: object
+      required:
+        - brandName
+        - brandTagline
+        - logoUrl
+        - stages
+        - contactStatuses
+        - championStatusToStage
+        - discoveryQuestions
+        - allowedEmailDomain
+        - allowedEmailDomains
+        - allowAnyEmailDomain
+      properties:
+
+        brandName:
+          type: string
+
+        brandTagline:
+          type: string
+
+        logoUrl:
+          type: string
+
+        stages:
+          type: array
+          items:
+            type: string
+
+        contactStatuses:
+          type: array
+          items:
+            type: string
+
+        championStatusToStage:
+          type: object
+          additionalProperties:
+            type:
+              - string
+              - "null"
+        discoveryQuestions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscoveryQuestion"
+        allowedEmailDomain:
+          type:
+            - string
+            - "null"
+        allowedEmailDomains:
+          type: array
+          items:
+            type: string
+        allowAnyEmailDomain:
+          type: boolean
+
+
+
+paths:
+  /api/health:
+    get:
+      summary: Health check endpoint
+      responses:
+        "200":
+          description: Successful health check
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - ok
+                properties:
+                  ok:
+                    type: boolean
+                    description: Indicates whether the API server is healthy.
+                    example: true
+
+  /api/config:
+    get:
+      summary: Public instance configuration
+      responses:
+        "200":
+          description: Successful config response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigResponse"
+        "500":
+          description: Failed to load config
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
