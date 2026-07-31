@@ -104,17 +104,6 @@ components:
           type: string
         industry:
           type: string
-          enum:
-            - BFSI
-            - Healthcare
-            - Retail
-            - EdTech
-            - Telecom
-            - SaaS
-            - Logistics
-            - Research / Biotech
-            - Other
-            - ""
         location:
           type: string
         estimatedCallVolume:
@@ -127,11 +116,7 @@ components:
             - "null"
         intent:
           type: string
-          enum:
-            - ""
-            - Hot
-            - Cold
-            - Warm
+
         offeredPrice:
           type:
             - number
@@ -149,12 +134,12 @@ components:
           type:
             - string
             - "null"
-          format: date-time
+          format: date
         nextFollowUp:
           type:
             - string
             - "null"
-          format: date-time
+          format: date
         notes:
           type: string
         sourceLink:
@@ -169,7 +154,7 @@ components:
             type: string
         createdAt:
           type: string
-          format: date-time
+          format: date
     Contact:
       type: object
       required:
@@ -213,17 +198,17 @@ components:
           type:
             - string
             - "null"
-          format: date-time
+          format: date
         nextFollowUp:
           type:
             - string
             - "null"
-          format: date-time
+          format: date
         notes:
           type: string
         createdAt:
           type: string
-          format: date-time
+          format: date
     DiscoveryQuestion:
       type: object
       required:
@@ -478,8 +463,6 @@ components:
         closedLost:
           type: integer
 
-
-
 security: #as mentioned in API.md, all endpoints require auth
   - bearerAuth: []
 
@@ -650,6 +633,12 @@ paths:
     post:
       summary: Creates a new user.
       description: Requires an authenticated admin user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
       responses:
         "201":
           description: Returns the new user.
@@ -678,12 +667,6 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateUserRequest"
   /api/users/roles:
     get:
       summary: Allowed user roles.
@@ -743,6 +726,3 @@ paths:
                 $ref: "#/components/schemas/Metrics"
         "401":
           $ref: "#/components/responses/Unauthorized"
-
-
-
