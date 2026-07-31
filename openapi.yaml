@@ -12,6 +12,12 @@ servers:
 
 components:
   responses:
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
     BadRequest:
       description: Invalid request.
       content:
@@ -229,6 +235,59 @@ components:
           type: object
           additionalProperties:
             type: string
+    PatchCompanyRequest:
+      type: object
+      properties:
+        companyName:
+          type: string
+        stage:
+          type: string
+        industry:
+          type: string
+        location:
+          type: string
+        estimatedCallVolume:
+          type:
+            - integer
+            - "null"
+        employeeCount:
+          type:
+            - integer
+            - "null"
+        intent:
+          type: string
+        offeredPrice:
+          type:
+            - number
+            - "null"
+        primaryContactId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        lastContacted:
+          type:
+            - string
+            - "null"
+          format: date
+        nextFollowUp:
+          type:
+            - string
+            - "null"
+          format: date
+        notes:
+          type: string
+        sourceLink:
+          type: string
+        companyWebsite:
+          type: string
+        linkedInCompany:
+          type: string
+        discoveryAnswers:
+          type: object
+          additionalProperties:
+            type: string
+
     Contact:
       type: object
       required:
@@ -798,4 +857,35 @@ paths:
                 $ref: "#/components/schemas/Company"
         "400":
           $ref: "#/components/responses/BadRequest"
-
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/companies/{id}:
+    patch:
+      summary: update company details.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Company Id
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchCompanyRequest"
+      responses:
+        "200":
+          description: Company updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
