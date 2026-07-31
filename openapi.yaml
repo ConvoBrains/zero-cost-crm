@@ -242,7 +242,8 @@ components:
           type: string
           description: User email address.
           format: email
-          example: alice@example.com
+          examples:
+            - alice@example.com
         password:
           type: string
           format: password
@@ -267,7 +268,8 @@ components:
       properties:
         ok:
           type: boolean
-          example: true
+          examples:
+            - true
         lastActiveAt:
           type: string
           format: date-time
@@ -315,7 +317,8 @@ paths:
                   ok:
                     type: boolean
                     description: Indicates whether the API server is healthy.
-                    example: true
+                    examples:
+                      - true
   /api/config:
     get:
       security: []
