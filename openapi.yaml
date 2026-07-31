@@ -212,6 +212,26 @@ components:
           type:
             - string
             - "null"
+    CreateUserRequest:
+      type: object
+      required:
+        - name
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          description: User email address.
+          format: email
+        name:
+          type: string
+          description: Name of the user.
+        password:
+          type: string
+          format: password
+          description: Minimum length; 8 characters.
+        role:
+          $ref: "#/components/schemas/UserRoles"
 
     LoginRequest:
       type: object
@@ -239,10 +259,6 @@ components:
           description: JWT bearer token
         user:
           $ref: "#/components/schemas/User"
-
-
-#_____________________ Security _____________________
-
     HeartBeatResponse:
       type: object
       required:
@@ -255,6 +271,30 @@ components:
         lastActiveAt:
           type: string
           format: date-time
+    UserResponse:
+      type: object
+      required:
+        - id
+        - email
+        - name
+        - role
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          $ref: "#/components/schemas/UserRoles"
+        createdAt:
+          type: string
+          format: date-time
+
+
 
 security: #as mentioned in API.md, all endpoints require auth
   - bearerAuth: []
@@ -429,4 +469,62 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
-
+  /api/users:
+    get:
+      summary: Retrives all users.
+      description: Requires an authenticated admin user.
+      responses:
+        "200":
+          description: Returns a list of all users.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - users
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/UserResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      summary: Creates a new user.
+      description: Requires an authenticated admin user.
+      responses:
+        "201":
+          description: Returns the new user.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - user
+                properties:
+                  user:
+                    $ref: "#/components/schemas/UserResponse"
+        "400":
+          description: One or more of the fields have invalid data.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email is already in use by another user.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
