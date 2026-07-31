@@ -3,6 +3,8 @@ openapi: 3.1.0
 info:
   title: Zero Cost CRM API
   version: 1.1.0
+  license:
+    name: MIT
 
 servers:
   - url: http://localhost:4000
@@ -70,6 +72,160 @@ components:
         - founder
         - sdr
         - admin
+    Company:
+      type: object
+      required:
+        - id
+        - companyName
+        - stage
+        - industry
+        - location
+        - estimatedCallVolume
+        - employeeCount
+        - intent
+        - offeredPrice
+        - primaryContactId
+        - assignedTo
+        - lastContacted
+        - nextFollowUp
+        - notes
+        - sourceLink
+        - companyWebsite
+        - linkedInCompany
+        - discoveryAnswers
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        companyName:
+          type: string
+        stage:
+          type: string
+        industry:
+          type: string
+          enum:
+            - BFSI
+            - Healthcare
+            - Retail
+            - EdTech
+            - Telecom
+            - SaaS
+            - Logistics
+            - Research / Biotech
+            - Other
+            - ""
+        location:
+          type: string
+        estimatedCallVolume:
+          type:
+            - number
+            - "null"
+        employeeCount:
+          type:
+            - number
+            - "null"
+        intent:
+          type: string
+          enum:
+            - ""
+            - Hot
+            - Cold
+            - Warm
+        offeredPrice:
+          type:
+            - number
+            - "null"
+        primaryContactId:
+          type:
+            - string
+            - "null"
+          format: uuid
+
+        assignedTo:
+          type: string
+
+        lastContacted:
+          type:
+            - string
+            - "null"
+          format: date-time
+        nextFollowUp:
+          type:
+            - string
+            - "null"
+          format: date-time
+        notes:
+          type: string
+        sourceLink:
+          type: string
+        companyWebsite:
+          type: string
+        linkedInCompany:
+          type: string
+        discoveryAnswers:
+          type: object
+          additionalProperties:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+    Contact:
+      type: object
+      required:
+       - id
+       - contactName
+       - companyId
+       - role
+       - phone
+       - email
+       - linkedInProfile
+       - contactStatus
+       - champion
+       - lastContacted
+       - nextFollowUp
+       - notes
+       - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        contactName:
+          type: string
+        companyId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        role:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        linkedInProfile:
+          type: string
+        contactStatus:
+          type: string
+        champion:
+          type: boolean
+        lastContacted:
+          type:
+            - string
+            - "null"
+          format: date-time
+        nextFollowUp:
+          type:
+            - string
+            - "null"
+          format: date-time
+        notes:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+
     DiscoveryQuestion:
       type: object
       required:
@@ -522,4 +678,31 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+
+  /api/bootstrap:
+    get:
+      summary: Retrieve companies and contacts.
+      responses:
+        "200":
+          description: Returns all companies and contacts required to initialize the CRM application.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - companies
+                  - contacts
+                properties:
+                  companies:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Company"
+                  contacts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Contact"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+
 
