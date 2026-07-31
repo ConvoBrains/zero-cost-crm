@@ -60,11 +60,13 @@ components:
         name:
           type: string
         role:
-          type: string
-          enum:
-            - founder
-            - sdr
-            - admin
+          $ref: "#/components/schemas/UserRoles"
+    UserRoles:
+      type: string
+      enum:
+        - founder
+        - sdr
+        - admin
     DiscoveryQuestion:
       type: object
       required:
@@ -402,7 +404,29 @@ paths:
                     $ref: "#/components/schemas/User"
         "401":
           $ref: "#/components/responses/Unauthorized"
-
-
-
+  #=========================
+  # Users ENDPOINTS
+  #=========================
+  /api/users/roles:
+    get:
+      summary: Allowed user roles.
+      description: Requires an authenticated admin user.
+      responses:
+        "200":
+          description: Returns the list of allowed roles.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - roles
+                properties:
+                  roles:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/UserRoles"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
