@@ -3,7 +3,11 @@ openapi: 3.1.0
 info:
   title: Zero Cost CRM API
   version: 1.1.0
-#___________________________Components________________________
+
+servers:
+  - url: http://localhost:4000
+    description: Local development server.
+
 components:
   responses:
     BadRequest:
@@ -36,7 +40,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
-
   securitySchemes:
     bearerAuth:
       type: http
@@ -87,7 +90,6 @@ components:
             - text
             - textarea
             - number
-
     ErrorResponse:
       type: object
       required:
@@ -95,7 +97,6 @@ components:
       properties:
         error:
           type: string
-
     ConfigResponse:
       type: object
       required:
@@ -144,7 +145,6 @@ components:
             type: string
         allowAnyEmailDomain:
           type: boolean
-
     SettingsPatch:
       type: object
       properties:
@@ -232,7 +232,6 @@ components:
           description: Minimum length; 8 characters.
         role:
           $ref: "#/components/schemas/UserRoles"
-
     LoginRequest:
       type: object
       required:
@@ -256,6 +255,7 @@ components:
       properties:
         token:
           type: string
+          format: jwt
           description: JWT bearer token
         user:
           $ref: "#/components/schemas/User"
@@ -294,15 +294,10 @@ components:
           type: string
           format: date-time
 
-
-
 security: #as mentioned in API.md, all endpoints require auth
   - bearerAuth: []
-#_____________________ Paths ______________________
+
 paths:
-  #=========================
-  # PUBLIC ENDPOINTS
-  #=========================
   /api/health:
     get:
       security: []
@@ -365,9 +360,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
-  #=========================
-  # AUTH ENDPOINTS
-  #=========================
+
   /api/auth/login:
     post:
       security: []
@@ -444,34 +437,10 @@ paths:
                     $ref: "#/components/schemas/User"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  #=========================
-  # Users ENDPOINTS
-  #=========================
-  /api/users/roles:
-    get:
-      summary: Allowed user roles.
-      description: Requires an authenticated admin user.
-      responses:
-        "200":
-          description: Returns the list of allowed roles.
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - roles
-                properties:
-                  roles:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/UserRoles"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+
   /api/users:
     get:
-      summary: Retrives all users.
+      summary: Retrieves all users.
       description: Requires an authenticated admin user.
       responses:
         "200":
@@ -528,3 +497,26 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/CreateUserRequest"
+  /api/users/roles:
+    get:
+      summary: Allowed user roles.
+      description: Requires an authenticated admin user.
+      responses:
+        "200":
+          description: Returns the list of allowed roles.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - roles
+                properties:
+                  roles:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/UserRoles"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
