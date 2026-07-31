@@ -119,11 +119,11 @@ components:
           type: string
         estimatedCallVolume:
           type:
-            - number
+            - integer
             - "null"
         employeeCount:
           type:
-            - number
+            - integer
             - "null"
         intent:
           type: string
@@ -224,8 +224,6 @@ components:
         createdAt:
           type: string
           format: date-time
-
-
     DiscoveryQuestion:
       type: object
       required:
@@ -451,6 +449,36 @@ components:
         createdAt:
           type: string
           format: date-time
+    Metrics:
+      type: object
+      required:
+        - totalCompanies
+        - totalContacts
+        - newLeads
+        - followUpsDueToday
+        - demoScheduled
+        - activeOpportunities
+        - closedWon
+        - closedLost
+      properties:
+        totalCompanies:
+          type: integer
+        totalContacts:
+          type: integer
+        newLeads:
+          type: integer
+        followUpsDueToday:
+          type: integer
+        demoScheduled:
+          type: integer
+        activeOpportunities:
+          type: integer
+        closedWon:
+          type: integer
+        closedLost:
+          type: integer
+
+
 
 security: #as mentioned in API.md, all endpoints require auth
   - bearerAuth: []
@@ -701,6 +729,18 @@ paths:
                     type: array
                     items:
                       $ref: "#/components/schemas/Contact"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/metrics:
+    get:
+      summary: Retrieves the metrics.
+      responses:
+        "200":
+          description: Metrics successfully retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Metrics"
         "401":
           $ref: "#/components/responses/Unauthorized"
 
