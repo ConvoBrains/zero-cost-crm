@@ -48,6 +48,26 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    CreateUserRequest:
+      type: object
+      required:
+        - name
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          description: User email address.
+          format: email
+        name:
+          type: string
+          description: Name of the user.
+        password:
+          type: string
+          format: password
+          description: Minimum length; 8 characters.
+        role:
+          $ref: "#/components/schemas/UserRoles"
     User:
       type: object
       required:
@@ -155,6 +175,60 @@ components:
         createdAt:
           type: string
           format: date
+    CreateCompanyRequest:
+      type: object
+      required:
+        - companyName
+      properties:
+        companyName:
+          type: string
+        stage:
+          type: string
+        industry:
+          type: string
+        location:
+          type: string
+        estimatedCallVolume:
+          type:
+            - integer
+            - "null"
+        employeeCount:
+          type:
+            - integer
+            - "null"
+        intent:
+          type: string
+        offeredPrice:
+          type:
+            - number
+            - "null"
+        primaryContactId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        lastContacted:
+          type:
+            - string
+            - "null"
+          format: date
+        nextFollowUp:
+          type:
+            - string
+            - "null"
+          format: date
+        notes:
+          type: string
+        sourceLink:
+          type: string
+        companyWebsite:
+          type: string
+        linkedInCompany:
+          type: string
+        discoveryAnswers:
+          type: object
+          additionalProperties:
+            type: string
     Contact:
       type: object
       required:
@@ -351,26 +425,6 @@ components:
           type:
             - string
             - "null"
-    CreateUserRequest:
-      type: object
-      required:
-        - name
-        - email
-        - password
-      properties:
-        email:
-          type: string
-          description: User email address.
-          format: email
-        name:
-          type: string
-          description: Name of the user.
-        password:
-          type: string
-          format: password
-          description: Minimum length; 8 characters.
-        role:
-          $ref: "#/components/schemas/UserRoles"
     LoginRequest:
       type: object
       required:
@@ -726,3 +780,22 @@ paths:
                 $ref: "#/components/schemas/Metrics"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /api/companies:
+    post:
+      summary: Create new company.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCompanyRequest"
+      responses:
+        "201":
+          description: Company created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
