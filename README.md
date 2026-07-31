@@ -1,14 +1,22 @@
 # Zero Cost CRM
 
-[![Open Source Helpers](https://www.codetriage.com/convobrains/zero-cost-crm/badges/users.svg)](https://www.codetriage.com/convobrains/zero-cost-crm)
+[![CI](https://github.com/ConvoBrains/zero-cost-crm/actions/workflows/ci.yml/badge.svg)](https://github.com/ConvoBrains/zero-cost-crm/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Good first issues](https://img.shields.io/github/labels/ConvoBrains/zero-cost-crm/good%20first%20issue)](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+[![GitHub stars](https://img.shields.io/github/stars/ConvoBrains/zero-cost-crm?style=social)](https://github.com/ConvoBrains/zero-cost-crm/stargazers)
 [![first-timers-only](https://img.shields.io/badge/first--timers--only-friendly-blue.svg?style=flat-square)](https://www.firsttimersonly.com/)
+[![Open Source Helpers](https://www.codetriage.com/convobrains/zero-cost-crm/badges/users.svg)](https://www.codetriage.com/convobrains/zero-cost-crm)
+
+**Salesforce for teams that still live in Sheets** — self-hosted pipeline, contacts, follow-ups, SDR activity, and optional call recordings. MIT. One command to run.
 
 **We don't need Salesforce. We need to know which SDR is converting and why.**
 
 Most early-stage B2B teams hire their first SDR and manage them on Google Sheets,
 scattered call recordings, and founder intuition. We built the system we wished existed.
 
-[Run locally](#run-it-in-3-steps) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · **[Book a demo](https://www.convobrains.com/contact)**
+[Run locally](#run-it-in-3-steps) · [Good first issues](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) · [Fun issues](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3Afun) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Contributing](CONTRIBUTING.md) · [Discussions](https://github.com/ConvoBrains/zero-cost-crm/discussions) · [Security](SECURITY.md) · **[Book a demo](https://www.convobrains.com/contact)**
+
+> **New here?** `make setup && make dev` → open [localhost:5173](http://localhost:5173) → pick an unassigned [good first issue](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22+no%3Aassignee) → comment *I'd like to take this*. We review fast and mentor first-timers. Rewards: see [#23](https://github.com/ConvoBrains/zero-cost-crm/issues/23).
 
 ![Zero Cost CRM login](docs/images/login.png)
 
@@ -248,12 +256,25 @@ Google Fonts (DM Sans, Instrument Serif) are loaded from Google’s CDN under th
 
 ## Contributing
 
-[Good first issues](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) · [CONTRIBUTING.md](CONTRIBUTING.md) · [CONTRIBUTORS.md](CONTRIBUTORS.md) · [CodeTriage](https://www.codetriage.com/convobrains/zero-cost-crm)
+We welcome first-time PRs. Maintainers aim to reply within a day on claimed issues.
+
+| Start here | Link |
+| --- | --- |
+| Beginner tickets | [good first issue](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22+no%3Aassignee) (unassigned) |
+| Showcase / delightful work | [`fun` label](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3Afun) |
+| How to claim + ship | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| Rewards + onboarding | [#23 Start here](https://github.com/ConvoBrains/zero-cost-crm/issues/23) |
+| Ideas & questions | [Discussions](https://github.com/ConvoBrains/zero-cost-crm/discussions) |
+| Hall of fame | [CONTRIBUTORS.md](CONTRIBUTORS.md) |
 
 ```bash
 make setup && make dev
 npm test
 ```
+
+<a href="https://github.com/ConvoBrains/zero-cost-crm/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=ConvoBrains/zero-cost-crm" alt="Contributors to Zero Cost CRM" />
+</a>
 
 ---
 
