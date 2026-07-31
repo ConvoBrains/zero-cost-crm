@@ -12,6 +12,8 @@ servers:
 
 components:
   responses:
+    NoContent:
+      description: No Content.
     NotFound:
       description: Resource not found.
       content:
@@ -860,16 +862,16 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
   /api/companies/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Company Id
+        schema:
+          type: string
+          format: uuid
     patch:
-      summary: update company details.
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: Company Id
-          schema:
-            type: string
-            format: uuid
+      summary: Update a company.
       requestBody:
         required: true
         content:
@@ -889,3 +891,14 @@ paths:
           $ref: "#/components/responses/NotFound"
         "401":
           $ref: "#/components/responses/Unauthorized"
+    delete:
+      summary: Delete a company.
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
