@@ -11,6 +11,15 @@ servers:
     description: Local development server.
 
 components:
+  parameters:
+    id:
+      name: id
+      in: path
+      required: true
+      description: Resource identifier.
+      schema:
+        type: string
+        format: uuid
   responses:
     NoContent:
       description: No Content.
@@ -50,7 +59,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
-
   securitySchemes:
     bearerAuth:
       type: http
@@ -382,6 +390,42 @@ components:
           format: date
         notes:
           type: string
+    PatchContactRequest:
+      type: object
+      properties:
+        contactName:
+          type: string
+        companyId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        role:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        linkedInProfile:
+          type: string
+        contactStatus:
+          type: string
+        champion:
+          type: boolean
+        lastContacted:
+          type:
+            - string
+            - "null"
+          format: date
+        nextFollowUp:
+          type:
+            - string
+            - "null"
+          format: date
+        notes:
+          type: string
+
     DiscoveryQuestion:
       type: object
       required:
@@ -902,13 +946,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
   /api/companies/{id}:
     parameters:
-      - name: id
-        in: path
-        required: true
-        description: Company Id
-        schema:
-          type: string
-          format: uuid
+      - $ref: "#/components/parameters/id"
     patch:
       summary: Update a company.
       requestBody:
@@ -961,3 +999,36 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /api/contacts/{id}:
+    parameters:
+      - $ref: "#/components/parameters/id"
+    patch:
+      summary: Update a contact.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchContactRequest"
+      responses:
+        "200":
+          description: Contact updated successfully.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Contact"
+                  - type: object
+                    required:
+                      - movedCompanyStage
+                    properties:
+                      movedCompanyStage:
+                        type:
+                          - string
+                          - "null"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "400":
+          $ref: "#/components/responses/BadRequest"
