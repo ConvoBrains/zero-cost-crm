@@ -425,7 +425,6 @@ components:
           format: date
         notes:
           type: string
-
     DiscoveryQuestion:
       type: object
       required:
@@ -659,7 +658,54 @@ components:
           type: integer
         closedLost:
           type: integer
-
+    Prospect:
+      type: object
+      properties:
+        company:
+          type: string
+        prospectName:
+          type: string
+        jobTitle:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        location:
+          type: string
+        employees:
+          type:
+            - integer
+            - "null"
+        industry:
+          type: string
+    ImportProspectsRequest:
+      type: object
+      required:
+        - rows
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/Prospect"
+    ImportProspectsResponse:
+      type:
+        object
+      required:
+        - companiesCreated
+        - companiesUpdated
+        - contactsCreated
+        - contactsSkipped
+      properties:
+        companiesCreated:
+          type: integer
+        companiesUpdated:
+          type: integer
+        contactsCreated:
+          type: integer
+        contactsSkipped:
+          type: integer
 security: #as mentioned in API.md, all endpoints require auth
   - bearerAuth: []
 
@@ -1045,3 +1091,23 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+  /api/import/prospects:
+    post:
+      summary: Bulk import prospects.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImportProspectsRequest"
+      responses:
+        "200":
+          description: Import successful.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportProspectsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
