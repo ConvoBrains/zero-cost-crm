@@ -36,11 +36,13 @@ npm run ci                # lint + format:check + unit + build
 
 ## Find something to work on
 
-1. Browse [good first issues](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) or [help wanted](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22).
-2. **Comment on the issue** to claim it (e.g. “I’d like to work on this”).
-3. Prefer one focused issue at a time.
+1. Prefer **[unassigned good first issues](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22+no%3Aassignee)** so you’re not blocked on someone else’s claim.
+2. Want a showcase PR? Browse the **[`fun` label](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3Afun)** (command palette, empty states, docs GIF, etc.).
+3. Or pick any [help wanted](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22) ticket.
+4. **Comment on the issue** to claim it (e.g. “I’d like to take this”). We’ll assign you — usually within a day.
+5. Prefer one focused issue at a time.
 
-If you’re new to open source, start with labels **`first-timers-only`**, **`good first issue`**, or **`easy`**.
+If you’re new to open source, start with labels **`first-timers-only`**, **`good first issue`**, or **`easy`**. Questions welcome in [Discussions](https://github.com/ConvoBrains/zero-cost-crm/discussions).
 
 ---
 
