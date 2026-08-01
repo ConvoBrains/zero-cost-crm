@@ -71,7 +71,6 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
-
     CreateUserRequest:
       type: object
       required:
@@ -844,17 +843,140 @@ components:
         - entityId
       properties:
         eventType:
-          type: string
-          enum:
-            - contact.opened
-            - company.opened
+          $ref: "#/components/schemas/EventType"
         entityId:
           type: string
           format: uuid
         name:
           type: string
-
-
+    CompanyHistoryEvent:
+      type: object
+      required:
+        - id
+        - userId
+        - userName
+        - eventType
+        - entityType
+        - summary
+        - payload
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        userName:
+          type: string
+        eventType:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        contactName:
+          type:
+            - string
+            - "null"
+        summary:
+          type: string
+        payload:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+    LeadHistoryEvent:
+      type: object
+      required:
+        - id
+        - userId
+        - userName
+        - eventType
+        - summary
+        - payload
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        userName:
+          type: string
+        eventType:
+          type: string
+        summary:
+          type: string
+        payload:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+    TimelineEvent:
+      type: object
+      required:
+        - id
+        - userId
+        - userName
+        - eventType
+        - entityType
+        - summary
+        - payload
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        userName:
+          type: string
+        sessionId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        eventType:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        summary:
+          type: string
+        payload:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+    EventType:
+      type: string
+      enum:
+        - contact.opened
+        - company.opened
+    CompanyHistoryResponse:
+      type: object
+      required:
+        - companyId
+        - companyName
+        - events
+      properties:
+        companyId:
+          type: string
+          format: uuid
+        companyName:
+          type: string
+        events:
+          $ref: "#/components/schemas/CompanyHistoryEvent"
 
 security: #as mentioned in API.md, all endpoints require auth
   - bearerAuth: []
@@ -1458,3 +1580,21 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /api/activity/company/{id}/history:
+    get:
+      summary: Company progress
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: Event history successfully retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyHistoryResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+
