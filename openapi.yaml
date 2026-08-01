@@ -802,6 +802,28 @@ components:
         stagingKey:
           type: string
 
+    Sdr:
+      type: object
+      required:
+        - id
+        - email
+        - name
+        - role
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          type: string
+          enum:
+            - sdr
+            - admin
+            - founder
 security: #as mentioned in API.md, all endpoints require auth
   - bearerAuth: []
 
@@ -1321,3 +1343,25 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
 
+  /api/activity/sdrs:
+    get:
+      summary: Returns the SDR roster.
+      description: Requires an authorized admin user.
+      responses:
+        "200":
+          description: SDR roster successfully retrieved.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - sdrs
+                properties:
+                  sdrs:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Sdr"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
