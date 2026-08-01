@@ -1283,7 +1283,41 @@ paths:
                   $ref: "#/components/schemas/Conversation"
         "401":
           $ref: "#/components/responses/Unauthorized"
-
-
-
+  /api/conversations/{id}/play:
+    get:
+      summary: Presigned play URL.
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: Presigned URL successfully retrieved.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - playUrl
+                properties:
+                  playUrl:
+                    type: string
+                    format: uri
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/conversations/{id}:
+    delete:
+      summary: Delete a conversation.
+      description: Requires an authorized admin user.
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
