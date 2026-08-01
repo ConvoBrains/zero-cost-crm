@@ -824,6 +824,20 @@ components:
             - sdr
             - admin
             - founder
+    ActivityTargets:
+      type: object
+      required:
+        - calls
+        - followUps
+        - demos
+      properties:
+        calls:
+          type: integer
+        followUps:
+          type: integer
+        demos:
+          type: integer
+
 security: #as mentioned in API.md, all endpoints require auth
   - bearerAuth: []
 
@@ -1365,3 +1379,49 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+  /api/activity/targets:
+    get:
+      summary: Fetches daily targets.
+      description: Requires an authorized admin user.
+      responses:
+        "200":
+          description: Targets retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - targets
+                properties:
+                  targets:
+                    $ref: "#/components/schemas/ActivityTargets"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    patch:
+      summary: Update targets.
+      description: Requires an authorized admin user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivityTargets"
+      responses:
+        "200":
+          description: Targets updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  targets:
+                    $ref: "#/components/schemas/ActivityTargets"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
