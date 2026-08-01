@@ -837,6 +837,24 @@ components:
           type: integer
         demos:
           type: integer
+    ActivityEvent:
+      type: object
+      required:
+        - eventType
+        - entityId
+      properties:
+        eventType:
+          type: string
+          enum:
+            - contact.opened
+            - company.opened
+        entityId:
+          type: string
+          format: uuid
+        name:
+          type: string
+
+
 
 security: #as mentioned in API.md, all endpoints require auth
   - bearerAuth: []
@@ -1424,4 +1442,19 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
-
+  /api/activity/events:
+    post:
+      summary: Client-side activity event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivityEvent"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
