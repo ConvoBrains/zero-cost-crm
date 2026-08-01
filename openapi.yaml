@@ -1040,6 +1040,200 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TimelineEvent"
+    SessionSummary:
+      type: object
+      required:
+        - activeMs
+        - idleMs
+        - activeDuration
+        - idleDuration
+        - sessionCount
+        - endReasons
+      properties:
+        loginTime:
+          type:
+            - string
+            - "null"
+        logoutTime:
+          type:
+            - string
+            - "null"
+        activeMs:
+          type: integer
+        idleMs:
+          type: integer
+        activeDuration:
+          type: string
+        idleDuration:
+          type: string
+        sessionCount:
+          type: integer
+        firstLogin:
+          type:
+            - string
+            - "null"
+          format: date-time
+        lastActivity:
+          type:
+            - string
+            - "null"
+          format: date-time
+        endReasons:
+          type: array
+          items:
+            type: string
+    CallMetrics:
+      type: object
+      required:
+        - callsMade
+        - connected
+        - didntPick
+        - wrongPerson
+        - interested
+        - followUps
+        - demo
+        - notInterested
+        - converted
+      properties:
+        callsMade:
+          type: integer
+        connected:
+          type: integer
+        didntPick:
+          type: integer
+        wrongPerson:
+          type: integer
+        interested:
+          type: integer
+        followUps:
+          type: integer
+        demo:
+          type: integer
+        notInterested:
+          type: integer
+        converted:
+          type: integer
+    ProductivityStats:
+      type: object
+      required:
+        - contactsWorked
+        - companiesWorked
+        - callsPerHour
+        - avgMinutesPerLead
+      properties:
+        contactsWorked:
+          type: integer
+        companiesWorked:
+          type: integer
+        callsPerHour:
+          type: number
+        avgMinutesPerLead:
+          type: integer
+    ActivityAlert:
+      type: object
+      required:
+        - code
+        - severity
+        - message
+        - userId
+        - userName
+      properties:
+        code:
+          type: string
+        severity:
+          type: string
+          enum:
+            - warning
+            - critical
+        message:
+          type: string
+        userId:
+          type: string
+          format: uuid
+        userName:
+          type: string
+    AgentOverview:
+      type: object
+      required:
+        - userId
+        - name
+        - email
+        - role
+        - session
+        - metrics
+        - productivity
+        - targets
+        - progress
+        - alerts
+      properties:
+        userId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+        session:
+          $ref: "#/components/schemas/SessionSummary"
+        metrics:
+          $ref: "#/components/schemas/CallMetrics"
+        productivity:
+          $ref: "#/components/schemas/ProductivityStats"
+        targets:
+          $ref: "#/components/schemas/ActivityTargets"
+        progress:
+          $ref: "#/components/schemas/ActivityTargets"
+        alerts:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityAlert"
+    ActivityOverviewResponse:
+      type: object
+      required:
+        - date
+        - from
+        - to
+        - userId
+        - targets
+        - session
+        - metrics
+        - productivity
+        - progress
+        - alerts
+        - agents
+      properties:
+        date:
+          type: string
+          format: date
+        from:
+          type: string
+          format: date
+        to:
+          type: string
+          format: date
+        userId:
+          type: string
+        targets:
+          $ref: "#/components/schemas/ActivityTargets"
+        session:
+          $ref: "#/components/schemas/SessionSummary"
+        metrics:
+          $ref: "#/components/schemas/CallMetrics"
+        productivity:
+          $ref: "#/components/schemas/ProductivityStats"
+        progress:
+          $ref: "#/components/schemas/ActivityTargets"
+        alerts:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityAlert"
+        agents:
+          type: array
+          items:
+            $ref: "#/components/schemas/AgentOverview"
     EventType:
       type: string
       enum:
@@ -1704,6 +1898,30 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+  /api/activity/overview:
+    get:
+      summary: Manager overview dashboard
+      description: Requires an authorized admin user.
+      parameters:
+        - $ref: "#/components/parameters/userIdQuery"
+        - $ref: "#/components/parameters/fromQuery"
+        - $ref: "#/components/parameters/toQuery"
+        - $ref: "#/components/parameters/qQuery"
+      responses:
+        "200":
+          description: Activity overview metrics successfully retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityOverviewResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /api/activity/timeline:
     get:
       summary: Event timeline
