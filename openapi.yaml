@@ -970,6 +970,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
     delete:
       summary: Delete a company.
+      description: Requires an authorized admin user.
       responses:
         "204":
           $ref: "#/components/responses/NoContent"
@@ -1032,3 +1033,15 @@ paths:
           $ref: "#/components/responses/NotFound"
         "400":
           $ref: "#/components/responses/BadRequest"
+    delete:
+      summary: Delete a contact.
+      description: Requires an authorized admin user.
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
