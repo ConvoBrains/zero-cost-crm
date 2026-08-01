@@ -12,6 +12,14 @@ servers:
 
 components:
   parameters:
+    entityType:
+      name: entityType
+      in: path
+      required: true
+      description: Entity type
+      schema:
+        $ref: "#/components/schemas/EntityTypeSchema"
+
     id:
       name: id
       in: path
@@ -917,6 +925,22 @@ components:
         createdAt:
           type: string
           format: date-time
+    LeadHistoryResponse:
+      type: object
+      required:
+        - entityType
+        - entityId
+        - events
+      properties:
+        entityType:
+          $ref: "#/components/schemas/EntityTypeSchema"
+        entityId:
+          type: string
+          format: uuid
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeadHistoryEvent"
     TimelineEvent:
       type: object
       required:
@@ -963,6 +987,11 @@ components:
       enum:
         - contact.opened
         - company.opened
+    EntityTypeSchema:
+      type: string
+      enum:
+        - contact
+        - company
     CompanyHistoryResponse:
       type: object
       required:
@@ -1598,3 +1627,25 @@ paths:
           $ref: "#/components/responses/NotFound"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /api/activity/lead/{entityType}/{id}:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/entityType"
+      summary: Retrieves activity for a lead.
+      responses:
+        "200":
+          description: Activity retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadHistoryResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+
+
