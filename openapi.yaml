@@ -50,6 +50,7 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
+
   securitySchemes:
     bearerAuth:
       type: http
@@ -289,7 +290,6 @@ components:
           type: object
           additionalProperties:
             type: string
-
     Contact:
       type: object
       required:
@@ -323,6 +323,7 @@ components:
           type: string
         email:
           type: string
+          format: email
         linkedInProfile:
           type: string
         contactStatus:
@@ -344,6 +345,43 @@ components:
         createdAt:
           type: string
           format: date
+    CreateContactRequest:
+      type: object
+      required:
+       - contactName
+      properties:
+        contactName:
+          type: string
+        companyId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        role:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        linkedInProfile:
+          type: string
+        contactStatus:
+          type: string
+        champion:
+          type: boolean
+        lastContacted:
+          type:
+            - string
+            - "null"
+          format: date
+        nextFollowUp:
+          type:
+            - string
+            - "null"
+          format: date
+        notes:
+          type: string
     DiscoveryQuestion:
       type: object
       required:
@@ -841,6 +879,7 @@ paths:
                 $ref: "#/components/schemas/Metrics"
         "401":
           $ref: "#/components/responses/Unauthorized"
+
   /api/companies:
     post:
       summary: Create new company.
@@ -902,3 +941,23 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+  /api/contacts:
+    post:
+      summary: Create a contact.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateContactRequest"
+      responses:
+        "201":
+          description: Contact created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
