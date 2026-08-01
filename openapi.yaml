@@ -976,7 +976,9 @@ components:
         companyName:
           type: string
         events:
-          $ref: "#/components/schemas/CompanyHistoryEvent"
+          type: array
+          items:
+            $ref: "#/components/schemas/CompanyHistoryEvent"
 
 security: #as mentioned in API.md, all endpoints require auth
   - bearerAuth: []
@@ -1591,10 +1593,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CompanyHistoryResponse"
+                  $ref: "#/components/schemas/CompanyHistoryResponse"
         "404":
           $ref: "#/components/responses/NotFound"
         "401":
           $ref: "#/components/responses/Unauthorized"
-
-
