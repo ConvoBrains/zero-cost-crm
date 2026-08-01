@@ -28,6 +28,40 @@ components:
       schema:
         type: string
         format: uuid
+
+    userIdQuery:
+      name: userId
+      in: query
+      required: true
+      description: SDR user ID (UUID) or 'all'.
+      schema:
+        type: string
+
+    fromQuery:
+      name: from
+      in: query
+      required: false
+      description: Start date (YYYY-MM-DD).
+      schema:
+        type: string
+        format: date
+
+    toQuery:
+      name: to
+      in: query
+      required: false
+      description: End date (YYYY-MM-DD).
+      schema:
+        type: string
+        format: date
+
+    qQuery:
+      name: q
+      in: query
+      required: false
+      description: Search term.
+      schema:
+        type: string
   responses:
     DuplicateRequest:
       description: Duplicate request.
@@ -982,6 +1016,30 @@ components:
         createdAt:
           type: string
           format: date-time
+    ActivityTimelineResponse:
+      type: object
+      required:
+        - date
+        - from
+        - to
+        - userId
+        - events
+      properties:
+        date:
+          type: string
+          format: date
+        from:
+          type: string
+          format: date
+        to:
+          type: string
+          format: date
+        userId:
+          type: string
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/TimelineEvent"
     EventType:
       type: string
       enum:
@@ -1640,6 +1698,28 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LeadHistoryResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /api/activity/timeline:
+    get:
+      summary: Event timeline
+      description: Requires an authorized admin user.
+      parameters:
+        - $ref: "#/components/parameters/userIdQuery"
+        - $ref: "#/components/parameters/fromQuery"
+        - $ref: "#/components/parameters/toQuery"
+        - $ref: "#/components/parameters/qQuery"
+      responses:
+        "200":
+          description: Timeline events successfully retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityTimelineResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
