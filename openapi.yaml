@@ -21,6 +21,12 @@ components:
         type: string
         format: uuid
   responses:
+    DuplicateRequest:
+      description: Duplicate request.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
     NoContent:
       description: No Content.
     NotFound:
@@ -65,6 +71,7 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+
     CreateUserRequest:
       type: object
       required:
@@ -109,6 +116,29 @@ components:
         - founder
         - sdr
         - admin
+    UserResponse:
+      type: object
+      required:
+        - id
+        - email
+        - name
+        - role
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          $ref: "#/components/schemas/UserRoles"
+        createdAt:
+          type: string
+          format: date-time
+
     Company:
       type: object
       required:
@@ -298,6 +328,7 @@ components:
           type: object
           additionalProperties:
             type: string
+
     Contact:
       type: object
       required:
@@ -425,6 +456,7 @@ components:
           format: date
         notes:
           type: string
+
     DiscoveryQuestion:
       type: object
       required:
@@ -445,6 +477,7 @@ components:
             - text
             - textarea
             - number
+
     ErrorResponse:
       type: object
       required:
@@ -452,6 +485,7 @@ components:
       properties:
         error:
           type: string
+
     ConfigResponse:
       type: object
       required:
@@ -500,6 +534,7 @@ components:
             type: string
         allowAnyEmailDomain:
           type: boolean
+
     SettingsPatch:
       type: object
       properties:
@@ -567,6 +602,7 @@ components:
           type:
             - string
             - "null"
+
     LoginRequest:
       type: object
       required:
@@ -608,28 +644,7 @@ components:
         lastActiveAt:
           type: string
           format: date-time
-    UserResponse:
-      type: object
-      required:
-        - id
-        - email
-        - name
-        - role
-        - createdAt
-      properties:
-        id:
-          type: string
-          format: uuid
-        email:
-          type: string
-          format: email
-        name:
-          type: string
-        role:
-          $ref: "#/components/schemas/UserRoles"
-        createdAt:
-          type: string
-          format: date-time
+
     Metrics:
       type: object
       required:
@@ -658,8 +673,12 @@ components:
           type: integer
         closedLost:
           type: integer
+
     Prospect:
       type: object
+      required:
+        - company
+        - prospectName
       properties:
         company:
           type: string
@@ -706,6 +725,83 @@ components:
           type: integer
         contactsSkipped:
           type: integer
+
+    Conversation:
+      type: object
+      required:
+        - id
+        - companyId
+        - contactId
+        - companyName
+        - contactName
+        - calledBy
+        - calledByName
+        - stageAtCall
+        - calledAt
+        - s3Url
+        - notes
+      properties:
+        id:
+          type: string
+          format: uuid
+        companyId:
+          type: string
+          format: uuid
+        contactId:
+          type: string
+          format: uuid
+        companyName:
+          type: string
+        contactName:
+          type: string
+        calledBy:
+          type: string
+          format: uuid
+        calledByName:
+          type: string
+        stageAtCall:
+          type: string
+        calledAt:
+          type: string
+          format: date-time
+        s3Url:
+          type: string
+          format: uri
+        notes:
+          type: string
+    ConversationsPresignRequest:
+      type: object
+      required:
+        - contactId
+        - fileExt
+      properties:
+        contactId:
+          type: string
+          format: uuid
+        fileExt:
+          type: string
+        notes:
+          type:
+            - string
+            - "null"
+        stageAtCall:
+          type: string
+    ConversationsPresignResponse:
+      type: object
+      required:
+        - conversationId
+        - uploadUrl
+        - stagingKey
+      properties:
+        conversationId:
+          type: string
+          format: uuid
+        uploadUrl:
+          type: string
+          format: uri
+        stagingKey:
+          type: string
+
 security: #as mentioned in API.md, all endpoints require auth
   - bearerAuth: []
 
@@ -1091,6 +1187,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+
   /api/import/prospects:
     post:
       summary: Bulk import prospects.
@@ -1111,3 +1208,49 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+
+  /api/conversations/presign:
+    post:
+      summary: Starts Upload.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConversationsPresignRequest"
+      responses:
+        "201":
+          description: Started conversaation upload.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationsPresignResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/conversations/{id}/complete:
+    parameters:
+      - $ref: "#/components/parameters/id"
+    post:
+      summary: Finalize upload.
+      responses:
+        "200":
+          description: Upload successful.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Conversation"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/DuplicateRequest"
