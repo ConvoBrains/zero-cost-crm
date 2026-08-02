@@ -1219,7 +1219,9 @@ components:
         targets:
           $ref: "#/components/schemas/ActivityTargets"
         session:
-          $ref: "#/components/schemas/SessionSummary"
+          oneOf:
+            - $ref: "#/components/schemas/SessionSummary"
+            - type: "null"
         metrics:
           $ref: "#/components/schemas/CallMetrics"
         productivity:
@@ -1679,7 +1681,7 @@ paths:
               $ref: "#/components/schemas/ConversationsPresignRequest"
       responses:
         "201":
-          description: Started conversaation upload.
+          description: Started conversation upload.
           content:
             application/json:
               schema:
