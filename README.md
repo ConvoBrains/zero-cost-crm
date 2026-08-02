@@ -14,7 +14,7 @@
 Most early-stage B2B teams hire their first SDR and manage them on Google Sheets,
 scattered call recordings, and founder intuition. We built the system we wished existed.
 
-[Run locally](#run-it-in-3-steps) · [Good first issues](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) · [Fun issues](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3Afun) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Contributing](CONTRIBUTING.md) · [Discussions](https://github.com/ConvoBrains/zero-cost-crm/discussions) · [Security](SECURITY.md) · **[Book a demo](https://www.convobrains.com/contact)**
+[Run locally](#run-it-in-3-steps) · [Good first issues](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) · [Fun issues](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3Afun) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [OpenAPI](openapi.yaml) · [Contributing](CONTRIBUTING.md) · [Discussions](https://github.com/ConvoBrains/zero-cost-crm/discussions) · [Security](SECURITY.md) · **[Book a demo](https://www.convobrains.com/contact)**
 
 > **New here?** `make setup && make dev` → open [localhost:5173](http://localhost:5173) → pick an unassigned [good first issue](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22+no%3Aassignee) → comment *I'd like to take this*. We review fast and mentor first-timers. Rewards: see [#23](https://github.com/ConvoBrains/zero-cost-crm/issues/23).
 
