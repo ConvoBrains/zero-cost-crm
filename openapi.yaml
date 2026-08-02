@@ -1269,6 +1269,7 @@ security: #as mentioned in API.md, all endpoints require auth
 paths:
   /api/health:
     get:
+      operationId: getHealth
       security: []
       summary: Health check endpoint
       responses:
@@ -1288,6 +1289,7 @@ paths:
                       - true
   /api/config:
     get:
+      operationId: getConfig
       security: []
       summary: Public instance configuration
       responses:
@@ -1305,6 +1307,7 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
   /api/settings:
     patch:
+      operationId: updateSettings
       summary: Update application settings.
       description: Requires an authenticated admin user.
       requestBody:
@@ -1333,6 +1336,7 @@ paths:
 
   /api/auth/login:
     post:
+      operationId: login
       security: []
       summary: User login.
       requestBody:
@@ -1360,6 +1364,7 @@ paths:
           $ref: "#/components/responses/TooManyRequests"
   /api/auth/logout:
     post:
+      operationId: logout
       summary: End session
       requestBody:
         content:
@@ -1380,6 +1385,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
   /api/auth/heartbeat:
     post:
+      operationId: heartbeat
       summary: Touch active session.
       responses:
         "200":
@@ -1392,6 +1398,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
   /api/auth/me:
     get:
+      operationId: getCurrentUser
       summary: Current user
       responses:
         "200":
@@ -1410,6 +1417,7 @@ paths:
 
   /api/users:
     get:
+      operationId: listUsers
       summary: Retrieves all users.
       description: Requires an authenticated admin user.
       responses:
@@ -1431,6 +1439,7 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
     post:
+      operationId: createUser
       summary: Creates a new user.
       description: Requires an authenticated admin user.
       requestBody:
@@ -1469,6 +1478,7 @@ paths:
           $ref: "#/components/responses/Forbidden"
   /api/users/roles:
     get:
+      operationId: listUserRoles
       summary: Allowed user roles.
       description: Requires an authenticated admin user.
       responses:
@@ -1492,6 +1502,7 @@ paths:
 
   /api/bootstrap:
     get:
+      operationId: getBootstrapData
       summary: Retrieve companies and contacts.
       responses:
         "200":
@@ -1516,6 +1527,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
   /api/metrics:
     get:
+      operationId: getMetrics
       summary: Retrieves the metrics.
       responses:
         "200":
@@ -1529,6 +1541,7 @@ paths:
 
   /api/companies:
     post:
+      operationId: createCompany
       summary: Create new company.
       requestBody:
         required: true
@@ -1551,6 +1564,7 @@ paths:
     parameters:
       - $ref: "#/components/parameters/id"
     patch:
+      operationId: updateCompany
       summary: Update a company.
       requestBody:
         required: true
@@ -1572,6 +1586,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
     delete:
+      operationId: deleteCompany
       summary: Delete a company.
       description: Requires an authorized admin user.
       responses:
@@ -1585,6 +1600,7 @@ paths:
           $ref: "#/components/responses/Forbidden"
   /api/contacts:
     post:
+      operationId: createContact
       summary: Create a contact.
       requestBody:
         required: true
@@ -1607,6 +1623,7 @@ paths:
     parameters:
       - $ref: "#/components/parameters/id"
     patch:
+      operationId: updateContact
       summary: Update a contact.
       requestBody:
         required: true
@@ -1637,6 +1654,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
     delete:
+      operationId: deleteContact
       summary: Delete a contact.
       description: Requires an authorized admin user.
       responses:
@@ -1651,6 +1669,7 @@ paths:
 
   /api/import/prospects:
     post:
+      operationId: importProspects
       summary: Bulk import prospects.
       requestBody:
         required: true
@@ -1672,6 +1691,7 @@ paths:
 
   /api/conversations/presign:
     post:
+      operationId: presignConversationUpload
       summary: Starts Upload.
       requestBody:
         required: true
@@ -1697,6 +1717,7 @@ paths:
     parameters:
       - $ref: "#/components/parameters/id"
     post:
+      operationId: completeConversationUpload
       summary: Finalize upload.
       responses:
         "200":
@@ -1717,6 +1738,7 @@ paths:
           $ref: "#/components/responses/DuplicateRequest"
   /api/conversations:
     get:
+      operationId: listConversations
       parameters:
         - name: contactId
           in: query
@@ -1746,6 +1768,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
   /api/conversations/{id}/play:
     get:
+      operationId: getConversationPlayUrl
       summary: Presigned play URL.
       parameters:
         - $ref: "#/components/parameters/id"
@@ -1768,6 +1791,7 @@ paths:
           $ref: "#/components/responses/NotFound"
   /api/conversations/{id}:
     delete:
+      operationId: deleteConversation
       summary: Delete a conversation.
       description: Requires an authorized admin user.
       parameters:
@@ -1784,6 +1808,7 @@ paths:
 
   /api/activity/sdrs:
     get:
+      operationId: listSdrs
       summary: Returns the SDR roster.
       description: Requires an authorized admin user.
       responses:
@@ -1806,6 +1831,7 @@ paths:
           $ref: "#/components/responses/Forbidden"
   /api/activity/targets:
     get:
+      operationId: getActivityTargets
       summary: Fetches daily targets.
       description: Requires an authorized admin user.
       responses:
@@ -1825,6 +1851,7 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
     patch:
+      operationId: updateActivityTargets
       summary: Update targets.
       description: Requires an authorized admin user.
       requestBody:
@@ -1851,6 +1878,7 @@ paths:
           $ref: "#/components/responses/Forbidden"
   /api/activity/events:
     post:
+      operationId: logActivityEvent
       summary: Client-side activity event
       requestBody:
         required: true
@@ -1867,6 +1895,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
   /api/activity/company/{id}/history:
     get:
+      operationId: getCompanyActivityHistory
       summary: Company progress
       parameters:
         - $ref: "#/components/parameters/id"
@@ -1883,6 +1912,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
   /api/activity/lead/{entityType}/{id}:
     get:
+      operationId: getLeadActivityHistory
       parameters:
         - $ref: "#/components/parameters/id"
         - $ref: "#/components/parameters/entityType"
@@ -1902,6 +1932,7 @@ paths:
           $ref: "#/components/responses/Forbidden"
   /api/activity/overview:
     get:
+      operationId: getActivityOverview
       summary: Manager overview dashboard
       description: Requires an authorized admin user.
       parameters:
@@ -1926,6 +1957,7 @@ paths:
           $ref: "#/components/responses/NotFound"
   /api/activity/timeline:
     get:
+      operationId: getActivityTimeline
       summary: Event timeline
       description: Requires an authorized admin user.
       parameters:
