@@ -43,6 +43,7 @@ export function Sidebar({
             <button
               key={item.id}
               type="button"
+              aria-current={active ? 'page' : undefined}
               onClick={() => onNavigate(item.id)}
               className={`rounded-none px-3 py-2.5 text-left transition ${
                 active ? 'bg-teal-700 text-white' : 'text-stone-700 hover:bg-stone-100'

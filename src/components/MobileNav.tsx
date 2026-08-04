@@ -22,6 +22,7 @@ export function MobileNav({ page, onNavigate, userRole }: MobileNavProps) {
             <button
               key={item.id}
               type="button"
+              aria-current={active ? 'page' : undefined}
               onClick={() => onNavigate(item.id)}
               className={`flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 px-1 py-2 text-[10px] font-semibold transition ${
                 active ? 'text-teal-700' : 'text-stone-500'
