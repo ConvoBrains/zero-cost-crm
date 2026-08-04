@@ -1,0 +1,1983 @@
+openapi: 3.1.0
+
+info:
+  title: Zero Cost CRM API
+  version: 1.1.0
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:4000
+    description: Local development server.
+
+components:
+  parameters:
+    entityType:
+      name: entityType
+      in: path
+      required: true
+      description: Entity type
+      schema:
+        $ref: "#/components/schemas/EntityTypeSchema"
+
+    id:
+      name: id
+      in: path
+      required: true
+      description: Resource identifier.
+      schema:
+        type: string
+        format: uuid
+
+    userIdQuery:
+      name: userId
+      in: query
+      required: true
+      description: SDR user ID (UUID) or 'all'.
+      schema:
+        type: string
+
+    fromQuery:
+      name: from
+      in: query
+      required: false
+      description: Start date (YYYY-MM-DD).
+      schema:
+        type: string
+        format: date
+
+    toQuery:
+      name: to
+      in: query
+      required: false
+      description: End date (YYYY-MM-DD).
+      schema:
+        type: string
+        format: date
+
+    qQuery:
+      name: q
+      in: query
+      required: false
+      description: Search term.
+      schema:
+        type: string
+  responses:
+    DuplicateRequest:
+      description: Duplicate request.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NoContent:
+      description: No Content.
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    BadRequest:
+      description: Invalid request.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    TooManyRequests:
+      description: Too many requests. Please try again later.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Missing, invalid, or expired bearer token.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    InvalidCredentials:
+      description: Invalid email or password.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: Insufficient permissions.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    CreateUserRequest:
+      type: object
+      required:
+        - name
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          description: User email address.
+          format: email
+        name:
+          type: string
+          description: Name of the user.
+        password:
+          type: string
+          format: password
+          description: Minimum length; 8 characters.
+        role:
+          $ref: "#/components/schemas/UserRoles"
+    User:
+      type: object
+      required:
+        - id
+        - email
+        - name
+        - role
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          $ref: "#/components/schemas/UserRoles"
+    UserRoles:
+      type: string
+      enum:
+        - founder
+        - sdr
+        - admin
+    UserResponse:
+      type: object
+      required:
+        - id
+        - email
+        - name
+        - role
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          $ref: "#/components/schemas/UserRoles"
+        createdAt:
+          type: string
+          format: date-time
+
+    Company:
+      type: object
+      required:
+        - id
+        - companyName
+        - stage
+        - industry
+        - location
+        - estimatedCallVolume
+        - employeeCount
+        - intent
+        - offeredPrice
+        - primaryContactId
+        - assignedTo
+        - lastContacted
+        - nextFollowUp
+        - notes
+        - sourceLink
+        - companyWebsite
+        - linkedInCompany
+        - discoveryAnswers
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        companyName:
+          type: string
+        stage:
+          type: string
+        industry:
+          type: string
+        location:
+          type: string
+        estimatedCallVolume:
+          type:
+            - integer
+            - "null"
+        employeeCount:
+          type:
+            - integer
+            - "null"
+        intent:
+          type: string
+
+        offeredPrice:
+          type:
+            - number
+            - "null"
+        primaryContactId:
+          type:
+            - string
+            - "null"
+          format: uuid
+
+        assignedTo:
+          type: string
+
+        lastContacted:
+          type:
+            - string
+            - "null"
+          format: date
+        nextFollowUp:
+          type:
+            - string
+            - "null"
+          format: date
+        notes:
+          type: string
+        sourceLink:
+          type: string
+        companyWebsite:
+          type: string
+        linkedInCompany:
+          type: string
+        discoveryAnswers:
+          type: object
+          additionalProperties:
+            type: string
+        createdAt:
+          type: string
+          format: date
+    CreateCompanyRequest:
+      type: object
+      required:
+        - companyName
+      properties:
+        companyName:
+          type: string
+        stage:
+          type: string
+        industry:
+          type: string
+        location:
+          type: string
+        estimatedCallVolume:
+          type:
+            - integer
+            - "null"
+        employeeCount:
+          type:
+            - integer
+            - "null"
+        intent:
+          type: string
+        offeredPrice:
+          type:
+            - number
+            - "null"
+        primaryContactId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        lastContacted:
+          type:
+            - string
+            - "null"
+          format: date
+        nextFollowUp:
+          type:
+            - string
+            - "null"
+          format: date
+        notes:
+          type: string
+        sourceLink:
+          type: string
+        companyWebsite:
+          type: string
+        linkedInCompany:
+          type: string
+        discoveryAnswers:
+          type: object
+          additionalProperties:
+            type: string
+    PatchCompanyRequest:
+      type: object
+      properties:
+        companyName:
+          type: string
+        stage:
+          type: string
+        industry:
+          type: string
+        location:
+          type: string
+        estimatedCallVolume:
+          type:
+            - integer
+            - "null"
+        employeeCount:
+          type:
+            - integer
+            - "null"
+        intent:
+          type: string
+        offeredPrice:
+          type:
+            - number
+            - "null"
+        primaryContactId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        lastContacted:
+          type:
+            - string
+            - "null"
+          format: date
+        nextFollowUp:
+          type:
+            - string
+            - "null"
+          format: date
+        notes:
+          type: string
+        sourceLink:
+          type: string
+        companyWebsite:
+          type: string
+        linkedInCompany:
+          type: string
+        discoveryAnswers:
+          type: object
+          additionalProperties:
+            type: string
+
+    Contact:
+      type: object
+      required:
+       - id
+       - contactName
+       - companyId
+       - role
+       - phone
+       - email
+       - linkedInProfile
+       - contactStatus
+       - champion
+       - lastContacted
+       - nextFollowUp
+       - notes
+       - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        contactName:
+          type: string
+        companyId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        role:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        linkedInProfile:
+          type: string
+        contactStatus:
+          type: string
+        champion:
+          type: boolean
+        lastContacted:
+          type:
+            - string
+            - "null"
+          format: date
+        nextFollowUp:
+          type:
+            - string
+            - "null"
+          format: date
+        notes:
+          type: string
+        createdAt:
+          type: string
+          format: date
+    CreateContactRequest:
+      type: object
+      required:
+       - contactName
+      properties:
+        contactName:
+          type: string
+        companyId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        role:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        linkedInProfile:
+          type: string
+        contactStatus:
+          type: string
+        champion:
+          type: boolean
+        lastContacted:
+          type:
+            - string
+            - "null"
+          format: date
+        nextFollowUp:
+          type:
+            - string
+            - "null"
+          format: date
+        notes:
+          type: string
+    PatchContactRequest:
+      type: object
+      properties:
+        contactName:
+          type: string
+        companyId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        role:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        linkedInProfile:
+          type: string
+        contactStatus:
+          type: string
+        champion:
+          type: boolean
+        lastContacted:
+          type:
+            - string
+            - "null"
+          format: date
+        nextFollowUp:
+          type:
+            - string
+            - "null"
+          format: date
+        notes:
+          type: string
+
+    DiscoveryQuestion:
+      type: object
+      required:
+        - id
+        - section
+        - prompt
+        - input
+      properties:
+        id:
+          type: string
+        section:
+          type: string
+        prompt:
+          type: string
+        input:
+          type: string
+          enum:
+            - text
+            - textarea
+            - number
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+
+    ConfigResponse:
+      type: object
+      required:
+        - brandName
+        - brandTagline
+        - logoUrl
+        - stages
+        - contactStatuses
+        - championStatusToStage
+        - discoveryQuestions
+        - allowedEmailDomain
+        - allowedEmailDomains
+        - allowAnyEmailDomain
+      properties:
+        brandName:
+          type: string
+        brandTagline:
+          type: string
+        logoUrl:
+          type: string
+        stages:
+          type: array
+          items:
+            type: string
+        contactStatuses:
+          type: array
+          items:
+            type: string
+        championStatusToStage:
+          type: object
+          additionalProperties:
+            type:
+              - string
+              - "null"
+        discoveryQuestions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscoveryQuestion"
+        allowedEmailDomain:
+          type:
+            - string
+            - "null"
+        allowedEmailDomains:
+          type: array
+          items:
+            type: string
+        allowAnyEmailDomain:
+          type: boolean
+
+    SettingsPatch:
+      type: object
+      properties:
+        brandName:
+          type: string
+        brandTagline:
+          type: string
+        logoUrl:
+          type: string
+        stages:
+          type: array
+          items:
+            type: string
+        contactStatuses:
+          type: array
+          items:
+            type: string
+        championStatusToStage:
+          type: object
+          additionalProperties:
+            type:
+              - string
+              - "null"
+        discoveryQuestions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscoveryQuestion"
+    SettingsResponse:
+      type: object
+      required:
+        - brandName
+        - brandTagline
+        - logoUrl
+        - stages
+        - contactStatuses
+        - championStatusToStage
+        - discoveryQuestions
+        - updatedAt
+      properties:
+        brandName:
+          type: string
+        brandTagline:
+          type: string
+        logoUrl:
+          type: string
+        stages:
+          type: array
+          items:
+            type: string
+        contactStatuses:
+          type: array
+          items:
+            type: string
+        championStatusToStage:
+          type: object
+          additionalProperties:
+            type:
+              - string
+              - "null"
+        discoveryQuestions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscoveryQuestion"
+        updatedAt:
+          type:
+            - string
+            - "null"
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          description: User email address.
+          format: email
+          examples:
+            - alice@example.com
+        password:
+          type: string
+          format: password
+          description: User password.
+    LoginResponse:
+      type: object
+      required:
+        - token
+        - user
+      properties:
+        token:
+          type: string
+          format: jwt
+          description: JWT bearer token
+        user:
+          $ref: "#/components/schemas/User"
+    HeartBeatResponse:
+      type: object
+      required:
+        - ok
+        - lastActiveAt
+      properties:
+        ok:
+          type: boolean
+          examples:
+            - true
+        lastActiveAt:
+          type: string
+          format: date-time
+
+    Metrics:
+      type: object
+      required:
+        - totalCompanies
+        - totalContacts
+        - newLeads
+        - followUpsDueToday
+        - demoScheduled
+        - activeOpportunities
+        - closedWon
+        - closedLost
+      properties:
+        totalCompanies:
+          type: integer
+        totalContacts:
+          type: integer
+        newLeads:
+          type: integer
+        followUpsDueToday:
+          type: integer
+        demoScheduled:
+          type: integer
+        activeOpportunities:
+          type: integer
+        closedWon:
+          type: integer
+        closedLost:
+          type: integer
+
+    Prospect:
+      type: object
+      required:
+        - company
+        - prospectName
+      properties:
+        company:
+          type: string
+        prospectName:
+          type: string
+        jobTitle:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        location:
+          type: string
+        employees:
+          type:
+            - integer
+            - "null"
+        industry:
+          type: string
+    ImportProspectsRequest:
+      type: object
+      required:
+        - rows
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/Prospect"
+    ImportProspectsResponse:
+      type:
+        object
+      required:
+        - companiesCreated
+        - companiesUpdated
+        - contactsCreated
+        - contactsSkipped
+      properties:
+        companiesCreated:
+          type: integer
+        companiesUpdated:
+          type: integer
+        contactsCreated:
+          type: integer
+        contactsSkipped:
+          type: integer
+
+    Conversation:
+      type: object
+      required:
+        - id
+        - companyId
+        - contactId
+        - companyName
+        - contactName
+        - calledBy
+        - calledByName
+        - stageAtCall
+        - calledAt
+        - s3Url
+        - notes
+      properties:
+        id:
+          type: string
+          format: uuid
+        companyId:
+          type: string
+          format: uuid
+        contactId:
+          type: string
+          format: uuid
+        companyName:
+          type: string
+        contactName:
+          type: string
+        calledBy:
+          type: string
+          format: uuid
+        calledByName:
+          type: string
+        stageAtCall:
+          type: string
+        calledAt:
+          type: string
+          format: date-time
+        s3Url:
+          type: string
+          format: uri
+        notes:
+          type: string
+    ConversationsPresignRequest:
+      type: object
+      required:
+        - contactId
+        - fileExt
+      properties:
+        contactId:
+          type: string
+          format: uuid
+        fileExt:
+          type: string
+        notes:
+          type:
+            - string
+            - "null"
+        stageAtCall:
+          type: string
+    ConversationsPresignResponse:
+      type: object
+      required:
+        - conversationId
+        - uploadUrl
+        - stagingKey
+      properties:
+        conversationId:
+          type: string
+          format: uuid
+        uploadUrl:
+          type: string
+          format: uri
+        stagingKey:
+          type: string
+
+    Sdr:
+      type: object
+      required:
+        - id
+        - email
+        - name
+        - role
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          type: string
+          enum:
+            - sdr
+            - admin
+            - founder
+    ActivityTargets:
+      type: object
+      required:
+        - calls
+        - followUps
+        - demos
+      properties:
+        calls:
+          type: integer
+        followUps:
+          type: integer
+        demos:
+          type: integer
+    ActivityEvent:
+      type: object
+      required:
+        - eventType
+        - entityId
+      properties:
+        eventType:
+          $ref: "#/components/schemas/EventType"
+        entityId:
+          type: string
+          format: uuid
+        name:
+          type: string
+    CompanyHistoryEvent:
+      type: object
+      required:
+        - id
+        - userId
+        - userName
+        - eventType
+        - entityType
+        - summary
+        - payload
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        userName:
+          type: string
+        eventType:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        contactName:
+          type:
+            - string
+            - "null"
+        summary:
+          type: string
+        payload:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+    LeadHistoryEvent:
+      type: object
+      required:
+        - id
+        - userId
+        - userName
+        - eventType
+        - summary
+        - payload
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        userName:
+          type: string
+        eventType:
+          type: string
+        summary:
+          type: string
+        payload:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+    LeadHistoryResponse:
+      type: object
+      required:
+        - entityType
+        - entityId
+        - events
+      properties:
+        entityType:
+          $ref: "#/components/schemas/EntityTypeSchema"
+        entityId:
+          type: string
+          format: uuid
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeadHistoryEvent"
+    TimelineEvent:
+      type: object
+      required:
+        - id
+        - userId
+        - userName
+        - eventType
+        - entityType
+        - summary
+        - payload
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        userName:
+          type: string
+        sessionId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        eventType:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        summary:
+          type: string
+        payload:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+    ActivityTimelineResponse:
+      type: object
+      required:
+        - date
+        - from
+        - to
+        - userId
+        - events
+      properties:
+        date:
+          type: string
+          format: date
+        from:
+          type: string
+          format: date
+        to:
+          type: string
+          format: date
+        userId:
+          type: string
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/TimelineEvent"
+    SessionSummary:
+      type: object
+      required:
+        - activeMs
+        - idleMs
+        - activeDuration
+        - idleDuration
+        - sessionCount
+        - endReasons
+      properties:
+        loginTime:
+          type:
+            - string
+            - "null"
+        logoutTime:
+          type:
+            - string
+            - "null"
+        activeMs:
+          type: integer
+        idleMs:
+          type: integer
+        activeDuration:
+          type: string
+        idleDuration:
+          type: string
+        sessionCount:
+          type: integer
+        firstLogin:
+          type:
+            - string
+            - "null"
+          format: date-time
+        lastActivity:
+          type:
+            - string
+            - "null"
+          format: date-time
+        endReasons:
+          type: array
+          items:
+            type: string
+    CallMetrics:
+      type: object
+      required:
+        - callsMade
+        - connected
+        - didntPick
+        - wrongPerson
+        - interested
+        - followUps
+        - demo
+        - notInterested
+        - converted
+      properties:
+        callsMade:
+          type: integer
+        connected:
+          type: integer
+        didntPick:
+          type: integer
+        wrongPerson:
+          type: integer
+        interested:
+          type: integer
+        followUps:
+          type: integer
+        demo:
+          type: integer
+        notInterested:
+          type: integer
+        converted:
+          type: integer
+    ProductivityStats:
+      type: object
+      required:
+        - contactsWorked
+        - companiesWorked
+        - callsPerHour
+        - avgMinutesPerLead
+      properties:
+        contactsWorked:
+          type: integer
+        companiesWorked:
+          type: integer
+        callsPerHour:
+          type: number
+        avgMinutesPerLead:
+          type: integer
+    ActivityAlert:
+      type: object
+      required:
+        - code
+        - severity
+        - message
+        - userId
+        - userName
+      properties:
+        code:
+          type: string
+        severity:
+          type: string
+          enum:
+            - warning
+            - critical
+        message:
+          type: string
+        userId:
+          type: string
+          format: uuid
+        userName:
+          type: string
+    AgentOverview:
+      type: object
+      required:
+        - userId
+        - name
+        - email
+        - role
+        - session
+        - metrics
+        - productivity
+        - targets
+        - progress
+        - alerts
+      properties:
+        userId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+        session:
+          $ref: "#/components/schemas/SessionSummary"
+        metrics:
+          $ref: "#/components/schemas/CallMetrics"
+        productivity:
+          $ref: "#/components/schemas/ProductivityStats"
+        targets:
+          $ref: "#/components/schemas/ActivityTargets"
+        progress:
+          $ref: "#/components/schemas/ActivityTargets"
+        alerts:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityAlert"
+    ActivityOverviewResponse:
+      type: object
+      required:
+        - date
+        - from
+        - to
+        - userId
+        - targets
+        - session
+        - metrics
+        - productivity
+        - progress
+        - alerts
+        - agents
+      properties:
+        date:
+          type: string
+          format: date
+        from:
+          type: string
+          format: date
+        to:
+          type: string
+          format: date
+        userId:
+          type: string
+        targets:
+          $ref: "#/components/schemas/ActivityTargets"
+        session:
+          oneOf:
+            - $ref: "#/components/schemas/SessionSummary"
+            - type: "null"
+        metrics:
+          $ref: "#/components/schemas/CallMetrics"
+        productivity:
+          $ref: "#/components/schemas/ProductivityStats"
+        progress:
+          $ref: "#/components/schemas/ActivityTargets"
+        alerts:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityAlert"
+        agents:
+          type: array
+          items:
+            $ref: "#/components/schemas/AgentOverview"
+    EventType:
+      type: string
+      enum:
+        - contact.opened
+        - company.opened
+    EntityTypeSchema:
+      type: string
+      enum:
+        - contact
+        - company
+    CompanyHistoryResponse:
+      type: object
+      required:
+        - companyId
+        - companyName
+        - events
+      properties:
+        companyId:
+          type: string
+          format: uuid
+        companyName:
+          type: string
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/CompanyHistoryEvent"
+
+security: #as mentioned in API.md, all endpoints require auth
+  - bearerAuth: []
+
+paths:
+  /api/health:
+    get:
+      operationId: getHealth
+      security: []
+      summary: Health check endpoint
+      responses:
+        "200":
+          description: Successful health check
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - ok
+                properties:
+                  ok:
+                    type: boolean
+                    description: Indicates whether the API server is healthy.
+                    examples:
+                      - true
+  /api/config:
+    get:
+      operationId: getConfig
+      security: []
+      summary: Public instance configuration
+      responses:
+        "200":
+          description: Successful config response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigResponse"
+        "500":
+          description: Failed to load config
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/settings:
+    patch:
+      operationId: updateSettings
+      summary: Update application settings.
+      description: Requires an authenticated admin user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsPatch"
+      responses:
+        "200":
+          description: Application settings updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsResponse"
+        "400":
+          description: Application settings failed. (Invalid settings)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/auth/login:
+    post:
+      operationId: login
+      security: []
+      summary: User login.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Successful user login.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          description: Email address is not allowed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/InvalidCredentials"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+  /api/auth/logout:
+    post:
+      operationId: logout
+      summary: End session
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  enum:
+                    - idle
+                    - expired
+                    - manual
+      responses:
+        "204":
+          description: Successful logout.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/auth/heartbeat:
+    post:
+      operationId: heartbeat
+      summary: Touch active session.
+      responses:
+        "200":
+          description: Session is valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeartBeatResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/auth/me:
+    get:
+      operationId: getCurrentUser
+      summary: Current user
+      responses:
+        "200":
+          description: Contains current user object.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - user
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/users:
+    get:
+      operationId: listUsers
+      summary: Retrieves all users.
+      description: Requires an authenticated admin user.
+      responses:
+        "200":
+          description: Returns a list of all users.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - users
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/UserResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      operationId: createUser
+      summary: Creates a new user.
+      description: Requires an authenticated admin user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        "201":
+          description: Returns the new user.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - user
+                properties:
+                  user:
+                    $ref: "#/components/schemas/UserResponse"
+        "400":
+          description: One or more of the fields have invalid data.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email is already in use by another user.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /api/users/roles:
+    get:
+      operationId: listUserRoles
+      summary: Allowed user roles.
+      description: Requires an authenticated admin user.
+      responses:
+        "200":
+          description: Returns the list of allowed roles.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - roles
+                properties:
+                  roles:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/UserRoles"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/bootstrap:
+    get:
+      operationId: getBootstrapData
+      summary: Retrieve companies and contacts.
+      responses:
+        "200":
+          description: Returns all companies and contacts required to initialize the CRM application.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - companies
+                  - contacts
+                properties:
+                  companies:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Company"
+                  contacts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Contact"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/metrics:
+    get:
+      operationId: getMetrics
+      summary: Retrieves the metrics.
+      responses:
+        "200":
+          description: Metrics successfully retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Metrics"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/companies:
+    post:
+      operationId: createCompany
+      summary: Create new company.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCompanyRequest"
+      responses:
+        "201":
+          description: Company created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/companies/{id}:
+    parameters:
+      - $ref: "#/components/parameters/id"
+    patch:
+      operationId: updateCompany
+      summary: Update a company.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchCompanyRequest"
+      responses:
+        "200":
+          description: Company updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    delete:
+      operationId: deleteCompany
+      summary: Delete a company.
+      description: Requires an authorized admin user.
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /api/contacts:
+    post:
+      operationId: createContact
+      summary: Create a contact.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateContactRequest"
+      responses:
+        "201":
+          description: Contact created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/contacts/{id}:
+    parameters:
+      - $ref: "#/components/parameters/id"
+    patch:
+      operationId: updateContact
+      summary: Update a contact.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchContactRequest"
+      responses:
+        "200":
+          description: Contact updated successfully.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Contact"
+                  - type: object
+                    required:
+                      - movedCompanyStage
+                    properties:
+                      movedCompanyStage:
+                        type:
+                          - string
+                          - "null"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+    delete:
+      operationId: deleteContact
+      summary: Delete a contact.
+      description: Requires an authorized admin user.
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/import/prospects:
+    post:
+      operationId: importProspects
+      summary: Bulk import prospects.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImportProspectsRequest"
+      responses:
+        "200":
+          description: Import successful.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportProspectsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/conversations/presign:
+    post:
+      operationId: presignConversationUpload
+      summary: Starts Upload.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConversationsPresignRequest"
+      responses:
+        "201":
+          description: Started conversation upload.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationsPresignResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/conversations/{id}/complete:
+    parameters:
+      - $ref: "#/components/parameters/id"
+    post:
+      operationId: completeConversationUpload
+      summary: Finalize upload.
+      responses:
+        "200":
+          description: Upload successful.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Conversation"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/DuplicateRequest"
+  /api/conversations:
+    get:
+      operationId: listConversations
+      parameters:
+        - name: contactId
+          in: query
+          required: false
+          description: Contact identifier.
+          schema:
+            type: string
+            format: uuid
+        - name: companyId
+          in: query
+          required: false
+          description: Company identifier.
+          schema:
+            type: string
+            format: uuid
+      summary: List conversations (by contactId / companyId).
+      responses:
+        "200":
+          description: Conversation retrieval successful.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Conversation"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/conversations/{id}/play:
+    get:
+      operationId: getConversationPlayUrl
+      summary: Presigned play URL.
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: Presigned URL successfully retrieved.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - playUrl
+                properties:
+                  playUrl:
+                    type: string
+                    format: uri
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/conversations/{id}:
+    delete:
+      operationId: deleteConversation
+      summary: Delete a conversation.
+      description: Requires an authorized admin user.
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/activity/sdrs:
+    get:
+      operationId: listSdrs
+      summary: Returns the SDR roster.
+      description: Requires an authorized admin user.
+      responses:
+        "200":
+          description: SDR roster successfully retrieved.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - sdrs
+                properties:
+                  sdrs:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Sdr"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /api/activity/targets:
+    get:
+      operationId: getActivityTargets
+      summary: Fetches daily targets.
+      description: Requires an authorized admin user.
+      responses:
+        "200":
+          description: Targets retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - targets
+                properties:
+                  targets:
+                    $ref: "#/components/schemas/ActivityTargets"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    patch:
+      operationId: updateActivityTargets
+      summary: Update targets.
+      description: Requires an authorized admin user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivityTargets"
+      responses:
+        "200":
+          description: Targets updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  targets:
+                    $ref: "#/components/schemas/ActivityTargets"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /api/activity/events:
+    post:
+      operationId: logActivityEvent
+      summary: Client-side activity event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivityEvent"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/activity/company/{id}/history:
+    get:
+      operationId: getCompanyActivityHistory
+      summary: Company progress
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: Event history successfully retrieved.
+          content:
+            application/json:
+              schema:
+                  $ref: "#/components/schemas/CompanyHistoryResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/activity/lead/{entityType}/{id}:
+    get:
+      operationId: getLeadActivityHistory
+      parameters:
+        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/entityType"
+      summary: Retrieves activity for a lead.
+      responses:
+        "200":
+          description: Activity retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadHistoryResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /api/activity/overview:
+    get:
+      operationId: getActivityOverview
+      summary: Manager overview dashboard
+      description: Requires an authorized admin user.
+      parameters:
+        - $ref: "#/components/parameters/userIdQuery"
+        - $ref: "#/components/parameters/fromQuery"
+        - $ref: "#/components/parameters/toQuery"
+        - $ref: "#/components/parameters/qQuery"
+      responses:
+        "200":
+          description: Activity overview metrics successfully retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityOverviewResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/activity/timeline:
+    get:
+      operationId: getActivityTimeline
+      summary: Event timeline
+      description: Requires an authorized admin user.
+      parameters:
+        - $ref: "#/components/parameters/userIdQuery"
+        - $ref: "#/components/parameters/fromQuery"
+        - $ref: "#/components/parameters/toQuery"
+        - $ref: "#/components/parameters/qQuery"
+      responses:
+        "200":
+          description: Timeline events successfully retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityTimelineResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+
+
