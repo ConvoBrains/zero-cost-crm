@@ -5,7 +5,7 @@ import rateLimit from 'express-rate-limit';
 import bcrypt from 'bcrypt';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { pool } from './db.js';
+import { pool, companiesHaveDiscoveryAnswers } from './db.js';
 import { config, resolveCorsOrigin } from './config.js';
 import {
   allowedEmailError,
@@ -485,8 +485,10 @@ app.post('/api/companies', requireAuth, async (req, res) => {
           ])
         )
       : {};
+  const hasDiscoveryCol = await companiesHaveDiscoveryAnswers();
   const { rows } = await pool.query(
-    `
+    hasDiscoveryCol
+      ? `
     INSERT INTO companies (
       company_name, stage, industry, location, estimated_call_volume, employee_count,
       intent, offered_price, primary_contact_id, assigned_to, last_contacted,
@@ -495,26 +497,55 @@ app.post('/api/companies', requireAuth, async (req, res) => {
       $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17::jsonb
     )
     RETURNING id
+    `
+      : `
+    INSERT INTO companies (
+      company_name, stage, industry, location, estimated_call_volume, employee_count,
+      intent, offered_price, primary_contact_id, assigned_to, last_contacted,
+      next_follow_up, notes, source_link, company_website, linkedin_company
+    ) VALUES (
+      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+    )
+    RETURNING id
     `,
-    [
-      b.companyName,
-      stage,
-      emptyToNull(b.industry),
-      b.location ?? '',
-      b.estimatedCallVolume ?? null,
-      b.employeeCount ?? null,
-      emptyToNull(b.intent),
-      b.offeredPrice ?? null,
-      b.primaryContactId ?? null,
-      req.user!.sub,
-      b.lastContacted ?? null,
-      b.nextFollowUp ?? null,
-      b.notes ?? '',
-      b.sourceLink ?? '',
-      b.companyWebsite ?? '',
-      b.linkedInCompany ?? '',
-      JSON.stringify(answers),
-    ]
+    hasDiscoveryCol
+      ? [
+          b.companyName,
+          stage,
+          emptyToNull(b.industry),
+          b.location ?? '',
+          b.estimatedCallVolume ?? null,
+          b.employeeCount ?? null,
+          emptyToNull(b.intent),
+          b.offeredPrice ?? null,
+          b.primaryContactId ?? null,
+          req.user!.sub,
+          b.lastContacted ?? null,
+          b.nextFollowUp ?? null,
+          b.notes ?? '',
+          b.sourceLink ?? '',
+          b.companyWebsite ?? '',
+          b.linkedInCompany ?? '',
+          JSON.stringify(answers),
+        ]
+      : [
+          b.companyName,
+          stage,
+          emptyToNull(b.industry),
+          b.location ?? '',
+          b.estimatedCallVolume ?? null,
+          b.employeeCount ?? null,
+          emptyToNull(b.intent),
+          b.offeredPrice ?? null,
+          b.primaryContactId ?? null,
+          req.user!.sub,
+          b.lastContacted ?? null,
+          b.nextFollowUp ?? null,
+          b.notes ?? '',
+          b.sourceLink ?? '',
+          b.companyWebsite ?? '',
+          b.linkedInCompany ?? '',
+        ]
   );
   const { rows: full } = await pool.query(`${COMPANY_SELECT} WHERE c.id = $1`, [rows[0].id]);
   const company = mapCompany(full[0]);
@@ -567,7 +598,7 @@ app.patch('/api/companies/:id', requireAuth, async (req, res) => {
   if (b.sourceLink !== undefined) update.set('source_link', b.sourceLink);
   if (b.companyWebsite !== undefined) update.set('company_website', b.companyWebsite);
   if (b.linkedInCompany !== undefined) update.set('linkedin_company', b.linkedInCompany);
-  if (b.discoveryAnswers !== undefined) {
+  if (b.discoveryAnswers !== undefined && (await companiesHaveDiscoveryAnswers())) {
     const answers =
       b.discoveryAnswers &&
       typeof b.discoveryAnswers === 'object' &&
@@ -646,7 +677,7 @@ app.patch('/api/companies/:id', requireAuth, async (req, res) => {
       payload: { name, from, to, note: to },
     });
   }
-  if (b.discoveryAnswers !== undefined) {
+  if (b.discoveryAnswers !== undefined && (await companiesHaveDiscoveryAnswers())) {
     const beforeAnswers =
       before.discovery_answers && typeof before.discovery_answers === 'object'
         ? (before.discovery_answers as Record<string, unknown>)
@@ -1321,6 +1352,20 @@ if (process.env.NODE_ENV === 'production') {
 
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);
+  const pgCode = (err as { code?: string }).code;
+  if (pgCode === '23514') {
+    res.status(400).json({
+      error:
+        'Invalid value for a database check constraint (often company stage). Refresh and try again, or ask an admin to update allowed stages.',
+    });
+    return;
+  }
+  if (pgCode === '42703') {
+    res.status(500).json({
+      error: 'Database schema is missing a required column. Apply pending migrations.',
+    });
+    return;
+  }
   res.status(500).json({ error: 'Internal server error' });
 });
 
