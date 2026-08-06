@@ -22,6 +22,7 @@ function parseList(raw: string | undefined): string[] {
 const nodeEnv = read('NODE_ENV') ?? 'development';
 const isProd = nodeEnv === 'production';
 const isTest = nodeEnv === 'test' || read('ALLOW_ACTIVITY_SEED') === '1';
+const enableApiDocs = !isProd || read('ENABLE_API_DOCS') === 'true';
 
 function requireJwtSecret(): string {
   const secret = read('JWT_SECRET');
@@ -55,6 +56,7 @@ export const config = {
   nodeEnv,
   isProd,
   isTest,
+  enableApiDocs,
   port: Number(read('PORT') ?? 4000),
   jwtSecret: requireJwtSecret(),
   allowedEmailAny: emailPolicy.any,

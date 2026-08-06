@@ -9,6 +9,7 @@ Unless noted, endpoints require `Authorization: Bearer <jwt>`.
 A complete machine-readable OpenAPI 3.1 contract is available in [`openapi.yaml`](../openapi.yaml).
 
 ### How to view the spec
+- **Interactive UI**: Visit `/api/docs` when running the server locally (or set `ENABLE_API_DOCS=true` in production).
 - **Redocly CLI**: Run `npx @redocly/cli build-docs openapi.yaml` to generate an interactive HTML documentation bundle (`redoc-static.html`).
 - **Swagger Editor**: Copy [`openapi.yaml`](../openapi.yaml) into [editor.swagger.io](https://editor.swagger.io).
 - **VS Code Extension**: Use the *OpenAPI (Swagger) Editor* extension for live preview.

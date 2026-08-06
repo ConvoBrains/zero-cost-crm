@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import bcrypt from 'bcrypt';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { readFileSync } from 'node:fs';
 import { pool, companiesHaveDiscoveryAnswers } from './db.js';
 import { config, resolveCorsOrigin } from './config.js';
 import {
@@ -40,7 +41,8 @@ import {
   asDiscoveryQuestions,
   type SettingsPatch,
 } from './settings.js';
-
+import swaggerUi from 'swagger-ui-express';
+import YAML from 'yaml';
 const app = express();
 app.use(
   helmet({
@@ -72,6 +74,14 @@ app.use(
   })
 );
 app.use(express.json({ limit: '2mb' }));
+
+// Serving interactive API docs at /api/docs.
+if (config.enableApiDocs) {
+  const openapiPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'openapi.yaml');
+  const file = readFileSync(openapiPath, 'utf-8');
+  const swaggerDoc = YAML.parse(file);
+  app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
+}
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
