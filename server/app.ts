@@ -75,11 +75,12 @@ app.use(
 );
 app.use(express.json({ limit: '2mb' }));
 
-//serving interective API docs at /api/docs.
+// Serving interactive API docs at /api/docs.
 if (config.enableApiDocs) {
   const openapiPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'openapi.yaml');
   const file = readFileSync(openapiPath, 'utf-8');
   const swaggerDoc = YAML.parse(file);
+  app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 }
 
 const loginLimiter = rateLimit({
