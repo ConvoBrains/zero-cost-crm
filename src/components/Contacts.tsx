@@ -5,7 +5,8 @@ import type {
   ContactSortKey,
   SortDirection,
 } from '../types'
-import type { CrmStore } from '../hooks/useCrmStore'
+import type { CrmStore } from '../hooks/useCrmStore';
+import { formatRelativeTime, formatAbsoluteDate } from '../lib/relativeTime';
 import {
   CONTACT_DATE_RANGE_OPTIONS,
   CONTACT_QUEUE_OPTIONS,
@@ -23,10 +24,6 @@ interface ContactsProps {
   store: CrmStore
   contactStatuses?: string[]
   stages?: string[]
-}
-
-function formatAddedDate(iso: string): string {
-  return iso.slice(0, 10) || '—'
 }
 
 function ContactRow({
@@ -75,7 +72,7 @@ function ContactRow({
         {contact.nextFollowUp ? (
           <span className="text-xs text-amber-700">Follow-up {contact.nextFollowUp}</span>
         ) : null}
-        <span className="text-xs text-stone-400">Added {formatAddedDate(contact.createdAt)}</span>
+        <span className="text-xs text-stone-400" title={formatAbsoluteDate(contact.createdAt)}>Added {formatRelativeTime(contact.createdAt)}</span>
       </div>
     </button>
   )
@@ -593,8 +590,8 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
                     <td className="px-4 py-3 text-stone-600">{company?.stage ?? '—'}</td>
                     <td className="px-4 py-3 text-stone-600">{t.phone || '—'}</td>
                     <td className="px-4 py-3 text-stone-500">{t.nextFollowUp || '—'}</td>
-                    <td className="px-4 py-3 text-stone-500">
-                      {formatAddedDate(t.createdAt)}
+                    <td className="px-4 py-3 text-stone-500" title={formatAbsoluteDate(t.createdAt)}>
+                      {formatRelativeTime(t.createdAt)}
                     </td>
                   </tr>
                 )

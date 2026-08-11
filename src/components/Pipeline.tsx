@@ -15,6 +15,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import type { Company, Contact, PipelineFilters, PipelineView, Stage } from '../types'
 import type { CrmStore } from '../hooks/useCrmStore'
+import { formatRelativeTime, formatAbsoluteDate } from '../lib/relativeTime'
 import {
   DEFAULT_PIPELINE_FILTERS,
   PIPELINE_DATE_RANGE_OPTIONS,
@@ -127,8 +128,8 @@ function CompanyCard({
             <p className="mt-1.5 text-[10px] text-stone-400">Follow-up {company.nextFollowUp}</p>
           ) : null}
           {company.createdAt ? (
-            <p className="mt-1 text-[10px] text-stone-400">
-              Added {company.createdAt.slice(0, 10)}
+            <p className="mt-1 text-[10px] text-stone-400" title={formatAbsoluteDate(company.createdAt)}>
+              Added {formatRelativeTime(company.createdAt)}
             </p>
           ) : null}
         </button>
@@ -458,7 +459,11 @@ export function Pipeline({
                     <span className="font-medium text-stone-900">{c.companyName}</span>
                     <span className="text-stone-500">
                       {c.stage}
-                      {c.createdAt ? ` · Added ${c.createdAt.slice(0, 10)}` : ''}
+                      {c.createdAt ? (
+                        <span title={formatAbsoluteDate(c.createdAt)}>
+                          {' '}· Added {formatRelativeTime(c.createdAt)}
+                        </span>
+                      ) : ''}
                     </span>
                   </button>
                 ))
