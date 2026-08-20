@@ -12,6 +12,7 @@ import { ImportLeads } from './components/ImportLeads';
 import { Users } from './components/Users';
 import { SettingsPage } from './components/SettingsPage';
 import { LoginPage } from './components/LoginPage';
+import { CommandPalette } from './components/CommandPalette';
 import { PAGE_TITLE } from './lib/nav';
 
 /** Admin-only — not in the SDR initial bundle. */
@@ -56,6 +57,8 @@ export default function App() {
   const [page, setPage] = useState<Page>(initialQuery.page ?? 'dashboard');
   const [menuOpen, setMenuOpen] = useState(false);
   const [openCompanyId, setOpenCompanyId] = useState<string | null>(initialQuery.companyId);
+  const [openContactId, setOpenContactId] = useState<string | null>(null);
+  const [commandOpen, setCommandOpen] = useState(false);
 
   const manageUsers = canManageUsers(auth.user?.role);
   const config = auth.config;
@@ -79,6 +82,34 @@ export default function App() {
     [auth.user?.role, openCompanyId]
   );
 
+  const openCompanyFromPalette = useCallback((companyId: string) => {
+    setPage('pipeline');
+    setMenuOpen(false);
+    setOpenContactId(null);
+    setOpenCompanyId(companyId);
+    writeQuery('pipeline', companyId);
+  }, []);
+
+  const openContactFromPalette = useCallback((contactId: string) => {
+    setPage('contacts');
+    setMenuOpen(false);
+    setOpenCompanyId(null);
+    setOpenContactId(contactId);
+    writeQuery('contacts', null);
+  }, []);
+
+  useEffect(() => {
+    if (!auth.user || store.loading) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setCommandOpen(true);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [auth.user, store.loading]);
+
   useEffect(() => {
     if (!auth.user) return;
     if (ADMIN_ONLY_PAGES.includes(page) && !canManageUsers(auth.user.role)) {
@@ -101,6 +132,7 @@ export default function App() {
     if (companyId) {
       setPage('pipeline');
       setOpenCompanyId(companyId);
+      setOpenContactId(null);
     }
   }, [auth.user, store.loading]);
 
@@ -109,6 +141,7 @@ export default function App() {
       const { page: qPage, companyId } = readQuery();
       if (qPage) setPage(qPage);
       setOpenCompanyId(companyId);
+      setOpenContactId(null);
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
@@ -239,7 +272,13 @@ export default function App() {
           />
         ) : null}
         {page === 'contacts' ? (
-          <Contacts store={store} contactStatuses={config.contactStatuses} stages={config.stages} />
+          <Contacts
+            store={store}
+            contactStatuses={config.contactStatuses}
+            stages={config.stages}
+            openContactId={openContactId}
+            onOpenContactIdConsumed={() => setOpenContactId(null)}
+          />
         ) : null}
         {page === 'activity' && manageUsers ? (
           <Suspense fallback={<p className="text-sm text-stone-500">Loading…</p>}>
@@ -251,6 +290,17 @@ export default function App() {
           <SettingsPage config={config} onSaved={auth.refreshConfig} />
         ) : null}
       </main>
+
+      <CommandPalette
+        open={commandOpen}
+        companies={store.companies}
+        contacts={store.contacts}
+        userRole={auth.user.role}
+        onClose={() => setCommandOpen(false)}
+        onNavigate={navigate}
+        onOpenCompany={openCompanyFromPalette}
+        onOpenContact={openContactFromPalette}
+      />
 
       <MobileNav page={page} onNavigate={navigate} userRole={auth.user.role} />
     </div>
