@@ -588,6 +588,13 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
                   <tr
                     key={t.id}
                     onClick={() => openContact(t)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        openContact(t);
+                      }
+                    }}
+                    tabIndex={0}
                     className="cursor-pointer border-b border-[var(--color-line)]/70 transition hover:bg-teal-50/40"
                   >
                     <td className="px-4 py-3">
