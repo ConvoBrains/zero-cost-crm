@@ -84,6 +84,7 @@ Important variables (see [`.env.example`](.env.example)):
 | ---------------------- | ---------------------------------------------------------------- |
 | `DATABASE_URL`         | Postgres connection string                                       |
 | `JWT_SECRET`           | **Required** — long random secret                                |
+| `ENABLE_API_DOCS`      | Optional — set `true` to expose Swagger UI at `/api/docs` in production |
 | `ALLOWED_EMAIL_DOMAIN` | Login allow-list (`convobrains.com`, comma list, or `*` for any) |
 | `CORS_ORIGINS`         | Allowed browser origins (comma-separated)                        |
 | `AWS_*`                | Optional — required only for call-recording uploads              |
