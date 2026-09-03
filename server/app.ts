@@ -83,7 +83,7 @@ if (config.enableApiDocs) {
     const swaggerDoc = YAML.parse(file);
     app.use(
       '/api/docs',
-      (_req, res, next) => {
+      (_req: express.Request, res: express.Response, next: express.NextFunction) => {
         res.removeHeader('Content-Security-Policy');
         next();
       },
