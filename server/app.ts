@@ -77,10 +77,22 @@ app.use(express.json({ limit: '2mb' }));
 
 // Serving interactive API docs at /api/docs.
 if (config.enableApiDocs) {
-  const openapiPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'openapi.yaml');
-  const file = readFileSync(openapiPath, 'utf-8');
-  const swaggerDoc = YAML.parse(file);
-  app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
+  try {
+    const openapiPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'openapi.yaml');
+    const file = readFileSync(openapiPath, 'utf-8');
+    const swaggerDoc = YAML.parse(file);
+    app.use(
+      '/api/docs',
+      (_req, res, next) => {
+        res.removeHeader('Content-Security-Policy');
+        next();
+      },
+      swaggerUi.serve,
+      swaggerUi.setup(swaggerDoc)
+    );
+  } catch (err) {
+    console.warn("[DOCS] openapi.yaml file not found or could not be loaded.",err)
+  }
 }
 
 const loginLimiter = rateLimit({
