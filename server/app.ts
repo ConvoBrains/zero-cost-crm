@@ -178,10 +178,27 @@ app.patch('/api/settings', requireAuth, requireAdmin, async (req, res) => {
   if (Array.isArray(b.contactStatuses)) {
     patch.contactStatuses = b.contactStatuses.filter((x): x is string => typeof x === 'string');
   }
-  if (b.championStatusToStage && typeof b.championStatusToStage === 'object') {
+  if (b.championStatusToStage !== undefined) {
+    if (
+      b.championStatusToStage === null ||
+      typeof b.championStatusToStage !== 'object' ||
+      Array.isArray(b.championStatusToStage)
+    ) {
+      res.status(400).json({
+        error: 'championStatusToStage must be an object map of contact status to pipeline stage.',
+      });
+      return;
+    }
     const map: Record<string, string | null> = {};
     for (const [k, v] of Object.entries(b.championStatusToStage as Record<string, unknown>)) {
-      if (v === null || typeof v === 'string') map[k] = v;
+      if (v === null || typeof v === 'string') {
+        map[k] = v;
+      } else {
+        res.status(400).json({
+          error: `championStatusToStage["${k}"] must be a stage name or null.`,
+        });
+        return;
+      }
     }
     patch.championStatusToStage = map;
   }

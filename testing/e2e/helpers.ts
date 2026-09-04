@@ -31,7 +31,7 @@ export async function login(page: Page, email: string, password: string) {
 
 export async function loginAsFounder(page: Page) {
   await login(page, SEED.founder.email, SEED.founder.password);
-  await expect(page.getByRole('heading', { name: 'SDR Dashboard' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
 }
 
 export async function loginAsSdr(page: Page) {
