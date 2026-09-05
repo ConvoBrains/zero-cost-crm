@@ -34,7 +34,7 @@
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.16.3",
-    "react": "^19.2.7",
+    "react": "^19.2.8",
     "react-dom": "^19.2.7"
   },
   "devDependencies": {
@@ -46,7 +46,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.13.2",
     "@types/pg": "^8.15.5",
-    "@types/react": "^19.2.17",
+    "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.4",
     "concurrently": "^9.2.1",
