@@ -36,7 +36,9 @@ We needed:
 
 This repo is **Zero Cost CRM**: pipeline operations for founder-led sales teams.
 
-[ConvoBrains](https://www.convobrains.com) is the **intelligence layer**: conversation analysis for call quality, pitch effectiveness, and objection handling.
+[ConvoBrains](https://www.convobrains.com/?utm_source=github&utm_medium=readme&utm_campaign=india_inbound&utm_content=zero_cost_crm) is the **intelligence layer**: conversation analysis for call quality, pitch effectiveness, and objection handling.
+
+**Try FastQA (₹199 / $3.99 sample audit):** [Start AI call QA →](https://www.convobrains.com/onboarding?utm_source=github&utm_medium=readme&utm_campaign=india_inbound&utm_content=zero_cost_crm)
 
 > Zero Cost CRM tells you **what** happened.
 >
