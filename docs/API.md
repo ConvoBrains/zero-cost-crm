@@ -9,9 +9,10 @@ Unless noted, endpoints require `Authorization: Bearer <jwt>`.
 A complete machine-readable OpenAPI 3.1 contract is available in [`openapi.yaml`](../openapi.yaml).
 
 ### How to view the spec
+
 - **Redocly CLI**: Run `npx @redocly/cli build-docs openapi.yaml` to generate an interactive HTML documentation bundle (`redoc-static.html`).
 - **Swagger Editor**: Copy [`openapi.yaml`](../openapi.yaml) into [editor.swagger.io](https://editor.swagger.io).
-- **VS Code Extension**: Use the *OpenAPI (Swagger) Editor* extension for live preview.
+- **VS Code Extension**: Use the _OpenAPI (Swagger) Editor_ extension for live preview.
 
 ## Public
 
@@ -19,7 +20,7 @@ A complete machine-readable OpenAPI 3.1 contract is available in [`openapi.yaml`
 | ------- | --------------- | ------------------------------------------------------------------------------------------------------------------- |
 | `GET`   | `/api/health`   | Liveness `{ ok: true }`                                                                                             |
 | `GET`   | `/api/config`   | Public instance config: email policy + branding, stages, contactStatuses, championStatusToStage, discoveryQuestions |
-| `PATCH` | `/api/settings` | Admin/founder: update branding + stages + contactStatuses (+ optional champion map / discoveryQuestions)            |
+| `PATCH` | `/api/settings` | Admin/founder: update branding + stages + contactStatuses + champion map (+ optional discoveryQuestions)            |
 
 ### Settings UI vs API-only
 
@@ -28,15 +29,13 @@ The **Settings** page in the app can edit:
 - `brandName`, `brandTagline`, `logoUrl`
 - `stages` (pipeline)
 - `contactStatuses`
+- `championStatusToStage` (champion contact status → pipeline stage auto-move)
 
-These two are **not** on that page yet (easy to miss — they’re not broken, just API/SQL only):
+`discoveryQuestions` is **not** on that page yet (easy to miss: not broken, just API/SQL only). Extra questions on the company form use `{ id, section, prompt, input }`.
 
-| Field | Purpose |
-| ----- | ------- |
-| `championStatusToStage` | When a champion’s contact status changes, optionally move the company to a pipeline stage |
-| `discoveryQuestions` | Extra questions shown on the company form (`id`, `section`, `prompt`, `input`) |
+Keys in `championStatusToStage` must be configured contact statuses. Values must be a configured pipeline stage or `null` (no auto-move). Unknown pairs return `400`.
 
-Change them with `PATCH /api/settings` (founder/admin JWT) or seed via [`sql/examples/convobrains-settings.sql`](../sql/examples/convobrains-settings.sql).
+Change discovery questions (or the map via API) with `PATCH /api/settings` (founder/admin JWT) or seed via [`sql/examples/convobrains-settings.sql`](../sql/examples/convobrains-settings.sql).
 
 ```bash
 curl -s -X PATCH http://localhost:4000/api/settings \
@@ -44,8 +43,8 @@ curl -s -X PATCH http://localhost:4000/api/settings \
   -H "Content-Type: application/json" \
   -d '{
     "championStatusToStage": {
-      "Connected - Booked a Discovery Call": "Discovery Call Done",
-      "Interested": "Follow-up"
+      "Interested": "Discovery Call Done",
+      "Follow-up Required": "Follow-up"
     },
     "discoveryQuestions": [
       {

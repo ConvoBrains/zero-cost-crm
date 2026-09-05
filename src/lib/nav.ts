@@ -22,7 +22,7 @@ export const NAV_ITEMS: {
   {
     id: 'settings',
     label: 'Settings',
-    hint: 'Brand · stages · statuses',
+    hint: 'Brand · stages · champion map',
     short: 'Settings',
     adminOnly: true,
   },

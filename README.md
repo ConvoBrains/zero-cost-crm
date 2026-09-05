@@ -16,7 +16,7 @@ scattered call recordings, and founder intuition. We built the system we wished 
 
 [Run locally](#run-it-in-3-steps) · [Good first issues](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) · [Fun issues](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3Afun) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [OpenAPI](openapi.yaml) · [Contributing](CONTRIBUTING.md) · [Discussions](https://github.com/ConvoBrains/zero-cost-crm/discussions) · [Security](SECURITY.md) · **[Book a demo](https://www.convobrains.com/contact)**
 
-> **New here?** `make setup && make dev` → open [localhost:5173](http://localhost:5173) → pick an unassigned [good first issue](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22+no%3Aassignee) → comment *I'd like to take this*. We review fast and mentor first-timers. Rewards: see [#23](https://github.com/ConvoBrains/zero-cost-crm/issues/23).
+> **New here?** `make setup && make dev` → open [localhost:5173](http://localhost:5173) → pick an unassigned [good first issue](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22+no%3Aassignee) → comment _I'd like to take this_. We review fast and mentor first-timers. Rewards: see [#23](https://github.com/ConvoBrains/zero-cost-crm/issues/23).
 
 ![Zero Cost CRM login](docs/images/login.png)
 
@@ -105,32 +105,32 @@ Skip it if you need enterprise CPQ, multi-currency ERP integrations, or a full m
 
 ## What's in Zero Cost CRM
 
-| Capability            | What you get                                         |
-| --------------------- | ---------------------------------------------------- |
-| **Live dashboard**    | Follow-ups due, demos, active opps, won/lost         |
-| **13-stage pipeline** | Drag deals from lead → closed                        |
-| **Contacts**          | Champions, statuses, notes, LinkedIn                 |
-| **Paste import**      | Excel / Sheets / CSV → deduped companies + contacts  |
-| **Call recordings**   | Upload & play audio per contact (S3 optional)        |
-| **SDR activity**      | Logins, active/idle time, outcomes, targets          |
-| **Manager alerts**    | No login by 10:30, zero connects, missing follow-ups |
-| **Roles**             | Founder / admin / SDR                                |
-| **Self-hosted**       | Your Postgres, your rules                            |
-| **Instance settings** | Brand name, stages, statuses in DB (Settings UI)     |
+| Capability            | What you get                                                  |
+| --------------------- | ------------------------------------------------------------- |
+| **Live dashboard**    | Follow-ups due, demos, active opps, won/lost                  |
+| **13-stage pipeline** | Drag deals from lead → closed                                 |
+| **Contacts**          | Champions, statuses, notes, LinkedIn                          |
+| **Paste import**      | Excel / Sheets / CSV → deduped companies + contacts           |
+| **Call recordings**   | Upload & play audio per contact (S3 optional)                 |
+| **SDR activity**      | Logins, active/idle time, outcomes, targets                   |
+| **Manager alerts**    | No login by 10:30, zero connects, missing follow-ups          |
+| **Roles**             | Founder / admin / SDR                                         |
+| **Self-hosted**       | Your Postgres, your rules                                     |
+| **Instance settings** | Brand, stages, statuses, champion auto-move map (Settings UI) |
 
 ### Configuring your instance
 
 Keep the **code** generic. Put company-specific values in env or the database:
 
-| What                                                | Where                                                                             |
-| --------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Postgres / JWT / email domain / S3 / CORS           | Server `.env` (`DATABASE_URL`, `JWT_SECRET`, `ALLOWED_EMAIL_DOMAIN`, …)           |
-| Brand name, logo, pipeline stages, contact statuses | DB `app_settings` — edit in **Settings** (founder/admin) or `PATCH /api/settings` |
-| Champion status → pipeline stage map (`championStatusToStage`) | **API / SQL only** today — `PATCH /api/settings` or [`sql/examples/convobrains-settings.sql`](sql/examples/convobrains-settings.sql) |
-| Discovery questions on the company form (`discoveryQuestions`) | **API / SQL only** today — same as above (not editable in the Settings UI yet) |
-| Optional first-boot brand | `BRAND_NAME`, `BRAND_TAGLINE`, `BRAND_LOGO_URL` in env (seeded once) |
+| What                                                           | Where                                                                                                                                                                      |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Postgres / JWT / email domain / S3 / CORS                      | Server `.env` (`DATABASE_URL`, `JWT_SECRET`, `ALLOWED_EMAIL_DOMAIN`, …)                                                                                                    |
+| Brand name, logo, pipeline stages, contact statuses            | DB `app_settings` — edit in **Settings** (founder/admin) or `PATCH /api/settings`                                                                                          |
+| Champion status → pipeline stage map (`championStatusToStage`) | DB `app_settings` — edit in **Settings** (founder/admin) or `PATCH /api/settings`                                                                                          |
+| Discovery questions on the company form (`discoveryQuestions`) | **API / SQL only** today — `PATCH /api/settings` or [`sql/examples/convobrains-settings.sql`](sql/examples/convobrains-settings.sql) (not editable in the Settings UI yet) |
+| Optional first-boot brand                                      | `BRAND_NAME`, `BRAND_TAGLINE`, `BRAND_LOGO_URL` in env (seeded once)                                                                                                       |
 
-Settings UI covers branding + stages + contact statuses. The champion sync map and discovery questions still go through the API (or the SQL example). See [`docs/API.md`](docs/API.md#settings-ui-vs-api-only) for a `PATCH` example.
+Settings UI covers branding, stages, contact statuses, and the champion auto-move map. Discovery questions still go through the API (or the SQL example). See [`docs/API.md`](docs/API.md#settings-ui-vs-api-only) for a `PATCH` example. Keys/values in the champion map must exist in the configured status and stage lists.
 
 ---
 
@@ -258,14 +258,14 @@ Google Fonts (DM Sans, Instrument Serif) are loaded from Google’s CDN under th
 
 We welcome first-time PRs. Maintainers aim to reply within a day on claimed issues.
 
-| Start here | Link |
-| --- | --- |
-| Beginner tickets | [good first issue](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22+no%3Aassignee) (unassigned) |
-| Showcase / delightful work | [`fun` label](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3Afun) |
-| How to claim + ship | [CONTRIBUTING.md](CONTRIBUTING.md) |
-| Rewards + onboarding | [#23 Start here](https://github.com/ConvoBrains/zero-cost-crm/issues/23) |
-| Ideas & questions | [Discussions](https://github.com/ConvoBrains/zero-cost-crm/discussions) |
-| Hall of fame | [CONTRIBUTORS.md](CONTRIBUTORS.md) |
+| Start here                 | Link                                                                                                                                                     |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Beginner tickets           | [good first issue](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22+no%3Aassignee) (unassigned) |
+| Showcase / delightful work | [`fun` label](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3Afun)                                                    |
+| How to claim + ship        | [CONTRIBUTING.md](CONTRIBUTING.md)                                                                                                                       |
+| Rewards + onboarding       | [#23 Start here](https://github.com/ConvoBrains/zero-cost-crm/issues/23)                                                                                 |
+| Ideas & questions          | [Discussions](https://github.com/ConvoBrains/zero-cost-crm/discussions)                                                                                  |
+| Hall of fame               | [CONTRIBUTORS.md](CONTRIBUTORS.md)                                                                                                                       |
 
 ```bash
 make setup && make dev
