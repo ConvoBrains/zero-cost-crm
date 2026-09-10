@@ -40,7 +40,7 @@ export function Modal({ open, title, onClose, children, wide }: ModalProps) {
         aria-labelledby={titleId}
         className={`relative z-10 my-0 w-full rounded-none border border-[var(--color-line)] bg-[var(--color-panel)] sm:my-4 ${
           wide ? 'max-w-3xl' : 'max-w-xl'
-          }`}
+        }`}
       >
         <div className="flex items-center justify-between border-b border-[var(--color-line)] px-4 py-3 sm:px-5 sm:py-4">
           <h2
@@ -253,62 +253,62 @@ export function FilterDropdown({
   const panel =
     open && typeof document !== 'undefined'
       ? createPortal(
-        <div
-          ref={panelRef}
-          role="listbox"
-          data-testid={testId ? `${testId}-panel` : undefined}
-          aria-multiselectable={multi || undefined}
-          style={panelStyle}
-          className="overflow-auto border border-[var(--color-line)] bg-white shadow-lg"
-        >
-          {searchable ? (
-            <div className="sticky top-0 border-b border-[var(--color-line)] bg-white p-2">
-              <input
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search…"
-                className={`${inputClass} py-1.5 text-xs`}
-                autoFocus
-              />
-            </div>
-          ) : null}
-          {filtered.length === 0 ? (
-            <p className="px-3 py-2 text-xs text-stone-400">No matches</p>
-          ) : (
-            filtered.map((opt) => {
-              const isOn = selected.includes(opt.value);
-              return (
-                <button
-                  key={opt.value || '__all__'}
-                  type="button"
-                  role="option"
-                  aria-selected={isOn}
-                  onClick={() => toggle(opt.value)}
+          <div
+            ref={panelRef}
+            role="listbox"
+            data-testid={testId ? `${testId}-panel` : undefined}
+            aria-multiselectable={multi || undefined}
+            style={panelStyle}
+            className="overflow-auto border border-[var(--color-line)] bg-white shadow-lg"
+          >
+            {searchable ? (
+              <div className="sticky top-0 border-b border-[var(--color-line)] bg-white p-2">
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search…"
+                  className={`${inputClass} py-1.5 text-xs`}
+                  autoFocus
+                />
+              </div>
+            ) : null}
+            {filtered.length === 0 ? (
+              <p className="px-3 py-2 text-xs text-stone-400">No matches</p>
+            ) : (
+              filtered.map((opt) => {
+                const isOn = selected.includes(opt.value);
+                return (
+                  <button
+                    key={opt.value || '__all__'}
+                    type="button"
+                    role="option"
+                    aria-selected={isOn}
+                    onClick={() => toggle(opt.value)}
                     className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition hover:bg-teal-50 ${
                       isOn ? 'bg-teal-50/80 font-medium text-teal-900' : 'text-stone-700'
                     }`}
-                >
-                  {multi ? (
-                    <span
-                      aria-hidden
+                  >
+                    {multi ? (
+                      <span
+                        aria-hidden
                         className={`inline-flex h-3.5 w-3.5 items-center justify-center border text-[9px] ${
                           isOn
-                        ? 'border-teal-700 bg-teal-700 text-white'
-                        : 'border-stone-300 bg-white'
+                            ? 'border-teal-700 bg-teal-700 text-white'
+                            : 'border-stone-300 bg-white'
                         }`}
-                    >
-                      {isOn ? '✓' : ''}
-                    </span>
-                  ) : null}
-                  <span className="min-w-0 truncate">{opt.label}</span>
-                </button>
-              );
-            })
-          )}
-        </div>,
-        document.body
-      )
+                      >
+                        {isOn ? '✓' : ''}
+                      </span>
+                    ) : null}
+                    <span className="min-w-0 truncate">{opt.label}</span>
+                  </button>
+                );
+              })
+            )}
+          </div>,
+          document.body
+        )
       : null;
 
   return (
@@ -326,9 +326,9 @@ export function FilterDropdown({
         }}
         className={`inline-flex items-center gap-1.5 rounded-none px-3 py-1.5 text-xs font-medium transition ${
           active
-          ? 'bg-teal-700 text-white'
-          : 'bg-white text-stone-600 ring-1 ring-[var(--color-line)] hover:bg-stone-50'
-          }`}
+            ? 'bg-teal-700 text-white'
+            : 'bg-white text-stone-600 ring-1 ring-[var(--color-line)] hover:bg-stone-50'
+        }`}
       >
         <span className="opacity-70">{label}:</span>
         <span>{summary}</span>
@@ -362,14 +362,13 @@ export function FilterChip({ label, onClear }: FilterChipProps) {
   );
 }
 
-
 // EmptyState: shown instead of a blank table/board when there's nothing to display.
 // Reusable everywhere so every "no data" screen looks and behaves the same way.
 interface EmptyStateProps {
-  title: string;       // short headline, e.g. "No companies yet"
-  message: string;      // one sentence explaining what to do next
-  ctaLabel: string;     // button text, e.g. "+ Add company"
-  onCta: () => void;    // function to run when button is clicked
+  title: string; // short headline, e.g. "No companies yet"
+  message: string; // one sentence explaining what to do next
+  ctaLabel: string; // button text, e.g. "+ Add company"
+  onCta: () => void; // function to run when button is clicked
 }
 
 export function EmptyState({ title, message, ctaLabel, onCta }: EmptyStateProps) {

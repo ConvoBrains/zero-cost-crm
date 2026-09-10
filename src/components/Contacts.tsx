@@ -314,9 +314,9 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
           onClick={() => patchFilters({ championOnly: !filters.championOnly })}
           className={`shrink-0 rounded-none px-3 py-1.5 text-xs font-medium transition ${
             filters.championOnly
-            ? 'bg-teal-700 text-white'
-            : 'bg-white text-stone-600 ring-1 ring-[var(--color-line)] hover:bg-stone-50'
-            }`}
+              ? 'bg-teal-700 text-white'
+              : 'bg-white text-stone-600 ring-1 ring-[var(--color-line)] hover:bg-stone-50'
+          }`}
         >
           Champion only
         </button>

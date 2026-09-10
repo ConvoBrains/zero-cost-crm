@@ -29,7 +29,15 @@ import {
 import { buildCardBadges, buildChampionTrail, findChampion, istToday } from '../lib/championCard';
 import { logViewEvent } from '../lib/activity';
 import { CompanyForm } from './CompanyForm';
-import { EmptyState, FilterChip, FilterDropdown, Modal, SearchInput, btnPrimary, inputClass } from './ui';
+import {
+  EmptyState,
+  FilterChip,
+  FilterDropdown,
+  Modal,
+  SearchInput,
+  btnPrimary,
+  inputClass,
+} from './ui';
 
 interface PipelineProps {
   store: CrmStore;
@@ -73,7 +81,7 @@ function CompanyCard({
       data-company-id={company.id}
       className={`rounded-none border border-[var(--color-line)] bg-white p-3 text-left transition hover:border-teal-600/40 ${
         dragging ? 'opacity-40' : ''
-        }`}
+      }`}
     >
       <div className="flex items-start justify-between gap-2">
         <button
@@ -209,7 +217,7 @@ function KanbanColumn({
       ref={setNodeRef}
       className={`flex w-[min(72vw,16rem)] shrink-0 flex-col rounded-none border border-[var(--color-line)] border-t-4 bg-[var(--color-panel)]/70 sm:w-64 ${stageAccent(stage)} ${
         isOver ? 'ring-2 ring-teal-600/30' : ''
-        }`}
+      }`}
     >
       <div className="flex items-center justify-between px-3 py-2.5">
         <h3 className="text-xs font-semibold tracking-wide text-stone-700 uppercase">{stage}</h3>
@@ -447,7 +455,7 @@ export function Pipeline({
                     onClick={() => pickSuggestion(c)}
                     className={`flex w-full flex-col gap-0.5 px-3 py-2 text-left text-xs transition ${
                       i === highlight ? 'bg-teal-50' : 'hover:bg-stone-50'
-                      }`}
+                    }`}
                   >
                     <span className="font-medium text-stone-900">{c.companyName}</span>
                     <span className="text-stone-500">
@@ -517,9 +525,9 @@ export function Pipeline({
           <FilterChip
             label={`Added: ${dateLabel}${
               filters.dateRange === 'custom'
-              ? ` ${filters.customFrom ?? '…'} → ${filters.customTo ?? '…'}`
-              : ''
-              }`}
+                ? ` ${filters.customFrom ?? '…'} → ${filters.customTo ?? '…'}`
+                : ''
+            }`}
             onClear={() => setFilters(DEFAULT_PIPELINE_FILTERS)}
           />
           <button
@@ -541,9 +549,9 @@ export function Pipeline({
             onClick={() => setView(v)}
             className={`shrink-0 rounded-none px-3 py-1.5 text-xs font-medium transition ${
               view === v
-              ? 'bg-teal-700 text-white'
-              : 'bg-white text-stone-600 ring-1 ring-[var(--color-line)] hover:bg-stone-50'
-              }`}
+                ? 'bg-teal-700 text-white'
+                : 'bg-white text-stone-600 ring-1 ring-[var(--color-line)] hover:bg-stone-50'
+            }`}
           >
             {v}
             <span className="ml-1.5 opacity-70">({viewCounts.get(v) ?? 0})</span>
@@ -657,7 +665,6 @@ export function Pipeline({
           </div>
         ) : null}
       </section>
-
 
       {filtered.length === 0 ? (
         <EmptyState
