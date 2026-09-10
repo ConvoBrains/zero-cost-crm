@@ -12,7 +12,7 @@ import {
 } from '../lib/views';
 import { logViewEvent } from '../lib/activity';
 import { ContactForm } from './ContactForm';
-import { FilterChip, FilterDropdown, Modal, SearchInput, btnPrimary } from './ui';
+import { EmptyState, FilterChip, FilterDropdown, Modal, SearchInput, btnPrimary } from './ui';
 
 interface ContactsProps {
   store: CrmStore;
@@ -314,9 +314,9 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
           onClick={() => patchFilters({ championOnly: !filters.championOnly })}
           className={`shrink-0 rounded-none px-3 py-1.5 text-xs font-medium transition ${
             filters.championOnly
-              ? 'bg-teal-700 text-white'
-              : 'bg-white text-stone-600 ring-1 ring-[var(--color-line)] hover:bg-stone-50'
-          }`}
+            ? 'bg-teal-700 text-white'
+            : 'bg-white text-stone-600 ring-1 ring-[var(--color-line)] hover:bg-stone-50'
+            }`}
         >
           Champion only
         </button>
@@ -517,9 +517,16 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
           );
         })}
         {sorted.length === 0 ? (
-          <p className="py-10 text-center text-sm text-stone-400">
-            No contacts match these filters.
-          </p>
+          <EmptyState
+            title={filtersActive ? 'No contacts match these filters' : 'No contacts yet'}
+            message={
+              filtersActive
+                ? 'Try clearing a filter to see more results.'
+                : 'Add your first contact to start tracking follow-ups.'
+            }
+            ctaLabel={filtersActive ? 'Clear all filters' : '+ Add contact'}
+            onCta={filtersActive ? clearFilters : () => setCreating(true)}
+          />
         ) : null}
       </div>
 
@@ -627,8 +634,17 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
               })}
               {sorted.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-10 text-center text-sm text-stone-400">
-                    No contacts match these filters.
+                  <td colSpan={9} className="px-4 py-10">
+                    <EmptyState
+                      title={filtersActive ? 'No contacts match these filters' : 'No contacts yet'}
+                      message={
+                        filtersActive
+                          ? 'Try clearing a filter to see more results.'
+                          : 'Add your first contact to start tracking follow-ups.'
+                      }
+                      ctaLabel={filtersActive ? 'Clear all filters' : '+ Add contact'}
+                      onCta={filtersActive ? clearFilters : () => setCreating(true)}
+                    />
                   </td>
                 </tr>
               ) : null}
