@@ -29,7 +29,15 @@ import {
 import { buildCardBadges, buildChampionTrail, findChampion, istToday } from '../lib/championCard';
 import { logViewEvent } from '../lib/activity';
 import { CompanyForm } from './CompanyForm';
-import { FilterChip, FilterDropdown, Modal, SearchInput, btnPrimary, inputClass } from './ui';
+import {
+  EmptyState,
+  FilterChip,
+  FilterDropdown,
+  Modal,
+  SearchInput,
+  btnPrimary,
+  inputClass,
+} from './ui';
 
 interface PipelineProps {
   store: CrmStore;
@@ -658,32 +666,49 @@ export function Pipeline({
         ) : null}
       </section>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={rectIntersection}
-        onDragStart={onDragStart}
-        onDragEnd={onDragEnd}
-      >
-        <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto pb-2 kanban-scroll">
-          {boardStages.map((stage) => (
-            <KanbanColumn
-              key={stage}
-              stage={stage}
-              companies={byStage.get(stage) ?? []}
-              store={store}
-              today={today}
-              onOpen={openCompany}
-            />
-          ))}
-        </div>
-        <DragOverlay>
-          {activeCompany ? (
-            <div className="w-[min(72vw,16rem)] rotate-1 sm:w-64">
-              <CompanyCard company={activeCompany} contacts={store.contacts} today={today} />
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+      {filtered.length === 0 ? (
+        <EmptyState
+          title={filtersActive ? 'No companies match these filters' : 'No companies yet'}
+          message={
+            filtersActive
+              ? 'Try clearing a filter to see more companies.'
+              : 'Add your first company to start building your pipeline.'
+          }
+          ctaLabel={filtersActive ? 'Clear date filter' : '+ Add company'}
+          onCta={
+            filtersActive ? () => setFilters(DEFAULT_PIPELINE_FILTERS) : () => setCreating(true)
+          }
+        />
+      ) : null}
+
+      {filtered.length > 0 ? (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={rectIntersection}
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+        >
+          <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto pb-2 kanban-scroll">
+            {boardStages.map((stage) => (
+              <KanbanColumn
+                key={stage}
+                stage={stage}
+                companies={byStage.get(stage) ?? []}
+                store={store}
+                today={today}
+                onOpen={openCompany}
+              />
+            ))}
+          </div>
+          <DragOverlay>
+            {activeCompany ? (
+              <div className="w-[min(72vw,16rem)] rotate-1 sm:w-64">
+                <CompanyCard company={activeCompany} contacts={store.contacts} today={today} />
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+      ) : null}
 
       <Modal open={creating} title="Add company" onClose={() => setCreating(false)} wide>
         <CompanyForm
