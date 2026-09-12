@@ -18,6 +18,8 @@ interface ContactsProps {
   store: CrmStore;
   contactStatuses?: string[];
   stages?: string[];
+  openContactId?: string | null;
+  onOpenContactIdConsumed?: () => void;
 }
 
 function formatIsoDate(iso: string | null | undefined): string {
@@ -110,7 +112,13 @@ function SortHeader({
   );
 }
 
-export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
+export function Contacts({
+  store,
+  contactStatuses,
+  stages,
+  openContactId = null,
+  onOpenContactIdConsumed,
+}: ContactsProps) {
   const [filters, setFilters] = useState<ContactFilters>(DEFAULT_CONTACT_FILTERS);
   const [searchDraft, setSearchDraft] = useState('');
   const [editing, setEditing] = useState<Contact | null>(null);
@@ -130,6 +138,16 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
     setEditing(c);
     logViewEvent('contact.opened', c.id, c.contactName);
   };
+
+  useEffect(() => {
+    if (!openContactId) return;
+    const contact = store.contacts.find((c) => c.id === openContactId);
+    if (contact) {
+      setEditing(contact);
+      logViewEvent('contact.opened', contact.id, contact.contactName);
+    }
+    onOpenContactIdConsumed?.();
+  }, [openContactId, store.contacts, onOpenContactIdConsumed]);
 
   const patchFilters = (patch: Partial<ContactFilters>) => {
     setFilters((f) => ({ ...f, ...patch }));
