@@ -354,6 +354,7 @@ export function Pipeline({
 
   const today = istToday();
   const filtersActive = pipelineFiltersAreActive(filters);
+  const isNarrowedDown = filtersActive || view !== 'All Companies';
   const dateLabel =
     PIPELINE_DATE_RANGE_OPTIONS.find((o) => o.value === filters.dateRange)?.label ?? 'All Time';
 
@@ -668,15 +669,20 @@ export function Pipeline({
 
       {filtered.length === 0 ? (
         <EmptyState
-          title={filtersActive ? 'No companies match these filters' : 'No companies yet'}
+          title={isNarrowedDown ? 'No companies match this view' : 'No companies yet'}
           message={
-            filtersActive
-              ? 'Try clearing a filter to see more companies.'
+            isNarrowedDown
+              ? 'Try a different view or clear the date filter to see more companies.'
               : 'Add your first company to start building your pipeline.'
           }
-          ctaLabel={filtersActive ? 'Clear date filter' : '+ Add company'}
+          ctaLabel={isNarrowedDown ? 'Show all companies' : '+ Add company'}
           onCta={
-            filtersActive ? () => setFilters(DEFAULT_PIPELINE_FILTERS) : () => setCreating(true)
+            isNarrowedDown
+              ? () => {
+                  setView('All Companies');
+                  setFilters(DEFAULT_PIPELINE_FILTERS);
+                }
+              : () => setCreating(true)
           }
         />
       ) : null}
