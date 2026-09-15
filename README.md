@@ -19,6 +19,7 @@ scattered call recordings, and founder intuition. We built the system we wished 
 > **New here?** `make setup && make dev` → open [localhost:5173](http://localhost:5173) → pick an unassigned [good first issue](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22+no%3Aassignee) → comment _I'd like to take this_. We review fast and mentor first-timers. Rewards: see [#23](https://github.com/ConvoBrains/zero-cost-crm/issues/23).
 
 ![Zero Cost CRM login](docs/images/login.png)
+![Zero Cost CRM product walkthrough](docs/images/product-walkthrough.gif)
 
 ---
 
