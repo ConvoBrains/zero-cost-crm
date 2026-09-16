@@ -29,7 +29,15 @@ import {
 import { buildCardBadges, buildChampionTrail, findChampion, istToday } from '../lib/championCard';
 import { logViewEvent } from '../lib/activity';
 import { CompanyForm } from './CompanyForm';
-import { FilterChip, FilterDropdown, Modal, SearchInput, btnPrimary, inputClass } from './ui';
+import {
+  EmptyState,
+  FilterChip,
+  FilterDropdown,
+  Modal,
+  SearchInput,
+  btnPrimary,
+  inputClass,
+} from './ui';
 
 interface PipelineProps {
   store: CrmStore;
@@ -346,6 +354,7 @@ export function Pipeline({
 
   const today = istToday();
   const filtersActive = pipelineFiltersAreActive(filters);
+  const isNarrowedDown = filtersActive || view !== 'All Companies';
   const dateLabel =
     PIPELINE_DATE_RANGE_OPTIONS.find((o) => o.value === filters.dateRange)?.label ?? 'All Time';
 
@@ -658,32 +667,54 @@ export function Pipeline({
         ) : null}
       </section>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={rectIntersection}
-        onDragStart={onDragStart}
-        onDragEnd={onDragEnd}
-      >
-        <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto pb-2 kanban-scroll">
-          {boardStages.map((stage) => (
-            <KanbanColumn
-              key={stage}
-              stage={stage}
-              companies={byStage.get(stage) ?? []}
-              store={store}
-              today={today}
-              onOpen={openCompany}
-            />
-          ))}
-        </div>
-        <DragOverlay>
-          {activeCompany ? (
-            <div className="w-[min(72vw,16rem)] rotate-1 sm:w-64">
-              <CompanyCard company={activeCompany} contacts={store.contacts} today={today} />
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+      {filtered.length === 0 ? (
+        <EmptyState
+          title={isNarrowedDown ? 'No companies match this view' : 'No companies yet'}
+          message={
+            isNarrowedDown
+              ? 'Try a different view or clear the date filter to see more companies.'
+              : 'Add your first company to start building your pipeline.'
+          }
+          ctaLabel={isNarrowedDown ? 'Show all companies' : '+ Add company'}
+          onCta={
+            isNarrowedDown
+              ? () => {
+                  setView('All Companies');
+                  setFilters(DEFAULT_PIPELINE_FILTERS);
+                }
+              : () => setCreating(true)
+          }
+        />
+      ) : null}
+
+      {filtered.length > 0 ? (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={rectIntersection}
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+        >
+          <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto pb-2 kanban-scroll">
+            {boardStages.map((stage) => (
+              <KanbanColumn
+                key={stage}
+                stage={stage}
+                companies={byStage.get(stage) ?? []}
+                store={store}
+                today={today}
+                onOpen={openCompany}
+              />
+            ))}
+          </div>
+          <DragOverlay>
+            {activeCompany ? (
+              <div className="w-[min(72vw,16rem)] rotate-1 sm:w-64">
+                <CompanyCard company={activeCompany} contacts={store.contacts} today={today} />
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+      ) : null}
 
       <Modal open={creating} title="Add company" onClose={() => setCreating(false)} wide>
         <CompanyForm

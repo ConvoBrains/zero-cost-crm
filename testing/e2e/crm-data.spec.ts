@@ -35,7 +35,7 @@ test.describe('CRM flows (UI)', () => {
 
   test('dashboard metrics reflect seeded data', async ({ page }) => {
     await loginAsFounder(page);
-    await expect(page.getByRole('heading', { name: 'SDR Dashboard' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
     await expect(page.getByText('Total Companies')).toBeVisible();
     await expect(page.getByText('Total Contacts')).toBeVisible();
     // Seed creates 8 companies

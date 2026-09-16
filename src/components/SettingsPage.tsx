@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import type { AppConfig } from '../types';
 import { api } from '../lib/api';
+import {
+  championMapToRows,
+  championRowsToMap,
+  validateChampionMapRows,
+  type ChampionMapRow,
+} from '../lib/championStatusMap';
+import { ChampionMapEditor } from './ChampionMapEditor';
 import { Field, inputClass, btnPrimary, btnGhost } from './ui';
 
 interface SettingsPageProps {
@@ -21,6 +28,9 @@ export function SettingsPage({ config, onSaved }: SettingsPageProps) {
   const [logoUrl, setLogoUrl] = useState(config.logoUrl);
   const [stagesText, setStagesText] = useState(config.stages.join('\n'));
   const [statusesText, setStatusesText] = useState(config.contactStatuses.join('\n'));
+  const [mapRows, setMapRows] = useState<ChampionMapRow[]>(() =>
+    championMapToRows(config.championStatusToStage)
+  );
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +41,7 @@ export function SettingsPage({ config, onSaved }: SettingsPageProps) {
     setLogoUrl(config.logoUrl);
     setStagesText(config.stages.join('\n'));
     setStatusesText(config.contactStatuses.join('\n'));
+    setMapRows(championMapToRows(config.championStatusToStage));
   }, [config]);
 
   const domainHint = useMemo(() => {
@@ -39,20 +50,29 @@ export function SettingsPage({ config, onSaved }: SettingsPageProps) {
     return 'Configured via env ALLOWED_EMAIL_DOMAIN';
   }, [config]);
 
+  const liveStatuses = linesToList(statusesText);
+  const liveStages = linesToList(stagesText);
+
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setError(null);
     setMessage(null);
     try {
+      const mapError = validateChampionMapRows(mapRows, liveStatuses, liveStages);
+      if (mapError) {
+        setError(mapError);
+        return;
+      }
       await api('/api/settings', {
         method: 'PATCH',
         body: JSON.stringify({
           brandName,
           brandTagline,
           logoUrl,
-          stages: linesToList(stagesText),
-          contactStatuses: linesToList(statusesText),
+          stages: liveStages,
+          contactStatuses: liveStatuses,
+          championStatusToStage: championRowsToMap(mapRows),
         }),
       });
       await onSaved();
@@ -65,19 +85,16 @@ export function SettingsPage({ config, onSaved }: SettingsPageProps) {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <h1 className="text-xl font-semibold text-stone-900">Instance settings</h1>
         <p className="mt-1 text-sm text-stone-500">
-          Branding and pipeline lists are stored in the database so Zero Cost CRM stays generic.
-          Email domain and database URL stay in server env.
+          Branding, pipeline lists, and champion auto-move mappings are stored in the database so
+          Zero Cost CRM stays generic. Email domain and database URL stay in server env.
         </p>
         <p className="mt-2 text-xs text-stone-500">
-          Champion status → stage mapping and discovery questions aren&apos;t on this
-          screen yet — update them with{' '}
-          <code className="rounded bg-stone-100 px-1 py-0.5 text-[11px]">
-            PATCH /api/settings
-          </code>{' '}
+          Discovery questions aren&apos;t on this screen yet. Update them with{' '}
+          <code className="rounded bg-stone-100 px-1 py-0.5 text-[11px]">PATCH /api/settings</code>{' '}
           or see{' '}
           <a
             className="underline decoration-stone-300 underline-offset-2 hover:text-stone-700"
@@ -135,9 +152,20 @@ export function SettingsPage({ config, onSaved }: SettingsPageProps) {
           />
         </Field>
 
+        <ChampionMapEditor
+          rows={mapRows}
+          contactStatuses={liveStatuses}
+          stages={liveStages}
+          onChange={setMapRows}
+        />
+
         <p className="text-xs text-stone-500">Login email policy: {domainHint}</p>
 
-        {error ? <p className="text-sm text-rose-700">{error}</p> : null}
+        {error ? (
+          <p className="text-sm text-rose-700" role="alert">
+            {error}
+          </p>
+        ) : null}
         {message ? <p className="text-sm text-teal-800">{message}</p> : null}
 
         <div className="flex gap-2">
@@ -153,6 +181,7 @@ export function SettingsPage({ config, onSaved }: SettingsPageProps) {
               setLogoUrl(config.logoUrl);
               setStagesText(config.stages.join('\n'));
               setStatusesText(config.contactStatuses.join('\n'));
+              setMapRows(championMapToRows(config.championStatusToStage));
               setError(null);
               setMessage(null);
             }}

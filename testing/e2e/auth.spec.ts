@@ -4,7 +4,7 @@ import { gotoLogin, loginAsFounder, SEED } from './helpers';
 test.describe('Auth (UI)', () => {
   test('founder logs in and reaches dashboard', async ({ page }) => {
     await loginAsFounder(page);
-    await expect(page.getByRole('heading', { name: 'SDR Dashboard' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
     await expect(page.getByText('Total Companies')).toBeVisible();
   });
 

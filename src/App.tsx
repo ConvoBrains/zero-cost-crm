@@ -213,7 +213,10 @@ export default function App() {
 
       <main className="min-w-0 flex-1 overflow-auto p-4 pb-24 sm:p-6 lg:p-8 lg:pb-8">
         {store.error ? (
-          <p className="mb-4 rounded-none bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          <p
+            role="alert"
+            className="mb-4 rounded-none bg-rose-50 px-3 py-2 text-sm text-rose-700"
+          >
             {store.error}
           </p>
         ) : null}

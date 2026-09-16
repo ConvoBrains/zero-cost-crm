@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Settings UI editor for `championStatusToStage` (add/remove champion status → pipeline stage rows, saved via `PATCH /api/settings`)
+- `PATCH /api/settings` rejects champion maps whose keys/values are not in the configured contact statuses / stages
 - Instance `app_settings` table for branding, pipeline stages, and contact statuses (DB-backed; keeps the product generic across deploys)
 - `GET /api/config` now returns `brandName`, `brandTagline`, `logoUrl`, `stages`, `contactStatuses`, `championStatusToStage`
 - `PATCH /api/settings` (admin/founder) to update instance settings

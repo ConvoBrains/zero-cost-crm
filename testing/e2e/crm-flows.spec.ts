@@ -21,7 +21,7 @@ test.describe('Navigation (UI)', () => {
     await expect(page.getByRole('heading', { name: 'Users' })).toBeVisible();
 
     await navTo(page, 'Dashboard');
-    await expect(page.getByRole('heading', { name: 'SDR Dashboard' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
   });
 
   test('SDR does not see admin-only nav', async ({ page }) => {

@@ -595,6 +595,7 @@ components:
             type: string
         championStatusToStage:
           type: object
+          description: Keys must be configured contactStatuses; values must be a configured stage or null.
           additionalProperties:
             type:
               - string
@@ -1309,7 +1310,7 @@ paths:
     patch:
       operationId: updateSettings
       summary: Update application settings.
-      description: Requires an authenticated admin user.
+      description: Requires an authenticated admin or founder. championStatusToStage keys must exist in contactStatuses; values must be a configured stage or null.
       requestBody:
         required: true
         content:

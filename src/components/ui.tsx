@@ -361,3 +361,24 @@ export function FilterChip({ label, onClear }: FilterChipProps) {
     </span>
   );
 }
+
+// EmptyState: shown instead of a blank table/board when there's nothing to display.
+// Reusable everywhere so every "no data" screen looks and behaves the same way.
+interface EmptyStateProps {
+  title: string; // short headline, e.g. "No companies yet"
+  message: string; // one sentence explaining what to do next
+  ctaLabel: string; // button text, e.g. "+ Add company"
+  onCta: () => void; // function to run when button is clicked
+}
+
+export function EmptyState({ title, message, ctaLabel, onCta }: EmptyStateProps) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-2 rounded-none border border-dashed border-line bg-panel px-4 py-12 text-center">
+      <p className="font-display text-xl text-stone-800">{title}</p>
+      <p className="max-w-sm text-sm text-stone-500">{message}</p>
+      <button type="button" className={btnPrimary} onClick={onCta}>
+        {ctaLabel}
+      </button>
+    </div>
+  );
+}

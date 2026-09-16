@@ -15,6 +15,7 @@ import {
   type DiscoveryInputType,
   type DiscoveryQuestion,
 } from '../src/defaults.js';
+import { validateChampionStatusToStage } from '../src/lib/championStatusMap.js';
 
 export interface AppSettings {
   brandName: string;
@@ -191,11 +192,12 @@ export async function updateAppSettings(patch: SettingsPatch): Promise<AppSettin
   const statusErr = validateNonEmptyStrings('contactStatuses', next.contactStatuses);
   if (statusErr) throw new Error(statusErr);
 
-  for (const [status, stage] of Object.entries(next.championStatusToStage)) {
-    if (stage != null && !next.stages.includes(stage)) {
-      throw new Error(`championStatusToStage["${status}"] targets unknown stage "${stage}".`);
-    }
-  }
+  const mapErr = validateChampionStatusToStage(
+    next.championStatusToStage,
+    next.contactStatuses,
+    next.stages
+  );
+  if (mapErr) throw new Error(mapErr);
 
   await ensureAppSettings();
   const { rows } = await pool.query(
