@@ -34,6 +34,7 @@ import {
   FilterChip,
   FilterDropdown,
   Modal,
+  RelativeTimestamp,
   SearchInput,
   btnPrimary,
   inputClass,
@@ -134,7 +135,7 @@ function CompanyCard({
           ) : null}
           {company.createdAt ? (
             <p className="mt-1 text-[10px] text-stone-400">
-              Added {company.createdAt.slice(0, 10)}
+              <RelativeTimestamp value={company.createdAt} prefix="Added " />
             </p>
           ) : null}
         </button>
@@ -461,7 +462,14 @@ export function Pipeline({
                     <span className="font-medium text-stone-900">{c.companyName}</span>
                     <span className="text-stone-500">
                       {c.stage}
-                      {c.createdAt ? ` · Added ${c.createdAt.slice(0, 10)}` : ''}
+                      {c.createdAt ? (
+                        <>
+                          {' · Added '}
+                          <RelativeTimestamp value={c.createdAt} />
+                        </>
+                      ) : (
+                        ''
+                      )}
                     </span>
                   </button>
                 ))
