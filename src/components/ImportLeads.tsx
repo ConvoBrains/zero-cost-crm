@@ -297,7 +297,10 @@ export function ImportLeads({ store }: ImportLeadsProps) {
             {busy ? 'Saving…' : 'Add lead'}
           </button>
           {lastResult && mode === 'single' ? (
-            <p className={`rounded-none px-3 py-2 text-sm ${resultBannerClass(lastResult.ok)}`}>
+            <p
+              role="alert"
+              className={`rounded-none px-3 py-2 text-sm ${resultBannerClass(lastResult.ok)}`}
+            >
               {lastResult.message}
             </p>
           ) : null}
@@ -392,6 +395,7 @@ export function ImportLeads({ store }: ImportLeadsProps) {
 
             {lastResult && mode === 'bulk' ? (
               <p
+                role="alert"
                 className={`mt-3 rounded-none px-3 py-2 text-sm ${resultBannerClass(lastResult.ok)}`}
               >
                 {lastResult.message}
