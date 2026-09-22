@@ -158,7 +158,9 @@ export function Users() {
         </form>
 
         {error ? (
-          <p className="mt-4 rounded-none bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
+          <p role="alert" className="mt-4 rounded-none bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            {error}
+          </p>
         ) : null}
         {success ? (
           <p className="mt-4 rounded-none bg-teal-50 px-3 py-2 text-sm text-teal-800">{success}</p>
