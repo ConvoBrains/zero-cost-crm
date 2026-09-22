@@ -12,17 +12,20 @@ import {
 } from '../lib/views';
 import { logViewEvent } from '../lib/activity';
 import { ContactForm } from './ContactForm';
-import { EmptyState, FilterChip, FilterDropdown, Modal, SearchInput, btnPrimary } from './ui';
+import {
+  EmptyState,
+  FilterChip,
+  FilterDropdown,
+  Modal,
+  RelativeTimestamp,
+  SearchInput,
+  btnPrimary,
+} from './ui';
 
 interface ContactsProps {
   store: CrmStore;
   contactStatuses?: string[];
   stages?: string[];
-}
-
-function formatIsoDate(iso: string | null | undefined): string {
-  if (!iso) return '—';
-  return iso.slice(0, 10) || '—';
 }
 
 function ContactRow({
@@ -72,11 +75,17 @@ function ContactRow({
           <span className="text-xs text-amber-700">Follow-up {contact.nextFollowUp}</span>
         ) : null}
         {contact.lastContacted ? (
-          <span className="text-xs text-stone-500">
-            Last {formatIsoDate(contact.lastContacted)}
-          </span>
+          <RelativeTimestamp
+            value={contact.lastContacted}
+            prefix="Last "
+            className="text-xs text-stone-500"
+          />
         ) : null}
-        <span className="text-xs text-stone-400">Added {formatIsoDate(contact.createdAt)}</span>
+        <RelativeTimestamp
+          value={contact.createdAt}
+          prefix="Added "
+          className="text-xs text-stone-400"
+        />
       </div>
     </button>
   );
@@ -627,8 +636,12 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
                     <td className="px-4 py-3 text-stone-600">{company?.stage ?? '—'}</td>
                     <td className="px-4 py-3 text-stone-600">{t.phone || '—'}</td>
                     <td className="px-4 py-3 text-stone-500">{t.nextFollowUp || '—'}</td>
-                    <td className="px-4 py-3 text-stone-500">{formatIsoDate(t.lastContacted)}</td>
-                    <td className="px-4 py-3 text-stone-500">{formatIsoDate(t.createdAt)}</td>
+                    <td className="px-4 py-3 text-stone-500">
+                      <RelativeTimestamp value={t.lastContacted} />
+                    </td>
+                    <td className="px-4 py-3 text-stone-500">
+                      <RelativeTimestamp value={t.createdAt} />
+                    </td>
                   </tr>
                 );
               })}

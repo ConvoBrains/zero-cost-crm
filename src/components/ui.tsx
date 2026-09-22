@@ -1,6 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react';
+import { formatFullDateTime, formatRelativeTime } from '../lib/dates';
 
 interface ModalProps {
   open: boolean;
@@ -380,5 +381,34 @@ export function EmptyState({ title, message, ctaLabel, onCta }: EmptyStateProps)
         {ctaLabel}
       </button>
     </div>
+  );
+}
+
+interface RelativeTimestampProps {
+  value: string | null | undefined;
+  prefix?: string;
+  fallback?: string;
+  className?: string;
+}
+
+export function RelativeTimestamp({
+  value,
+  prefix = '',
+  fallback = '—',
+  className,
+}: RelativeTimestampProps) {
+  if (!value) {
+    return <span className={className}>{fallback}</span>;
+  }
+  const relative = formatRelativeTime(value);
+  if (relative === '—') {
+    return <span className={className}>{fallback}</span>;
+  }
+  const full = formatFullDateTime(value);
+  return (
+    <time dateTime={value} title={full || undefined} className={className}>
+      {prefix}
+      {relative}
+    </time>
   );
 }
