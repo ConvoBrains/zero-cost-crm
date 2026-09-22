@@ -611,7 +611,7 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
                       }
                     }}
                     tabIndex={0}
-                    className="cursor-pointer border-b border-[var(--color-line)]/70 transition hover:bg-teal-50/40"
+                    className="cursor-pointer border-b border-[var(--color-line)]/70 transition hover:bg-teal-50/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-teal-600"
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
