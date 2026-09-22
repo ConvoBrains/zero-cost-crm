@@ -28,6 +28,7 @@ COPY server ./server
 COPY --from=builder /app/src ./src
 COPY sql ./sql
 COPY scripts ./scripts
+COPY openapi.yaml ./
 
 USER crm
 
