@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { allowedEmailError, config, isAllowedEmail } from './config.js';
+import * as cookie from "cookie";
 
 /** Must match users.role CHECK in sql/schema.sql */
 export const USER_ROLES = ['founder', 'sdr', 'admin'] as const;
@@ -35,12 +36,14 @@ export function verifyToken(token: string): AuthPayload {
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ')) {
+  const cookies = cookie.parseCookie(req.headers.cookie || "");
+  const token = cookies.token || header?.substring(7);
+  if (!token) {
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }
   try {
-    req.user = verifyToken(header.slice(7));
+    req.user = verifyToken(token);
     next();
   } catch {
     res.status(401).json({ error: 'Invalid or expired session' });

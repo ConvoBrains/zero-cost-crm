@@ -43,7 +43,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getStoredToken();
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(path, { ...init, headers });
+  const res = await fetch(path, { ...init, credentials: "include", headers });
   if (!res.ok) {
     const body = (await res.json().catch(() => ({}))) as { error?: string };
     throw new ApiError(res.status, body.error ?? res.statusText);

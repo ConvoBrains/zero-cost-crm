@@ -43,22 +43,24 @@ import {
 } from './settings.js';
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yaml';
+import * as cookie from "cookie";
+
 const app = express();
 app.use(
   helmet({
     contentSecurityPolicy: config.isProd
       ? {
-          useDefaults: true,
-          directives: {
-            'default-src': ["'self'"],
-            'script-src': ["'self'"],
-            'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-            'font-src': ["'self'", 'https://fonts.gstatic.com'],
-            'img-src': ["'self'", 'data:', 'blob:'],
-            'media-src': ["'self'", 'blob:', 'https:'],
-            'connect-src': ["'self'", ...config.corsOrigins],
-          },
-        }
+        useDefaults: true,
+        directives: {
+          'default-src': ["'self'"],
+          'script-src': ["'self'"],
+          'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+          'font-src': ["'self'", 'https://fonts.gstatic.com'],
+          'img-src': ["'self'", 'data:', 'blob:'],
+          'media-src': ["'self'", 'blob:', 'https:'],
+          'connect-src': ["'self'", ...config.corsOrigins],
+        },
+      }
       : false,
     crossOriginEmbedderPolicy: false,
   })
@@ -269,7 +271,6 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
     res.status(401).json({ error: 'Invalid email or password.' });
     return;
   }
-
   const ok = await bcrypt.compare(password, user.password_hash);
   if (!ok) {
     res.status(401).json({ error: 'Invalid email or password.' });
@@ -295,8 +296,19 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
     sid,
   });
 
+  res.setHeader(
+    "Set-Cookie",
+    cookie.stringifySetCookie({
+      name: "token",
+      value: token,
+      httpOnly: true,
+      secure: config.isProd,
+      path: "/",
+      maxAge: 60 * 60 * 24 * 1, // 24 hrs 
+    }),
+  );
+
   res.json({
-    token,
     user: { id: user.id, email: user.email, name: user.name, role: user.role },
   });
 });
@@ -322,6 +334,12 @@ app.post('/api/auth/logout', requireAuth, async (req, res) => {
       });
     }
   }
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: config.isProd,
+    sameSite: "lax",
+    path: "/",
+  });
   res.status(204).end();
 });
 
@@ -515,14 +533,14 @@ app.post('/api/companies', requireAuth, async (req, res) => {
   }
   const answers =
     b.discoveryAnswers &&
-    typeof b.discoveryAnswers === 'object' &&
-    !Array.isArray(b.discoveryAnswers)
+      typeof b.discoveryAnswers === 'object' &&
+      !Array.isArray(b.discoveryAnswers)
       ? Object.fromEntries(
-          Object.entries(b.discoveryAnswers as Record<string, unknown>).map(([k, v]) => [
-            k,
-            v == null ? '' : String(v),
-          ])
-        )
+        Object.entries(b.discoveryAnswers as Record<string, unknown>).map(([k, v]) => [
+          k,
+          v == null ? '' : String(v),
+        ])
+      )
       : {};
   const hasDiscoveryCol = await companiesHaveDiscoveryAnswers();
   const { rows } = await pool.query(
@@ -549,42 +567,42 @@ app.post('/api/companies', requireAuth, async (req, res) => {
     `,
     hasDiscoveryCol
       ? [
-          b.companyName,
-          stage,
-          emptyToNull(b.industry),
-          b.location ?? '',
-          b.estimatedCallVolume ?? null,
-          b.employeeCount ?? null,
-          emptyToNull(b.intent),
-          b.offeredPrice ?? null,
-          b.primaryContactId ?? null,
-          req.user!.sub,
-          b.lastContacted ?? null,
-          b.nextFollowUp ?? null,
-          b.notes ?? '',
-          b.sourceLink ?? '',
-          b.companyWebsite ?? '',
-          b.linkedInCompany ?? '',
-          JSON.stringify(answers),
-        ]
+        b.companyName,
+        stage,
+        emptyToNull(b.industry),
+        b.location ?? '',
+        b.estimatedCallVolume ?? null,
+        b.employeeCount ?? null,
+        emptyToNull(b.intent),
+        b.offeredPrice ?? null,
+        b.primaryContactId ?? null,
+        req.user!.sub,
+        b.lastContacted ?? null,
+        b.nextFollowUp ?? null,
+        b.notes ?? '',
+        b.sourceLink ?? '',
+        b.companyWebsite ?? '',
+        b.linkedInCompany ?? '',
+        JSON.stringify(answers),
+      ]
       : [
-          b.companyName,
-          stage,
-          emptyToNull(b.industry),
-          b.location ?? '',
-          b.estimatedCallVolume ?? null,
-          b.employeeCount ?? null,
-          emptyToNull(b.intent),
-          b.offeredPrice ?? null,
-          b.primaryContactId ?? null,
-          req.user!.sub,
-          b.lastContacted ?? null,
-          b.nextFollowUp ?? null,
-          b.notes ?? '',
-          b.sourceLink ?? '',
-          b.companyWebsite ?? '',
-          b.linkedInCompany ?? '',
-        ]
+        b.companyName,
+        stage,
+        emptyToNull(b.industry),
+        b.location ?? '',
+        b.estimatedCallVolume ?? null,
+        b.employeeCount ?? null,
+        emptyToNull(b.intent),
+        b.offeredPrice ?? null,
+        b.primaryContactId ?? null,
+        req.user!.sub,
+        b.lastContacted ?? null,
+        b.nextFollowUp ?? null,
+        b.notes ?? '',
+        b.sourceLink ?? '',
+        b.companyWebsite ?? '',
+        b.linkedInCompany ?? '',
+      ]
   );
   const { rows: full } = await pool.query(`${COMPANY_SELECT} WHERE c.id = $1`, [rows[0].id]);
   const company = mapCompany(full[0]);
@@ -640,14 +658,14 @@ app.patch('/api/companies/:id', requireAuth, async (req, res) => {
   if (b.discoveryAnswers !== undefined && (await companiesHaveDiscoveryAnswers())) {
     const answers =
       b.discoveryAnswers &&
-      typeof b.discoveryAnswers === 'object' &&
-      !Array.isArray(b.discoveryAnswers)
+        typeof b.discoveryAnswers === 'object' &&
+        !Array.isArray(b.discoveryAnswers)
         ? Object.fromEntries(
-            Object.entries(b.discoveryAnswers as Record<string, unknown>).map(([k, v]) => [
-              k,
-              v == null ? '' : String(v),
-            ])
-          )
+          Object.entries(b.discoveryAnswers as Record<string, unknown>).map(([k, v]) => [
+            k,
+            v == null ? '' : String(v),
+          ])
+        )
         : {};
     update.set('discovery_answers', JSON.stringify(answers), 'jsonb');
   }

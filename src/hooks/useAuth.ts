@@ -33,11 +33,7 @@ function saveUser(user: AuthUser | null) {
 
 export function useAuth() {
   const { config, ready: configReady, refresh: refreshConfig } = useAppConfig();
-  const [user, setUser] = useState<AuthUser | null>(() => {
-    const token = getStoredToken();
-    if (token) setAuthToken(token);
-    return loadUser();
-  });
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
 
@@ -50,11 +46,9 @@ export function useAuth() {
   useEffect(() => {
     if (!configReady) return;
     const token = getStoredToken();
-    if (!token) {
-      setReady(true);
-      return;
+    if (token) {
+      setAuthToken(token);
     }
-    setAuthToken(token);
     api<{ user: AuthUser }>('/api/auth/me')
       .then(({ user: u }) => {
         setUser(u);
@@ -77,11 +71,10 @@ export function useAuth() {
         }
       }
       try {
-        const { token, user: u } = await api<{ token: string; user: AuthUser }>('/api/auth/login', {
+        const { user: u } = await api<{ user: AuthUser }>('/api/auth/login', {
           method: 'POST',
           body: JSON.stringify({ email: normalized, password }),
         });
-        setAuthToken(token);
         setUser(u);
         saveUser(u);
         return true;
