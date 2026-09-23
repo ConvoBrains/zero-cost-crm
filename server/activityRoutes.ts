@@ -1,5 +1,5 @@
 import type { Express, Request, Response } from 'express';
-import { requireAuth, requireAdmin } from './auth.js';
+import { requireAuth, requireAdmin, requireCsrf } from './auth.js';
 import { pool } from './db.js';
 import {
   accumulateCallMetrics,
@@ -224,7 +224,7 @@ export function registerActivityRoutes(app: Express) {
     res.json({ targets: await getTargets() });
   });
 
-  app.patch('/api/activity/targets', requireAuth, requireAdmin, async (req, res) => {
+  app.patch('/api/activity/targets', requireAuth, requireCsrf, requireAdmin, async (req, res) => {
     const calls = Number(req.body.calls ?? req.body.callsTarget);
     const followUps = Number(req.body.followUps ?? req.body.followUpsTarget);
     const demos = Number(req.body.demos ?? req.body.demosTarget);
@@ -253,7 +253,7 @@ export function registerActivityRoutes(app: Express) {
     res.json({ targets: await getTargets() });
   });
 
-  app.post('/api/activity/events', requireAuth, async (req, res) => {
+  app.post('/api/activity/events', requireAuth, requireCsrf, async (req, res) => {
     const eventType = String(req.body.eventType ?? '');
     const allowed = new Set(['contact.opened', 'company.opened']);
     if (!allowed.has(eventType)) {

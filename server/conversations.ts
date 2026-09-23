@@ -1,6 +1,6 @@
 import type { Express } from 'express';
 import type { Pool } from 'pg';
-import { requireAuth, requireAdmin } from './auth.js';
+import { requireAuth, requireAdmin, requireCsrf } from './auth.js';
 import { mapConversation } from './mappers.js';
 import {
   contentTypeForExt,
@@ -32,7 +32,7 @@ const CONVERSATION_SELECT = `
 `;
 
 export function registerConversationRoutes(app: Express, pool: Pool) {
-  app.post('/api/conversations/presign', requireAuth, async (req, res) => {
+  app.post('/api/conversations/presign', requireAuth, requireCsrf, async (req, res) => {
     const contactId = String(req.body.contactId ?? '');
     const fileExt = normalizeExt(String(req.body.fileExt ?? ''));
     const notes = req.body.notes != null ? String(req.body.notes) : null;
@@ -80,7 +80,7 @@ export function registerConversationRoutes(app: Express, pool: Pool) {
     });
   });
 
-  app.post('/api/conversations/:id/complete', requireAuth, async (req, res) => {
+  app.post('/api/conversations/:id/complete', requireAuth, requireCsrf, async (req, res) => {
     const { id } = req.params;
     const { rows } = await pool.query('SELECT * FROM conversations WHERE id = $1', [id]);
     const row = rows[0];
@@ -198,7 +198,7 @@ export function registerConversationRoutes(app: Express, pool: Pool) {
     res.json({ playUrl });
   });
 
-  app.delete('/api/conversations/:id', requireAuth, requireAdmin, async (req, res) => {
+  app.delete('/api/conversations/:id', requireAuth, requireCsrf, requireAdmin, async (req, res) => {
     const { id } = req.params;
     const { rows } = await pool.query(
       `

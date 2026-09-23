@@ -19,6 +19,13 @@ export function getStoredToken(): string | null {
     return null;
   }
 }
+export function getCookie(name: string): string | null {
+  const match = document.cookie
+    .split('; ')
+    .find((row) => row.startsWith(`${name}=`));
+
+  return match ? decodeURIComponent(match.split('=')[1]) : null;
+}
 
 export function setAuthToken(token: string | null) {
   authToken = token;
@@ -42,6 +49,11 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   };
   const token = getStoredToken();
   if (token) headers.Authorization = `Bearer ${token}`;
+  
+  const csrfToken = getCookie('csrfToken');
+  if (csrfToken) {
+    headers['X-CSRF-Token'] = csrfToken;
+  }
 
   const res = await fetch(path, { ...init, credentials: "include", headers });
   if (!res.ok) {

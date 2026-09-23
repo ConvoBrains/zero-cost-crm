@@ -14,6 +14,7 @@ import {
   isUserRole,
   requireAuth,
   requireAdmin,
+  requireCsrf,
   signToken,
   USER_ROLES,
 } from './auth.js';
@@ -44,6 +45,7 @@ import {
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yaml';
 import * as cookie from "cookie";
+import crypto from "node:crypto";
 
 const app = express();
 app.use(
@@ -93,8 +95,12 @@ if (config.enableApiDocs) {
       swaggerUi.setup(swaggerDoc)
     );
   } catch (err) {
-    console.warn("[DOCS] openapi.yaml file not found or could not be loaded.",err)
+    console.warn("[DOCS] openapi.yaml file not found or could not be loaded.", err)
   }
+}
+
+function createCsrfToken(): string {
+  return crypto.randomBytes(32).toString('hex');
 }
 
 const loginLimiter = rateLimit({
@@ -190,7 +196,7 @@ app.get('/api/config', async (_req, res) => {
 
 // ─── Instance settings (admin / founder) ────────────────────────────────────
 
-app.patch('/api/settings', requireAuth, requireAdmin, async (req, res) => {
+app.patch('/api/settings', requireAuth, requireCsrf, requireAdmin, async (req, res) => {
   const b = req.body as Record<string, unknown>;
   const patch: SettingsPatch = {};
   if (typeof b.brandName === 'string') patch.brandName = b.brandName;
@@ -296,15 +302,31 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
     sid,
   });
 
-  res.setHeader(
+  const csrfToken = createCsrfToken();
+
+  res.appendHeader(
     "Set-Cookie",
     cookie.stringifySetCookie({
       name: "token",
       value: token,
       httpOnly: true,
       secure: config.isProd,
+      sameSite: 'lax',
       path: "/",
-      maxAge: 60 * 60 * 24 * 1, // 24 hrs 
+      maxAge: 60 * 60 * 12, // 12 hrs
+    }),
+  );
+
+  res.appendHeader(
+    "Set-Cookie",
+    cookie.stringifySetCookie({
+      name: "csrfToken",
+      value: csrfToken,
+      httpOnly: false,
+      secure: config.isProd,
+      sameSite: 'lax',
+      path: "/",
+      maxAge: 60 * 60 * 12, // 12 hrs
     }),
   );
 
@@ -313,7 +335,7 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
   });
 });
 
-app.post('/api/auth/logout', requireAuth, async (req, res) => {
+app.post('/api/auth/logout', requireAuth, requireCsrf, async (req, res) => {
   const reasonRaw = String(req.body?.reason ?? 'manual');
   const reason =
     reasonRaw === 'idle' || reasonRaw === 'expired' || reasonRaw === 'manual'
@@ -340,10 +362,16 @@ app.post('/api/auth/logout', requireAuth, async (req, res) => {
     sameSite: "lax",
     path: "/",
   });
+  res.clearCookie('csrfToken', {
+    httpOnly: false,
+    secure: config.isProd,
+    sameSite: 'lax',
+    path: '/',
+  });
   res.status(204).end();
 });
 
-app.post('/api/auth/heartbeat', requireAuth, async (req, res) => {
+app.post('/api/auth/heartbeat', requireAuth, requireCsrf, async (req, res) => {
   const sid = req.user!.sid;
   if (!sid) {
     res.status(401).json({ error: 'Session required — please log in again' });
@@ -407,7 +435,7 @@ app.get('/api/users', requireAuth, requireAdmin, async (_req, res) => {
   });
 });
 
-app.post('/api/users', requireAuth, requireAdmin, async (req, res) => {
+app.post('/api/users', requireAuth, requireCsrf, requireAdmin, async (req, res) => {
   const email = String(req.body.email ?? '')
     .trim()
     .toLowerCase();
@@ -521,7 +549,7 @@ app.get('/api/metrics', requireAuth, async (_req, res) => {
 
 // ─── Companies ─────────────────────────────────────────────────────────────
 
-app.post('/api/companies', requireAuth, async (req, res) => {
+app.post('/api/companies', requireAuth, requireCsrf, async (req, res) => {
   const b = req.body;
   const settings = await getAppSettings();
   const stage = b.stage ?? settings.stages[0] ?? 'Lead Added';
@@ -618,7 +646,7 @@ app.post('/api/companies', requireAuth, async (req, res) => {
   res.status(201).json(company);
 });
 
-app.patch('/api/companies/:id', requireAuth, async (req, res) => {
+app.patch('/api/companies/:id', requireAuth, requireCsrf, async (req, res) => {
   const { id } = req.params;
   const b = req.body;
   const { rows: beforeRows } = await pool.query(`${COMPANY_SELECT} WHERE c.id = $1`, [id]);
@@ -863,7 +891,7 @@ app.patch('/api/companies/:id', requireAuth, async (req, res) => {
   res.json(mapCompany(full[0]));
 });
 
-app.delete('/api/companies/:id', requireAuth, requireAdmin, async (req, res) => {
+app.delete('/api/companies/:id', requireAuth, requireCsrf, requireAdmin, async (req, res) => {
   const { id } = req.params;
   const { rows: beforeRows } = await pool.query(
     'SELECT company_name FROM companies WHERE id = $1',
@@ -891,7 +919,7 @@ app.delete('/api/companies/:id', requireAuth, requireAdmin, async (req, res) => 
 
 // ─── Contacts ────────────────────────────────────────────────────────────────
 
-app.post('/api/contacts', requireAuth, async (req, res) => {
+app.post('/api/contacts', requireAuth, requireCsrf, async (req, res) => {
   const b = req.body;
   const settings = await getAppSettings();
   const contactStatus = b.contactStatus ?? settings.contactStatuses[0] ?? 'Not Contacted';
@@ -947,7 +975,7 @@ app.post('/api/contacts', requireAuth, async (req, res) => {
   res.status(201).json(mapped);
 });
 
-app.patch('/api/contacts/:id', requireAuth, async (req, res) => {
+app.patch('/api/contacts/:id', requireAuth, requireCsrf, async (req, res) => {
   const { id } = req.params;
   const b = req.body;
   const { rows: beforeRows } = await pool.query('SELECT * FROM contacts WHERE id = $1', [id]);
@@ -1205,7 +1233,7 @@ app.patch('/api/contacts/:id', requireAuth, async (req, res) => {
   }
 });
 
-app.delete('/api/contacts/:id', requireAuth, requireAdmin, async (req, res) => {
+app.delete('/api/contacts/:id', requireAuth, requireCsrf, requireAdmin, async (req, res) => {
   const { id } = req.params;
   const { rows: beforeRows } = await pool.query('SELECT contact_name FROM contacts WHERE id = $1', [
     id,
@@ -1234,7 +1262,7 @@ app.delete('/api/contacts/:id', requireAuth, requireAdmin, async (req, res) => {
 
 // ─── Import ──────────────────────────────────────────────────────────────────
 
-app.post('/api/import/prospects', requireAuth, async (req, res) => {
+app.post('/api/import/prospects', requireAuth, requireCsrf, async (req, res) => {
   const rows = req.body.rows as Array<{
     company: string;
     prospectName: string;
