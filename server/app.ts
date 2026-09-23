@@ -14,6 +14,7 @@ import {
   isUserRole,
   requireAuth,
   requireAdmin,
+  requireCsrf,
   signToken,
   USER_ROLES,
 } from './auth.js';
@@ -43,22 +44,25 @@ import {
 } from './settings.js';
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yaml';
+import * as cookie from "cookie";
+import crypto from "node:crypto";
+
 const app = express();
 app.use(
   helmet({
     contentSecurityPolicy: config.isProd
       ? {
-          useDefaults: true,
-          directives: {
-            'default-src': ["'self'"],
-            'script-src': ["'self'"],
-            'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-            'font-src': ["'self'", 'https://fonts.gstatic.com'],
-            'img-src': ["'self'", 'data:', 'blob:'],
-            'media-src': ["'self'", 'blob:', 'https:'],
-            'connect-src': ["'self'", ...config.corsOrigins],
-          },
-        }
+        useDefaults: true,
+        directives: {
+          'default-src': ["'self'"],
+          'script-src': ["'self'"],
+          'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+          'font-src': ["'self'", 'https://fonts.gstatic.com'],
+          'img-src': ["'self'", 'data:', 'blob:'],
+          'media-src': ["'self'", 'blob:', 'https:'],
+          'connect-src': ["'self'", ...config.corsOrigins],
+        },
+      }
       : false,
     crossOriginEmbedderPolicy: false,
   })
@@ -91,8 +95,12 @@ if (config.enableApiDocs) {
       swaggerUi.setup(swaggerDoc)
     );
   } catch (err) {
-    console.warn("[DOCS] openapi.yaml file not found or could not be loaded.",err)
+    console.warn("[DOCS] openapi.yaml file not found or could not be loaded.", err)
   }
+}
+
+function createCsrfToken(): string {
+  return crypto.randomBytes(32).toString('hex');
 }
 
 const loginLimiter = rateLimit({
@@ -188,7 +196,7 @@ app.get('/api/config', async (_req, res) => {
 
 // ─── Instance settings (admin / founder) ────────────────────────────────────
 
-app.patch('/api/settings', requireAuth, requireAdmin, async (req, res) => {
+app.patch('/api/settings', requireAuth, requireCsrf, requireAdmin, async (req, res) => {
   const b = req.body as Record<string, unknown>;
   const patch: SettingsPatch = {};
   if (typeof b.brandName === 'string') patch.brandName = b.brandName;
@@ -269,7 +277,6 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
     res.status(401).json({ error: 'Invalid email or password.' });
     return;
   }
-
   const ok = await bcrypt.compare(password, user.password_hash);
   if (!ok) {
     res.status(401).json({ error: 'Invalid email or password.' });
@@ -295,13 +302,40 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
     sid,
   });
 
+  const csrfToken = createCsrfToken();
+
+  res.appendHeader(
+    "Set-Cookie",
+    cookie.stringifySetCookie({
+      name: "token",
+      value: token,
+      httpOnly: true,
+      secure: config.isProd,
+      sameSite: 'lax',
+      path: "/",
+      maxAge: 60 * 60 * 12, // 12 hrs
+    }),
+  );
+
+  res.appendHeader(
+    "Set-Cookie",
+    cookie.stringifySetCookie({
+      name: "csrfToken",
+      value: csrfToken,
+      httpOnly: false,
+      secure: config.isProd,
+      sameSite: 'lax',
+      path: "/",
+      maxAge: 60 * 60 * 12, // 12 hrs
+    }),
+  );
+
   res.json({
-    token,
     user: { id: user.id, email: user.email, name: user.name, role: user.role },
   });
 });
 
-app.post('/api/auth/logout', requireAuth, async (req, res) => {
+app.post('/api/auth/logout', requireAuth, requireCsrf, async (req, res) => {
   const reasonRaw = String(req.body?.reason ?? 'manual');
   const reason =
     reasonRaw === 'idle' || reasonRaw === 'expired' || reasonRaw === 'manual'
@@ -322,10 +356,22 @@ app.post('/api/auth/logout', requireAuth, async (req, res) => {
       });
     }
   }
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: config.isProd,
+    sameSite: "lax",
+    path: "/",
+  });
+  res.clearCookie('csrfToken', {
+    httpOnly: false,
+    secure: config.isProd,
+    sameSite: 'lax',
+    path: '/',
+  });
   res.status(204).end();
 });
 
-app.post('/api/auth/heartbeat', requireAuth, async (req, res) => {
+app.post('/api/auth/heartbeat', requireAuth, requireCsrf, async (req, res) => {
   const sid = req.user!.sid;
   if (!sid) {
     res.status(401).json({ error: 'Session required — please log in again' });
@@ -389,7 +435,7 @@ app.get('/api/users', requireAuth, requireAdmin, async (_req, res) => {
   });
 });
 
-app.post('/api/users', requireAuth, requireAdmin, async (req, res) => {
+app.post('/api/users', requireAuth, requireCsrf, requireAdmin, async (req, res) => {
   const email = String(req.body.email ?? '')
     .trim()
     .toLowerCase();
@@ -503,7 +549,7 @@ app.get('/api/metrics', requireAuth, async (_req, res) => {
 
 // ─── Companies ─────────────────────────────────────────────────────────────
 
-app.post('/api/companies', requireAuth, async (req, res) => {
+app.post('/api/companies', requireAuth, requireCsrf, async (req, res) => {
   const b = req.body;
   const settings = await getAppSettings();
   const stage = b.stage ?? settings.stages[0] ?? 'Lead Added';
@@ -515,14 +561,14 @@ app.post('/api/companies', requireAuth, async (req, res) => {
   }
   const answers =
     b.discoveryAnswers &&
-    typeof b.discoveryAnswers === 'object' &&
-    !Array.isArray(b.discoveryAnswers)
+      typeof b.discoveryAnswers === 'object' &&
+      !Array.isArray(b.discoveryAnswers)
       ? Object.fromEntries(
-          Object.entries(b.discoveryAnswers as Record<string, unknown>).map(([k, v]) => [
-            k,
-            v == null ? '' : String(v),
-          ])
-        )
+        Object.entries(b.discoveryAnswers as Record<string, unknown>).map(([k, v]) => [
+          k,
+          v == null ? '' : String(v),
+        ])
+      )
       : {};
   const hasDiscoveryCol = await companiesHaveDiscoveryAnswers();
   const { rows } = await pool.query(
@@ -549,42 +595,42 @@ app.post('/api/companies', requireAuth, async (req, res) => {
     `,
     hasDiscoveryCol
       ? [
-          b.companyName,
-          stage,
-          emptyToNull(b.industry),
-          b.location ?? '',
-          b.estimatedCallVolume ?? null,
-          b.employeeCount ?? null,
-          emptyToNull(b.intent),
-          b.offeredPrice ?? null,
-          b.primaryContactId ?? null,
-          req.user!.sub,
-          b.lastContacted ?? null,
-          b.nextFollowUp ?? null,
-          b.notes ?? '',
-          b.sourceLink ?? '',
-          b.companyWebsite ?? '',
-          b.linkedInCompany ?? '',
-          JSON.stringify(answers),
-        ]
+        b.companyName,
+        stage,
+        emptyToNull(b.industry),
+        b.location ?? '',
+        b.estimatedCallVolume ?? null,
+        b.employeeCount ?? null,
+        emptyToNull(b.intent),
+        b.offeredPrice ?? null,
+        b.primaryContactId ?? null,
+        req.user!.sub,
+        b.lastContacted ?? null,
+        b.nextFollowUp ?? null,
+        b.notes ?? '',
+        b.sourceLink ?? '',
+        b.companyWebsite ?? '',
+        b.linkedInCompany ?? '',
+        JSON.stringify(answers),
+      ]
       : [
-          b.companyName,
-          stage,
-          emptyToNull(b.industry),
-          b.location ?? '',
-          b.estimatedCallVolume ?? null,
-          b.employeeCount ?? null,
-          emptyToNull(b.intent),
-          b.offeredPrice ?? null,
-          b.primaryContactId ?? null,
-          req.user!.sub,
-          b.lastContacted ?? null,
-          b.nextFollowUp ?? null,
-          b.notes ?? '',
-          b.sourceLink ?? '',
-          b.companyWebsite ?? '',
-          b.linkedInCompany ?? '',
-        ]
+        b.companyName,
+        stage,
+        emptyToNull(b.industry),
+        b.location ?? '',
+        b.estimatedCallVolume ?? null,
+        b.employeeCount ?? null,
+        emptyToNull(b.intent),
+        b.offeredPrice ?? null,
+        b.primaryContactId ?? null,
+        req.user!.sub,
+        b.lastContacted ?? null,
+        b.nextFollowUp ?? null,
+        b.notes ?? '',
+        b.sourceLink ?? '',
+        b.companyWebsite ?? '',
+        b.linkedInCompany ?? '',
+      ]
   );
   const { rows: full } = await pool.query(`${COMPANY_SELECT} WHERE c.id = $1`, [rows[0].id]);
   const company = mapCompany(full[0]);
@@ -600,7 +646,7 @@ app.post('/api/companies', requireAuth, async (req, res) => {
   res.status(201).json(company);
 });
 
-app.patch('/api/companies/:id', requireAuth, async (req, res) => {
+app.patch('/api/companies/:id', requireAuth, requireCsrf, async (req, res) => {
   const { id } = req.params;
   const b = req.body;
   const { rows: beforeRows } = await pool.query(`${COMPANY_SELECT} WHERE c.id = $1`, [id]);
@@ -640,14 +686,14 @@ app.patch('/api/companies/:id', requireAuth, async (req, res) => {
   if (b.discoveryAnswers !== undefined && (await companiesHaveDiscoveryAnswers())) {
     const answers =
       b.discoveryAnswers &&
-      typeof b.discoveryAnswers === 'object' &&
-      !Array.isArray(b.discoveryAnswers)
+        typeof b.discoveryAnswers === 'object' &&
+        !Array.isArray(b.discoveryAnswers)
         ? Object.fromEntries(
-            Object.entries(b.discoveryAnswers as Record<string, unknown>).map(([k, v]) => [
-              k,
-              v == null ? '' : String(v),
-            ])
-          )
+          Object.entries(b.discoveryAnswers as Record<string, unknown>).map(([k, v]) => [
+            k,
+            v == null ? '' : String(v),
+          ])
+        )
         : {};
     update.set('discovery_answers', JSON.stringify(answers), 'jsonb');
   }
@@ -845,7 +891,7 @@ app.patch('/api/companies/:id', requireAuth, async (req, res) => {
   res.json(mapCompany(full[0]));
 });
 
-app.delete('/api/companies/:id', requireAuth, requireAdmin, async (req, res) => {
+app.delete('/api/companies/:id', requireAuth, requireCsrf, requireAdmin, async (req, res) => {
   const { id } = req.params;
   const { rows: beforeRows } = await pool.query(
     'SELECT company_name FROM companies WHERE id = $1',
@@ -873,7 +919,7 @@ app.delete('/api/companies/:id', requireAuth, requireAdmin, async (req, res) => 
 
 // ─── Contacts ────────────────────────────────────────────────────────────────
 
-app.post('/api/contacts', requireAuth, async (req, res) => {
+app.post('/api/contacts', requireAuth, requireCsrf, async (req, res) => {
   const b = req.body;
   const settings = await getAppSettings();
   const contactStatus = b.contactStatus ?? settings.contactStatuses[0] ?? 'Not Contacted';
@@ -929,7 +975,7 @@ app.post('/api/contacts', requireAuth, async (req, res) => {
   res.status(201).json(mapped);
 });
 
-app.patch('/api/contacts/:id', requireAuth, async (req, res) => {
+app.patch('/api/contacts/:id', requireAuth, requireCsrf, async (req, res) => {
   const { id } = req.params;
   const b = req.body;
   const { rows: beforeRows } = await pool.query('SELECT * FROM contacts WHERE id = $1', [id]);
@@ -1187,7 +1233,7 @@ app.patch('/api/contacts/:id', requireAuth, async (req, res) => {
   }
 });
 
-app.delete('/api/contacts/:id', requireAuth, requireAdmin, async (req, res) => {
+app.delete('/api/contacts/:id', requireAuth, requireCsrf, requireAdmin, async (req, res) => {
   const { id } = req.params;
   const { rows: beforeRows } = await pool.query('SELECT contact_name FROM contacts WHERE id = $1', [
     id,
@@ -1216,7 +1262,7 @@ app.delete('/api/contacts/:id', requireAuth, requireAdmin, async (req, res) => {
 
 // ─── Import ──────────────────────────────────────────────────────────────────
 
-app.post('/api/import/prospects', requireAuth, async (req, res) => {
+app.post('/api/import/prospects', requireAuth, requireCsrf, async (req, res) => {
   const rows = req.body.rows as Array<{
     company: string;
     prospectName: string;

@@ -18,7 +18,7 @@ export async function startApi() {
     server = app.listen(0, '127.0.0.1', () => resolve());
     server.on('error', reject);
   });
-  baseUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  baseUrl = `http://127.0.0.1:${(server!.address() as AddressInfo).port}`;
 }
 
 export async function stopApi() {
@@ -38,6 +38,7 @@ export async function api<T = unknown>(
     method?: string;
     body?: unknown;
     token?: string;
+    session?: TestSession;
     headers?: Record<string, string>;
   } = {}
 ): Promise<ApiResult<T>> {
@@ -46,6 +47,8 @@ export async function api<T = unknown>(
     headers: {
       ...(opts.body !== undefined ? { 'content-type': 'application/json' } : {}),
       ...(opts.token ? { authorization: `Bearer ${opts.token}` } : {}),
+      ...(opts.session ? { cookie: opts.session.cookieHeader } : {}),
+      ...(opts.session?.csrfToken ? { 'x-csrf-token': opts.session.csrfToken } : {}),
       ...opts.headers,
     },
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
@@ -60,19 +63,56 @@ export async function api<T = unknown>(
   return { status: res.status, data };
 }
 
-export async function loginAs(email: string, password = 'TestSeed123!') {
-  const { status, data } = await api<{
-    token?: string;
+/** Logs in via the httpOnly-cookie flow and returns the raw Cookie header + CSRF token for follow-up requests. */
+export async function loginAsCookie(email: string, password = 'TestSeed123!') {
+  const res = await fetch(`${getBaseUrl()}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = (await res.json()) as {
     user?: { id: string; email: string; role: string; name: string };
     error?: string;
-  }>('/api/auth/login', { body: { email, password } });
-  if (status !== 200 || !data.token || !data.user) {
-    throw new Error(`Login failed (${status}): ${data.error ?? JSON.stringify(data)}`);
+  };
+  if (res.status !== 200 || !data.user) {
+    throw new Error(`Login failed (${res.status}): ${data.error ?? JSON.stringify(data)}`);
   }
-  return { token: data.token, user: data.user };
+  const cookieJar: Record<string, string> = {};
+  for (const raw of res.headers.getSetCookie()) {
+    const [pair] = raw.split(';');
+    const i = pair.indexOf('=');
+    cookieJar[pair.slice(0, i)] = pair.slice(i + 1);
+  }
+  const cookieHeader = Object.entries(cookieJar)
+    .map(([k, v]) => `${k}=${v}`)
+    .join('; ');
+  return {
+    cookieHeader,
+    token: cookieJar.token,
+    csrfToken: cookieJar.csrfToken,
+    user: data.user,
+  };
+}
+
+/** Logs in and returns the JWT (read from the Set-Cookie header, since the body no longer includes it) for Bearer-header tests. */
+export async function loginAs(email: string, password = 'TestSeed123!') {
+  const { token, user } = await loginAsCookie(email, password);
+  if (!token) throw new Error('Login succeeded but no token cookie was set');
+  return { token, user };
 }
 
 export const SEED = {
   founder: 'founder.seed@convobrains.com',
   sdr: 'rahul.seed@convobrains.com',
 } as const;
+
+export type TestSession = {
+  cookieHeader: string;
+  csrfToken: string;
+  user: {
+    id: string;
+    email: string;
+    role: string;
+    name: string;
+  };
+};

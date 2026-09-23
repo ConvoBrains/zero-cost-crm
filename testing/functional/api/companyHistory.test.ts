@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { api, loginAs, SEED } from './helpers';
+import { api, loginAsCookie, SEED, type TestSession } from './helpers';
 
 /**
  * Company pipeline stage from contact context + company progress history rollup.
@@ -11,7 +11,7 @@ const uniq = () => `${Date.now()}-${++seq}`;
 type CompanyRow = { id: string; stage: string; companyName?: string };
 
 async function createCompany(
-  token: string,
+  session: TestSession,
   fields: Record<string, unknown> = {}
 ): Promise<CompanyRow> {
   const res = await api<CompanyRow>('/api/companies', {
@@ -23,14 +23,14 @@ async function createCompany(
       intent: 'Warm',
       ...fields,
     },
-    token,
+    session,
   });
   expect(res.status).toBe(201);
   return res.data;
 }
 
 async function createContact(
-  token: string,
+  session: TestSession,
   companyId: string,
   fields: Record<string, unknown> = {}
 ): Promise<{ id: string; contactName?: string }> {
@@ -44,7 +44,7 @@ async function createContact(
       champion: false,
       ...fields,
     },
-    token,
+    session,
   });
   expect(res.status).toBe(201);
   return res.data;
@@ -52,21 +52,21 @@ async function createContact(
 
 describe('company stage from contact + company history', () => {
   it('PATCH company stage with stageChangeSource=contact_form updates company and logs source', async () => {
-    const { token } = await loginAs(SEED.founder);
-    const co = await createCompany(token);
-    await createContact(token, co.id);
+    const session = await loginAsCookie(SEED.founder);
+    const co = await createCompany(session);
+    await createContact(session, co.id);
 
     const patched = await api<CompanyRow>(`/api/companies/${co.id}`, {
       method: 'PATCH',
       body: { stage: 'Follow-up', stageChangeSource: 'contact_form' },
-      token,
+      session,
     });
     expect(patched.status).toBe(200);
     expect(patched.data.stage).toBe('Follow-up');
 
     const history = await api<{
       events: Array<{ eventType: string; payload: Record<string, unknown> }>;
-    }>(`/api/activity/company/${co.id}/history`, { token });
+    }>(`/api/activity/company/${co.id}/history`, { session });
     expect(history.status).toBe(200);
 
     const stageEv = [...history.data.events]
@@ -77,13 +77,13 @@ describe('company stage from contact + company history', () => {
     expect(stageEv?.payload.to).toBe('Follow-up');
     expect(stageEv?.payload.source).toBe('contact_form');
 
-    await api(`/api/companies/${co.id}`, { method: 'DELETE', token });
+    await api(`/api/companies/${co.id}`, { method: 'DELETE', session });
   });
 
   it('GET company history returns company + linked contact events in chronological order', async () => {
-    const { token } = await loginAs(SEED.sdr);
-    const co = await createCompany(token);
-    const contact = await createContact(token, co.id);
+    const session = await loginAsCookie(SEED.sdr);
+    const co = await createCompany(session);
+    const contact = await createContact(session, co.id);
 
     await api(`/api/contacts/${contact.id}`, {
       method: 'PATCH',
@@ -92,12 +92,12 @@ describe('company stage from contact + company history', () => {
         phone: '9999999999',
         email: `upd.${uniq()}@history.example`,
       },
-      token,
+      session,
     });
     await api(`/api/companies/${co.id}`, {
       method: 'PATCH',
       body: { stage: 'Discovery Call Done' },
-      token,
+      session,
     });
 
     const history = await api<{
@@ -110,7 +110,7 @@ describe('company stage from contact + company history', () => {
         summary: string;
         payload: Record<string, unknown>;
       }>;
-    }>(`/api/activity/company/${co.id}/history`, { token });
+    }>(`/api/activity/company/${co.id}/history`, { session });
 
     expect(history.status).toBe(200);
     expect(history.data.companyId).toBe(co.id);
@@ -140,13 +140,13 @@ describe('company stage from contact + company history', () => {
     );
     expect(changeFields).toEqual(expect.arrayContaining(['phone', 'email']));
 
-    await api(`/api/companies/${co.id}`, { method: 'DELETE', token });
+    await api(`/api/companies/${co.id}`, { method: 'DELETE', session });
   });
 
   it('returns 404 for unknown company history', async () => {
-    const { token } = await loginAs(SEED.founder);
+    const session = await loginAsCookie(SEED.founder);
     const res = await api('/api/activity/company/00000000-0000-0000-0000-000000000000/history', {
-      token,
+      session,
     });
     expect(res.status).toBe(404);
   });

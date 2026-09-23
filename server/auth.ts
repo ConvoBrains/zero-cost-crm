@@ -1,6 +1,22 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { allowedEmailError, config, isAllowedEmail } from './config.js';
+import * as cookie from "cookie";
+import crypto from "node:crypto"
+
+function verifyCsrfToken(
+  cookieToken: string | undefined,
+  headerToken: string | undefined
+): boolean {
+  if (!cookieToken || !headerToken) return false;
+
+  const a = Buffer.from(cookieToken);
+  const b = Buffer.from(headerToken);
+
+  if (a.length !== b.length) return false;
+
+  return crypto.timingSafeEqual(a, b);
+}
 
 /** Must match users.role CHECK in sql/schema.sql */
 export const USER_ROLES = ['founder', 'sdr', 'admin'] as const;
@@ -34,13 +50,14 @@ export function verifyToken(token: string): AuthPayload {
 }
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
-  const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ')) {
+  const cookies = cookie.parseCookie(req.headers.cookie || "");
+  const token = cookies.token;
+  if (!token) {
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }
   try {
-    req.user = verifyToken(header.slice(7));
+    req.user = verifyToken(token);
     next();
   } catch {
     res.status(401).json({ error: 'Invalid or expired session' });
@@ -55,6 +72,35 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
+export function requireCsrf(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+
+  const cookies = cookie.parseCookie(req.headers.cookie || '');
+
+  const cookieToken = cookies.csrfToken;
+
+  const headerValue = req.headers['x-csrf-token'];
+  const headerToken =
+    typeof headerValue === 'string'
+      ? headerValue
+      : undefined;
+
+  if (!cookieToken || !headerToken) {
+    res.status(403).json({ error: 'CSRF token required' });
+    return;
+  }
+
+  if (!verifyCsrfToken(cookieToken, headerToken)) {
+    res.status(403).json({ error: 'Invalid CSRF token' });
+    return;
+  }
+
+  next();
+}
+
 declare global {
   namespace Express {
     interface Request {
@@ -62,3 +108,5 @@ declare global {
     }
   }
 }
+
+
