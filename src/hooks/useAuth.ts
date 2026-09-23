@@ -7,16 +7,6 @@ import { useAppConfig } from './useAppConfig';
 const USER_KEY = 'zcrm-user';
 const LEGACY_USER_KEY = 'convobrains-crm-user';
 
-function loadUser(): AuthUser | null {
-  try {
-    const raw = localStorage.getItem(USER_KEY) ?? localStorage.getItem(LEGACY_USER_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as AuthUser;
-  } catch {
-    return null;
-  }
-}
-
 function saveUser(user: AuthUser | null) {
   try {
     if (user) {
