@@ -90,7 +90,7 @@ components:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     Unauthorized:
-      description: Missing, invalid, or expired bearer token.
+      description: Missing, invalid, or expired authentication session.
       content:
         application/json:
           schema:
@@ -107,11 +107,23 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
+    CsrfRequired:
+      description: Missing or invalid CSRF token. Requires the `csrfToken` cookie value to be echoed back in the `X-CSRF-Token` header.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
   securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+      description: Session JWT, set as an HttpOnly cookie by POST /api/auth/login.
+    csrfAuth:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+      description: Double-submit CSRF token. Must match the non-HttpOnly `csrfToken` cookie set at login. Required on all state-changing (POST/PATCH/DELETE) requests.
   schemas:
     CreateUserRequest:
       type: object
@@ -664,13 +676,8 @@ components:
     LoginResponse:
       type: object
       required:
-        - token
         - user
       properties:
-        token:
-          type: string
-          format: jwt
-          description: JWT bearer token
         user:
           $ref: "#/components/schemas/User"
     HeartBeatResponse:
@@ -1265,7 +1272,7 @@ components:
             $ref: "#/components/schemas/CompanyHistoryEvent"
 
 security: #as mentioned in API.md, all endpoints require auth
-  - bearerAuth: []
+  - cookieAuth: []
 
 paths:
   /api/health:
@@ -1309,6 +1316,9 @@ paths:
   /api/settings:
     patch:
       operationId: updateSettings
+      security:
+        - cookieAuth: []
+          csrfAuth: []
       summary: Update application settings.
       description: Requires an authenticated admin or founder. championStatusToStage keys must exist in contactStatuses; values must be a configured stage or null.
       requestBody:
@@ -1348,7 +1358,12 @@ paths:
               $ref: "#/components/schemas/LoginRequest"
       responses:
         "200":
-          description: Successful user login.
+          description: >-
+            Successful user login. Sets two cookies via Set-Cookie: `token`
+            (HttpOnly, SameSite=Lax, Secure in production — the session JWT,
+            never returned in the body) and `csrfToken` (readable by the
+            frontend, same attributes minus HttpOnly — echo its value back in
+            the `X-CSRF-Token` header on subsequent state-changing requests).
           content:
             application/json:
               schema:

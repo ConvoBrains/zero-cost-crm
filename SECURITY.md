@@ -46,8 +46,6 @@ The authentication cookie uses:
 
 The login API returns user information only and does not return the JWT in the response body.
 
-For migration compatibility, the API temporarily still accepts legacy `Authorization: Bearer <token>` authentication.
-
 ## CSRF protection
 
 Cookie-authenticated state-changing requests are protected using a double-submit CSRF token.
@@ -58,8 +56,6 @@ On login, the server sets:
 * `csrfToken` — frontend-readable CSRF cookie
 
 For mutating requests, the frontend sends the CSRF value in the `X-CSRF-Token` header. The server verifies that the cookie and header values match.
-
-Legacy Bearer-authenticated requests do not require CSRF validation.
 
 ## CORS and deployment
 

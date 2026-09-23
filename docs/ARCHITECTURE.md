@@ -54,7 +54,7 @@ Source of truth: [`sql/schema.sql`](../sql/schema.sql).
 
 * Password hashes: bcrypt
 * Sessions: JWT (12h) + server-side `user_sessions` for idle tracking
-* JWT is stored in an `HttpOnly` cookie; legacy `Authorization: Bearer` auth is temporarily supported
+* JWT is stored in an `HttpOnly` cookie
 * Cookie-authenticated mutating requests use a CSRF token sent in the `X-CSRF-Token` header
 * Frontend API requests use `credentials: 'include'`
 * Logout clears both the auth cookie and CSRF cookie

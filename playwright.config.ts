@@ -79,7 +79,6 @@ export default defineConfig({
     trace: 'on-first-retry',
     ...devices['Desktop Chrome'],
     viewport: { width: 1280, height: 800 },
-    headless: false,
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   // Always boot our own API/Vite with the test env — never reuse a random local server.
