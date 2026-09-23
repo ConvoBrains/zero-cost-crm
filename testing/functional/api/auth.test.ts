@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { api, getBaseUrl, loginAs, loginAsCookie, SEED } from './helpers';
+import { api, getBaseUrl, loginAsCookie, SEED } from './helpers';
 
 describe('health & config', () => {
   it('GET /api/health', async () => {
@@ -21,10 +21,10 @@ describe('health & config', () => {
 
 describe('auth', () => {
   it('logs in founder with seed credentials', async () => {
-    const { token, user } = await loginAs(SEED.founder);
-    expect(token.length).toBeGreaterThan(20);
-    expect(user.role).toBe('founder');
-    expect(user.email).toBe(SEED.founder);
+    const session = await loginAsCookie(SEED.founder);
+    expect(session.token.length).toBeGreaterThan(20);
+    expect(session.user.role).toBe('founder');
+    expect(session.user.email).toBe(SEED.founder);
   });
 
   it('rejects bad password', async () => {
@@ -44,28 +44,39 @@ describe('auth', () => {
   });
 
   it('GET /api/auth/me restores session', async () => {
-    const { token } = await loginAs(SEED.sdr);
-    const me = await api<{ user: { email: string; role: string } }>('/api/auth/me', { token });
+    const { cookieHeader } = await loginAsCookie(SEED.sdr);
+
+    const me = await api<{
+      user: {
+        email: string;
+        role: string;
+      };
+    }>('/api/auth/me', {
+      headers: {
+        cookie: cookieHeader,
+      },
+    });
+
     expect(me.status).toBe(200);
     expect(me.data.user.email).toBe(SEED.sdr);
     expect(me.data.user.role).toBe('sdr');
   });
 
   it('logout ends server session (heartbeat fails)', async () => {
-    const { token } = await loginAs(SEED.sdr);
+    const session = await loginAsCookie(SEED.sdr);
     const out = await api('/api/auth/logout', {
       method: 'POST',
-      token,
+      session,
       body: { reason: 'manual' },
     });
     expect(out.status).toBe(204);
-    const hb = await api('/api/auth/heartbeat', { method: 'POST', token, body: {} });
+    const hb = await api('/api/auth/heartbeat', { method: 'POST', session, body: {} });
     expect(hb.status).toBe(401);
   });
 
   it('heartbeat keeps session alive', async () => {
-    const { token } = await loginAs(SEED.founder);
-    const hb = await api('/api/auth/heartbeat', { method: 'POST', token, body: {} });
+    const session = await loginAsCookie(SEED.founder);
+    const hb = await api('/api/auth/heartbeat', { method: 'POST', session, body: {} });
     expect(hb.status).toBe(200);
   });
 
@@ -129,31 +140,33 @@ describe('auth', () => {
 
 describe('RBAC', () => {
   it('SDR cannot list users; founder can', async () => {
-    const sdr = await loginAs(SEED.sdr);
-    expect((await api('/api/users', { token: sdr.token })).status).toBe(403);
+    const sdrSession = await loginAsCookie(SEED.sdr);
+    expect((await api('/api/users', { session: sdrSession })).status).toBe(403);
 
-    const founder = await loginAs(SEED.founder);
-    const res = await api<{ users: { email: string }[] }>('/api/users', { token: founder.token });
+    const founderSession = await loginAsCookie(SEED.founder);
+    const res = await api<{ users: { email: string }[] }>('/api/users', {
+      session: founderSession,
+    });
     expect(res.status).toBe(200);
     expect(res.data.users.some((u) => u.email === SEED.founder)).toBe(true);
   });
 
   it('SDR cannot access activity overview', async () => {
-    const { token } = await loginAs(SEED.sdr);
-    expect((await api('/api/activity/overview?userId=all', { token })).status).toBe(403);
+    const session = await loginAsCookie(SEED.sdr);
+    expect((await api('/api/activity/overview?userId=all', { session })).status).toBe(403);
   });
 
   it('SDR cannot delete companies', async () => {
-    const { token: founderToken } = await loginAs(SEED.founder);
+    const founderSession = await loginAsCookie(SEED.founder);
     const boot = await api<{ companies: { id: string }[] }>('/api/bootstrap', {
-      token: founderToken,
+      session: founderSession,
     });
     const companyId = boot.data.companies[0]?.id;
     expect(companyId).toBeTruthy();
 
-    const { token: sdrToken } = await loginAs(SEED.sdr);
+    const sdrSession = await loginAsCookie(SEED.sdr);
     expect(
-      (await api(`/api/companies/${companyId}`, { method: 'DELETE', token: sdrToken })).status
+      (await api(`/api/companies/${companyId}`, { method: 'DELETE', session: sdrSession })).status
     ).toBe(403);
   });
 });

@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { api, loginAs, SEED } from './helpers';
+import { api, loginAsCookie, SEED } from './helpers';
 
 describe('bootstrap & metrics', () => {
   it('returns seeded companies, contacts, and metrics', async () => {
-    const { token } = await loginAs(SEED.founder);
+    const session = await loginAsCookie(SEED.founder);
     const boot = await api<{ companies: unknown[]; contacts: unknown[] }>('/api/bootstrap', {
-      token,
+      session,
     });
     expect(boot.status).toBe(200);
     expect(boot.data.companies.length).toBeGreaterThan(0);
     expect(boot.data.contacts.length).toBeGreaterThan(0);
 
-    const metrics = await api('/api/metrics', { token });
+    const metrics = await api('/api/metrics', { session });
     expect(metrics.status).toBe(200);
     expect(metrics.data).toBeTruthy();
   });
@@ -19,7 +19,7 @@ describe('bootstrap & metrics', () => {
 
 describe('companies CRUD', () => {
   it('creates, patches stage, and admin deletes', async () => {
-    const { token } = await loginAs(SEED.founder);
+    const session = await loginAsCookie(SEED.founder);
     const suffix = Date.now();
 
     const created = await api<{ id: string; stage: string }>('/api/companies', {
@@ -30,7 +30,7 @@ describe('companies CRUD', () => {
         location: 'Remote',
         intent: 'Warm',
       },
-      token,
+      session,
     });
     expect(created.status).toBe(201);
     expect(created.data.stage).toBe('Lead Added');
@@ -38,21 +38,21 @@ describe('companies CRUD', () => {
     const patched = await api<{ stage: string }>(`/api/companies/${created.data.id}`, {
       method: 'PATCH',
       body: { stage: 'Follow-up' },
-      token,
+      session,
     });
     expect(patched.status).toBe(200);
     expect(patched.data.stage).toBe('Follow-up');
 
     expect(
-      (await api(`/api/companies/${created.data.id}`, { method: 'DELETE', token })).status
+      (await api(`/api/companies/${created.data.id}`, { method: 'DELETE', session })).status
     ).toBe(204);
   });
 });
 
 describe('contacts CRUD', () => {
   it('creates and updates contact status', async () => {
-    const { token } = await loginAs(SEED.founder);
-    const boot = await api<{ companies: { id: string }[] }>('/api/bootstrap', { token });
+    const session = await loginAsCookie(SEED.founder);
+    const boot = await api<{ companies: { id: string }[] }>('/api/bootstrap', { session });
     const companyId = boot.data.companies[0]?.id;
     expect(companyId).toBeTruthy();
 
@@ -64,14 +64,14 @@ describe('contacts CRUD', () => {
         email: `pat.${suffix}@acme.example`,
         contactStatus: 'Not Contacted',
       },
-      token,
+      session,
     });
     expect(created.status).toBe(201);
 
     const patched = await api<{ contactStatus: string }>(`/api/contacts/${created.data.id}`, {
       method: 'PATCH',
       body: { contactStatus: 'Interested' },
-      token,
+      session,
     });
     expect(patched.status).toBe(200);
     expect(patched.data.contactStatus).toBe('Interested');
@@ -80,7 +80,7 @@ describe('contacts CRUD', () => {
 
 describe('import prospects', () => {
   it('creates rows and skips duplicate emails', async () => {
-    const { token } = await loginAs(SEED.founder);
+    const session = await loginAsCookie(SEED.founder);
     const suffix = Date.now();
     const email = `import.${suffix}@northwind.example`;
     const row = {
@@ -98,7 +98,7 @@ describe('import prospects', () => {
       companiesCreated: number;
       contactsCreated: number;
       contactsSkipped: number;
-    }>('/api/import/prospects', { body: { rows: [row] }, token });
+    }>('/api/import/prospects', { body: { rows: [row] }, session });
     expect(first.status).toBe(200);
     expect(first.data.companiesCreated).toBeGreaterThanOrEqual(1);
     expect(first.data.contactsCreated).toBe(1);
@@ -106,7 +106,7 @@ describe('import prospects', () => {
 
     const second = await api<{ contactsCreated: number; contactsSkipped: number }>(
       '/api/import/prospects',
-      { body: { rows: [row] }, token }
+      { body: { rows: [row] }, session }
     );
     expect(second.status).toBe(200);
     expect(second.data.contactsCreated).toBe(0);
@@ -116,24 +116,24 @@ describe('import prospects', () => {
 
 describe('activity', () => {
   it('founder loads SDR roster, overview, timeline', async () => {
-    const { token } = await loginAs(SEED.founder);
-    const sdrs = await api<{ sdrs: unknown[] }>('/api/activity/sdrs', { token });
+    const session = await loginAsCookie(SEED.founder);
+    const sdrs = await api<{ sdrs: unknown[] }>('/api/activity/sdrs', { session });
     expect(sdrs.status).toBe(200);
     expect(Array.isArray(sdrs.data.sdrs)).toBe(true);
 
-    expect((await api('/api/activity/overview?userId=all', { token })).status).toBe(200);
-    expect((await api('/api/activity/timeline?userId=all', { token })).status).toBe(200);
+    expect((await api('/api/activity/overview?userId=all', { session })).status).toBe(200);
+    expect((await api('/api/activity/timeline?userId=all', { session })).status).toBe(200);
   });
 
   it('SDR can post company.opened event', async () => {
-    const { token } = await loginAs(SEED.sdr);
-    const boot = await api<{ companies: { id: string }[] }>('/api/bootstrap', { token });
+    const session = await loginAsCookie(SEED.sdr);
+    const boot = await api<{ companies: { id: string }[] }>('/api/bootstrap', { session });
     const companyId = boot.data.companies[0]?.id;
     expect(companyId).toBeTruthy();
 
     const ev = await api('/api/activity/events', {
       body: { eventType: 'company.opened', entityId: companyId, name: 'Test Co' },
-      token,
+      session,
     });
     expect(ev.status).toBe(204);
   });

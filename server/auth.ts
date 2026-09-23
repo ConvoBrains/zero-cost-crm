@@ -50,19 +50,14 @@ export function verifyToken(token: string): AuthPayload {
 }
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
-  const header = req.headers.authorization;
   const cookies = cookie.parseCookie(req.headers.cookie || "");
-  const bearerToken = header?.startsWith('Bearer ') ? header.slice(7) : undefined;
-  const token = cookies.token || bearerToken;
+  const token = cookies.token;
   if (!token) {
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }
   try {
     req.user = verifyToken(token);
-
-    req.authMethod = cookies.token ? 'cookie' : 'bearer';
-
     next();
   } catch {
     res.status(401).json({ error: 'Invalid or expired session' });
@@ -82,13 +77,7 @@ export function requireCsrf(
   res: Response,
   next: NextFunction
 ) {
-  // ----------------------------Old authentication system--------------------------
-  if (req.authMethod === 'bearer') {
-    next();
-    return;
-  }
 
-  // ------------------------New cookie authentication-------------------------------
   const cookies = cookie.parseCookie(req.headers.cookie || '');
 
   const cookieToken = cookies.csrfToken;
@@ -116,7 +105,6 @@ declare global {
   namespace Express {
     interface Request {
       user?: AuthPayload;
-      authMethod: "bearer" | "cookie";
     }
   }
 }

@@ -6,19 +6,6 @@ export class ApiError extends Error {
   }
 }
 
-const AUTH_KEY = 'zcrm-token';
-const LEGACY_AUTH_KEY = 'convobrains-crm-token';
-
-let authToken: string | null = null;
-
-export function getStoredToken(): string | null {
-  if (authToken) return authToken;
-  try {
-    return localStorage.getItem(AUTH_KEY) ?? localStorage.getItem(LEGACY_AUTH_KEY);
-  } catch {
-    return null;
-  }
-}
 export function getCookie(name: string): string | null {
   const match = document.cookie
     .split('; ')
@@ -27,29 +14,12 @@ export function getCookie(name: string): string | null {
   return match ? decodeURIComponent(match.split('=')[1]) : null;
 }
 
-export function setAuthToken(token: string | null) {
-  authToken = token;
-  try {
-    if (token) {
-      localStorage.setItem(AUTH_KEY, token);
-      localStorage.removeItem(LEGACY_AUTH_KEY);
-    } else {
-      localStorage.removeItem(AUTH_KEY);
-      localStorage.removeItem(LEGACY_AUTH_KEY);
-    }
-  } catch {
-    /* ignore */
-  }
-}
-
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(init?.headers as Record<string, string> | undefined),
   };
-  const token = getStoredToken();
-  if (token) headers.Authorization = `Bearer ${token}`;
-  
+ 
   const csrfToken = getCookie('csrfToken');
   if (csrfToken) {
     headers['X-CSRF-Token'] = csrfToken;

@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { api, loginAs, SEED } from './helpers';
+import { api, loginAsCookie, SEED } from './helpers';
 
 let seq = 0;
 const uniq = () => `${Date.now()}-${++seq}`;
 
 describe('discovery questions + answers', () => {
   it('config exposes discoveryQuestions; company can store discoveryAnswers', async () => {
-    const { token } = await loginAs(SEED.founder);
+    const session = await loginAsCookie(SEED.founder);
 
     const seeded = await api('/api/settings', {
       method: 'PATCH',
-      token,
+      session,
       body: {
         discoveryQuestions: [
           {
@@ -42,7 +42,7 @@ describe('discovery questions + answers', () => {
       id: string;
       discoveryAnswers: Record<string, string>;
     }>('/api/companies', {
-      token,
+      session,
       body: {
         companyName: `Discovery Co ${uniq()}`,
         stage: 'Lead Added',
@@ -59,7 +59,7 @@ describe('discovery questions + answers', () => {
       discoveryAnswers: Record<string, string>;
     }>(`/api/companies/${created.data.id}`, {
       method: 'PATCH',
-      token,
+      session,
       body: {
         discoveryAnswers: {
           problem_pain: 'Missed objections',
@@ -72,12 +72,12 @@ describe('discovery questions + answers', () => {
 
     const history = await api<{
       events: Array<{ eventType: string; payload: Record<string, unknown> }>;
-    }>(`/api/activity/company/${created.data.id}/history`, { token });
+    }>(`/api/activity/company/${created.data.id}/history`, { session });
     expect(history.status).toBe(200);
     const disc = history.data.events.find((e) => e.eventType === 'company.discovery_updated');
     expect(disc).toBeTruthy();
     expect(disc?.payload.changedFields).toEqual(expect.arrayContaining(['floors_type']));
 
-    await api(`/api/companies/${created.data.id}`, { method: 'DELETE', token });
+    await api(`/api/companies/${created.data.id}`, { method: 'DELETE', session });
   });
 });

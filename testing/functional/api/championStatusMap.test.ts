@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { api, loginAs, SEED } from './helpers';
+import { api, loginAsCookie, SEED, type TestSession } from './helpers';
 
 type SettingsBody = {
   championStatusToStage: Record<string, string | null>;
@@ -8,11 +8,11 @@ type SettingsBody = {
   error?: string;
 };
 
-async function readMap(token: string) {
+async function readMap(session: TestSession) {
   const res = await api<SettingsBody>('/api/config');
   expect(res.status).toBe(200);
   return {
-    token,
+    session,
     map: res.data.championStatusToStage,
     stages: res.data.stages,
     contactStatuses: res.data.contactStatuses,
@@ -21,24 +21,24 @@ async function readMap(token: string) {
 
 describe('championStatusToStage settings', () => {
   let restore: Record<string, string | null> | null = null;
-  let token = '';
+  let session: TestSession | null = null;
 
   afterEach(async () => {
-    if (restore && token) {
+    if (restore && session) {
       await api('/api/settings', {
         method: 'PATCH',
-        token,
+        session,
         body: { championStatusToStage: restore },
       });
     }
     restore = null;
-    token = '';
+    session = null;
   });
 
   it('saves and reloads a valid mapping', async () => {
-    const auth = await loginAs(SEED.founder);
-    const current = await readMap(auth.token);
-    token = auth.token;
+    const auth = await loginAsCookie(SEED.founder);
+    const current = await readMap(auth);
+    session = auth;
     restore = current.map;
 
     const next = {
@@ -47,7 +47,7 @@ describe('championStatusToStage settings', () => {
     };
     const patched = await api<SettingsBody>('/api/settings', {
       method: 'PATCH',
-      token,
+      session,
       body: { championStatusToStage: next },
     });
     expect(patched.status).toBe(200);
@@ -60,14 +60,14 @@ describe('championStatusToStage settings', () => {
   });
 
   it('rejects a status that is not in contactStatuses', async () => {
-    const auth = await loginAs(SEED.founder);
-    const current = await readMap(auth.token);
-    token = auth.token;
+    const auth = await loginAsCookie(SEED.founder);
+    const current = await readMap(auth);
+    session = auth;
     restore = current.map;
 
     const res = await api<SettingsBody>('/api/settings', {
       method: 'PATCH',
-      token,
+      session,
       body: { championStatusToStage: { Engaged: 'Follow-up' } },
     });
     expect(res.status).toBe(400);
@@ -78,14 +78,14 @@ describe('championStatusToStage settings', () => {
   });
 
   it('rejects a stage that is not in stages', async () => {
-    const auth = await loginAs(SEED.founder);
-    const current = await readMap(auth.token);
-    token = auth.token;
+    const auth = await loginAsCookie(SEED.founder);
+    const current = await readMap(auth);
+    session = auth;
     restore = current.map;
 
     const res = await api<SettingsBody>('/api/settings', {
       method: 'PATCH',
-      token,
+      session,
       body: { championStatusToStage: { Interested: 'Outreach Positive' } },
     });
     expect(res.status).toBe(400);
@@ -96,11 +96,11 @@ describe('championStatusToStage settings', () => {
   });
 
   it('rejects a non-object championStatusToStage payload', async () => {
-    const auth = await loginAs(SEED.founder);
-    token = auth.token;
+    const auth = await loginAsCookie(SEED.founder);
+    session = auth;
     const res = await api<SettingsBody>('/api/settings', {
       method: 'PATCH',
-      token,
+      session,
       body: { championStatusToStage: ['Interested', 'Follow-up'] },
     });
     expect(res.status).toBe(400);

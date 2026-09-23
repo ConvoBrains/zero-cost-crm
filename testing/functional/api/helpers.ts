@@ -38,6 +38,7 @@ export async function api<T = unknown>(
     method?: string;
     body?: unknown;
     token?: string;
+    session?: TestSession;
     headers?: Record<string, string>;
   } = {}
 ): Promise<ApiResult<T>> {
@@ -46,6 +47,8 @@ export async function api<T = unknown>(
     headers: {
       ...(opts.body !== undefined ? { 'content-type': 'application/json' } : {}),
       ...(opts.token ? { authorization: `Bearer ${opts.token}` } : {}),
+      ...(opts.session ? { cookie: opts.session.cookieHeader } : {}),
+      ...(opts.session?.csrfToken ? { 'x-csrf-token': opts.session.csrfToken } : {}),
       ...opts.headers,
     },
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
@@ -102,3 +105,14 @@ export const SEED = {
   founder: 'founder.seed@convobrains.com',
   sdr: 'rahul.seed@convobrains.com',
 } as const;
+
+export type TestSession = {
+  cookieHeader: string;
+  csrfToken: string;
+  user: {
+    id: string;
+    email: string;
+    role: string;
+    name: string;
+  };
+};
