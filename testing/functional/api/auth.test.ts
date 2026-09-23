@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { api, loginAs, SEED } from './helpers';
+import { api, getBaseUrl, loginAs, loginAsCookie, SEED } from './helpers';
 
 describe('health & config', () => {
   it('GET /api/health', async () => {
@@ -67,6 +67,63 @@ describe('auth', () => {
     const { token } = await loginAs(SEED.founder);
     const hb = await api('/api/auth/heartbeat', { method: 'POST', token, body: {} });
     expect(hb.status).toBe(200);
+  });
+
+  it('login response does not expose the JWT; auth cookie is HttpOnly + SameSite=Lax', async () => {
+    const res = await fetch(`${getBaseUrl()}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: SEED.founder, password: 'TestSeed123!' }),
+    });
+    const data = (await res.json()) as { token?: string };
+    expect(res.status).toBe(200);
+    expect(data.token).toBeUndefined();
+
+    const authCookie = res.headers.getSetCookie().find((c) => c.startsWith('token='));
+    expect(authCookie).toBeDefined();
+    expect(authCookie).toContain('HttpOnly');
+    expect(authCookie).toContain('SameSite=Lax');
+  });
+
+  it('cookie-only authentication works for GET /api/auth/me', async () => {
+    const session = await loginAsCookie(SEED.sdr);
+    const me = await api<{ user: { email: string } }>('/api/auth/me', {
+      headers: { cookie: session.cookieHeader },
+    });
+    expect(me.status).toBe(200);
+    expect(me.data.user.email).toBe(SEED.sdr);
+  });
+
+  it('cookie-authenticated mutation without CSRF token is rejected', async () => {
+    const session = await loginAsCookie(SEED.founder);
+    const res = await api('/api/auth/heartbeat', {
+      method: 'POST',
+      headers: { cookie: session.cookieHeader },
+      body: {},
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it('cookie-authenticated mutation with correct CSRF token succeeds', async () => {
+    const session = await loginAsCookie(SEED.founder);
+    expect(session.csrfToken).toBeTruthy();
+
+    const res = await api('/api/auth/heartbeat', {
+      method: 'POST',
+      headers: { cookie: session.cookieHeader, 'x-csrf-token': session.csrfToken },
+      body: {},
+    });
+    expect(res.status).toBe(200);
+  });
+
+  it('invalid CSRF token is rejected', async () => {
+    const session = await loginAsCookie(SEED.founder);
+    const res = await api('/api/auth/heartbeat', {
+      method: 'POST',
+      headers: { cookie: session.cookieHeader, 'x-csrf-token': 'invalid-token' },
+      body: {},
+    });
+    expect(res.status).toBe(403);
   });
 });
 
