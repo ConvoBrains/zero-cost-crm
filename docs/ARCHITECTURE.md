@@ -52,10 +52,14 @@ Source of truth: [`sql/schema.sql`](../sql/schema.sql).
 
 ## Auth & roles
 
-- Password hashes: bcrypt
-- Sessions: JWT (12h) + server-side `user_sessions` for idle tracking
-- Roles: `founder`, `admin`, `sdr`
-- Email domains: `ALLOWED_EMAIL_DOMAIN` (`*` = any)
+* Password hashes: bcrypt
+* Sessions: JWT (12h) + server-side `user_sessions` for idle tracking
+* JWT is stored in an `HttpOnly` cookie; legacy `Authorization: Bearer` auth is temporarily supported
+* Cookie-authenticated mutating requests use a CSRF token sent in the `X-CSRF-Token` header
+* Frontend API requests use `credentials: 'include'`
+* Logout clears both the auth cookie and CSRF cookie
+* Roles: `founder`, `admin`, `sdr`
+* Email domains: `ALLOWED_EMAIL_DOMAIN` (`*` = any)
 
 ## Demo vs production DBs
 
