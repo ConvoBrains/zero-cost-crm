@@ -54,7 +54,7 @@
     "@vitejs/plugin-react": "^6.0.4",
     "concurrently": "^9.2.1",
     "oxlint": "^1.82.0",
-    "prettier": "^3.9.6",
+    "prettier": "^3.9.8",
     "tailwindcss": "^4.3.2",
     "tsx": "^4.23.13",
     "typescript": "~6.0.2",
