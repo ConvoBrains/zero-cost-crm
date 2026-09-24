@@ -59,7 +59,7 @@
     "tsx": "^4.23.13",
     "typescript": "~6.0.2",
     "vite": "^8.3.0",
-    "vitest": "^3.2.7"
+    "vitest": "^5.0.1"
   },
   "description": "A self-hosted, open-source CRM for small sales teams—pipeline, contacts, follow-ups, activity tracking, lead imports, and optional call recordings.",
   "repository": {
