@@ -384,6 +384,36 @@ export function EmptyState({ title, message, ctaLabel, onCta }: EmptyStateProps)
   );
 }
 
+// Skeleton: a grey placeholder block shown while a page's data is still
+// loading. Decorative only — the loading region carries the accessible
+// "Loading…" text, so every bar here is hidden from assistive tech.
+// `motion-safe:` keeps the pulse off for people who ask their OS to reduce
+// motion, and stone/teal keep it in step with the app's palette.
+export function Skeleton({ className = '' }: { className?: string }) {
+  return (
+    <div
+      aria-hidden="true"
+      className={`motion-safe:animate-pulse rounded-none bg-stone-200 ${className}`}
+    />
+  );
+}
+
+interface SkeletonRowsProps {
+  rows?: number;
+  className?: string;
+}
+
+// SkeletonRows: `rows` stacked bars, for list- and table-shaped placeholders.
+export function SkeletonRows({ rows = 5, className = '' }: SkeletonRowsProps) {
+  return (
+    <div className={`space-y-2 ${className}`}>
+      {Array.from({ length: rows }, (_, i) => (
+        <Skeleton key={i} className="h-3 w-full" />
+      ))}
+    </div>
+  );
+}
+
 interface RelativeTimestampProps {
   value: string | null | undefined;
   prefix?: string;

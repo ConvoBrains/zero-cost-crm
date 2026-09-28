@@ -12,6 +12,7 @@ import { ImportLeads } from './components/ImportLeads';
 import { Users } from './components/Users';
 import { SettingsPage } from './components/SettingsPage';
 import { LoginPage } from './components/LoginPage';
+import { Skeleton, SkeletonRows } from './components/ui';
 import { PAGE_TITLE } from './lib/nav';
 
 /** Admin-only — not in the SDR initial bundle. */
@@ -47,6 +48,128 @@ function writeQuery(page: Page, companyId: string | null) {
   if (next !== current) {
     window.history.replaceState(null, '', next);
   }
+}
+
+// Page-shaped skeletons. Each mirrors the real page's layout so that when the
+// store resolves the placeholder is filled in rather than swapped out (issue
+// #116). They live here, not in ui.tsx, because each one is specific to a page
+// that App owns — ui.tsx stays a generic toolbox.
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-8">
+      <div className="space-y-2">
+        <Skeleton className="h-3 w-48" />
+        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-4 w-full max-w-xl" />
+      </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {Array.from({ length: 5 }, (_, i) => (
+          <div
+            key={i}
+            className="space-y-2 border border-[var(--color-line)] bg-[var(--color-panel)] px-4 py-3"
+          >
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-8 w-12" />
+          </div>
+        ))}
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }, (_, i) => (
+          <div
+            key={i}
+            className="space-y-2 border border-[var(--color-line)] bg-[var(--color-panel)] p-5"
+          >
+            <Skeleton className="h-3 w-32" />
+            <Skeleton className="h-3 w-44" />
+          </div>
+        ))}
+      </div>
+      <div className="space-y-3 border border-[var(--color-line)] bg-[var(--color-panel)] p-5">
+        <Skeleton className="h-6 w-56" />
+        <SkeletonRows rows={3} />
+      </div>
+    </div>
+  );
+}
+
+function ContactsSkeleton() {
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-9 w-52" />
+        <Skeleton className="h-4 w-full max-w-md" />
+      </div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <Skeleton className="h-10 w-full sm:max-w-xs" />
+        <Skeleton className="h-8 w-32" />
+        <Skeleton className="h-8 w-40" />
+      </div>
+      <Skeleton className="h-4 w-40" />
+      <div className="space-y-2 border border-[var(--color-line)] bg-[var(--color-panel)] p-4">
+        {Array.from({ length: 8 }, (_, i) => (
+          <div key={i} className="flex items-center gap-3">
+            <Skeleton className="h-3 flex-1" />
+            <Skeleton className="h-3 w-32" />
+            <Skeleton className="h-3 w-20" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PipelineSkeleton({ stages }: { stages: string[] }) {
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-4">
+      <div className="space-y-3 sm:flex-row sm:items-start">
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-9 w-64" />
+        </div>
+        <Skeleton className="h-10 w-full sm:max-w-xs" />
+      </div>
+      <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto pb-2 kanban-scroll">
+        {stages.map((stage) => (
+          <div
+            key={stage}
+            className="flex w-[min(72vw,16rem)] shrink-0 flex-col rounded-none border border-[var(--color-line)] border-t-4 border-stone-200 bg-[var(--color-panel)]/70 sm:w-64"
+          >
+            <div className="flex items-center justify-between px-3 py-2.5">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-4 w-6" />
+            </div>
+            <div className="flex flex-col gap-2 px-2.5 pb-3">
+              {Array.from({ length: 2 }, (_, i) => (
+                <div key={i} className="space-y-2 border border-[var(--color-line)] bg-white p-3">
+                  <Skeleton className="h-3 w-32" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Fallback for pages with no bespoke placeholder (import, users, settings…). */
+function PageSkeleton() {
+  return (
+    <div className="space-y-4">
+      <Skeleton className="h-9 w-64" />
+      <Skeleton className="h-4 w-full max-w-md" />
+      <SkeletonRows rows={6} />
+    </div>
+  );
+}
+
+function PageLoadingSkeleton({ page, stages }: { page: Page; stages: string[] }) {
+  if (page === 'dashboard') return <DashboardSkeleton />;
+  if (page === 'pipeline') return <PipelineSkeleton stages={stages} />;
+  if (page === 'contacts') return <ContactsSkeleton />;
+  return <PageSkeleton />;
 }
 
 export default function App() {
@@ -136,14 +259,10 @@ export default function App() {
     );
   }
 
-  if (store.loading) {
-    return (
-      <div className="flex min-h-[100dvh] items-center justify-center text-sm text-stone-500">
-        Loading pipeline…
-      </div>
-    );
-  }
-
+  // NOTE: no `if (store.loading) return …` gate here. Blocking the whole app
+  // while the store loads is what produced the blank flash described in issue
+  // #116; the shell (sidebar, header, nav) now paints immediately and only the
+  // data area below is swapped for a page-shaped skeleton.
   return (
     <div className="flex min-h-[100dvh] flex-col lg:flex-row">
       {auth.idleWarnSeconds != null ? (
@@ -211,48 +330,65 @@ export default function App() {
         className="sticky top-0 hidden h-[100dvh] lg:flex"
       />
 
-      <main className="min-w-0 flex-1 overflow-auto p-4 pb-24 sm:p-6 lg:p-8 lg:pb-8">
+      <main
+        aria-busy={store.loading}
+        className="min-w-0 flex-1 overflow-auto p-4 pb-24 sm:p-6 lg:p-8 lg:pb-8"
+      >
+        {store.loading ? (
+          <p role="status" className="sr-only">
+            Loading your CRM…
+          </p>
+        ) : null}
         {store.error ? (
-          <p
-            role="alert"
-            className="mb-4 rounded-none bg-rose-50 px-3 py-2 text-sm text-rose-700"
-          >
+          <p role="alert" className="mb-4 rounded-none bg-rose-50 px-3 py-2 text-sm text-rose-700">
             {store.error}
           </p>
         ) : null}
-        {page === 'dashboard' ? (
-          <Dashboard
-            store={store}
-            onNavigate={navigate}
-            canManageUsers={manageUsers}
-            brandName={config.brandName}
-          />
-        ) : null}
-        {page === 'import' ? <ImportLeads store={store} /> : null}
-        {page === 'pipeline' ? (
-          <Pipeline
-            store={store}
-            stages={config.stages}
-            discoveryQuestions={config.discoveryQuestions}
-            openCompanyId={openCompanyId}
-            onOpenCompanyIdConsumed={() => setOpenCompanyId(null)}
-            onEditingCompanyChange={(companyId) => {
-              writeQuery('pipeline', companyId);
-            }}
-          />
-        ) : null}
-        {page === 'contacts' ? (
-          <Contacts store={store} contactStatuses={config.contactStatuses} stages={config.stages} />
-        ) : null}
-        {page === 'activity' && manageUsers ? (
-          <Suspense fallback={<p className="text-sm text-stone-500">Loading…</p>}>
-            <SdrActivity />
-          </Suspense>
-        ) : null}
-        {page === 'users' && manageUsers ? <Users /> : null}
-        {page === 'settings' && manageUsers ? (
-          <SettingsPage config={config} onSaved={auth.refreshConfig} />
-        ) : null}
+        {store.loading ? (
+          <div data-testid="page-skeleton">
+            <PageLoadingSkeleton page={page} stages={config.stages} />
+          </div>
+        ) : (
+          <>
+            {page === 'dashboard' ? (
+              <Dashboard
+                store={store}
+                onNavigate={navigate}
+                canManageUsers={manageUsers}
+                brandName={config.brandName}
+              />
+            ) : null}
+            {page === 'import' ? <ImportLeads store={store} /> : null}
+            {page === 'pipeline' ? (
+              <Pipeline
+                store={store}
+                stages={config.stages}
+                discoveryQuestions={config.discoveryQuestions}
+                openCompanyId={openCompanyId}
+                onOpenCompanyIdConsumed={() => setOpenCompanyId(null)}
+                onEditingCompanyChange={(companyId) => {
+                  writeQuery('pipeline', companyId);
+                }}
+              />
+            ) : null}
+            {page === 'contacts' ? (
+              <Contacts
+                store={store}
+                contactStatuses={config.contactStatuses}
+                stages={config.stages}
+              />
+            ) : null}
+            {page === 'activity' && manageUsers ? (
+              <Suspense fallback={<p className="text-sm text-stone-500">Loading…</p>}>
+                <SdrActivity />
+              </Suspense>
+            ) : null}
+            {page === 'users' && manageUsers ? <Users /> : null}
+            {page === 'settings' && manageUsers ? (
+              <SettingsPage config={config} onSaved={auth.refreshConfig} />
+            ) : null}
+          </>
+        )}
       </main>
 
       <MobileNav page={page} onNavigate={navigate} userRole={auth.user.role} />
