@@ -59,7 +59,7 @@
     "tailwindcss": "^4.3.2",
     "tsx": "^4.23.15",
     "typescript": "~6.0.2",
-    "vite": "^8.3.0",
+    "vite": "^8.3.2",
     "vitest": "^5.0.2"
   },
   "description": "A self-hosted, open-source CRM for small sales teams—pipeline, contacts, follow-ups, activity tracking, lead imports, and optional call recordings.",
