@@ -453,18 +453,16 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
             {selectedIds.size} contact{selectedIds.size === 1 ? '' : 's'} selected
           </p>
           <div className="flex items-center gap-2">
-            <select
+            <FilterDropdown
+              label="New status"
               value={bulkStatus}
-              onChange={(e) => setBulkStatus(e.target.value)}
-              className="rounded-none border-[var(--color-line)] bg-white px-3 py-1.5 text-sm text-stone-800 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
-            >
-              <option value="">Choose new status…</option>
-              {contactStatuses?.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: '', label: 'Choose new status…' },
+                ...(contactStatuses?.map((s) => ({ value: s, label: s })) ?? []),
+              ]}
+              active={!!bulkStatus}
+              onChange={(v) => setBulkStatus(v as string)}
+            />
             <button
               type="button"
               disabled={!bulkStatus}
