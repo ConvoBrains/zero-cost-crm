@@ -232,6 +232,23 @@ export function useCrmStore(enabled: boolean, userRole?: string) {
     [refreshMetrics]
   );
 
+  const bulkUpdateContactStatus = useCallback(
+    async (contactIds: string[], contactStatus: string) => {
+      await api('/api/contacts/bulk-status', {
+        method: 'POST',
+        body: JSON.stringify({ contactIds, contactStatus }),
+      });
+      setState((s) => {
+        const contacts = s.contacts.map((t) =>
+          contactIds.includes(t.id) ? { ...t, contactStatus } : t
+        );
+        return { ...s, contacts };
+      });
+      await refreshMetrics();
+    },
+    [refreshMetrics]
+  );
+
   const deleteContact = useCallback(
     async (id: string) => {
       await api(`/api/contacts/${id}`, { method: 'DELETE' });
@@ -283,6 +300,7 @@ export function useCrmStore(enabled: boolean, userRole?: string) {
     moveCompanyStage,
     addContact,
     updateContact,
+    bulkUpdateContactStatus,
     deleteContact,
     importProspects,
     getContact,
