@@ -33,6 +33,8 @@ function ContactRow({
   companyName,
   stage,
   onEdit,
+  selected,
+  onToggle,
 }: {
   contact: Contact;
   companyName: string;
