@@ -1017,7 +1017,7 @@ app.post('/api/contacts/bulk-status', requireAuth, requireCsrf, async (req, res)
     
     await client.query('COMMIT');
     res.status(200).json({ updatedCount: rows.length });
-  } catch (e) {
+  } catch (_e) {
     await client.query('ROLLBACK');
     res.status(500).json({ error: 'Failed to update contacts' });
   } finally {
