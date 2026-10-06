@@ -33,18 +33,31 @@ function ContactRow({
   companyName,
   stage,
   onEdit,
+  selected,
+  onToggle,
 }: {
   contact: Contact;
   companyName: string;
   stage: string;
   onEdit: () => void;
+  selected: boolean;
+  onToggle: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onEdit}
-      className="w-full rounded-none border border-[var(--color-line)] bg-[var(--color-panel)] p-4 text-left transition active:bg-teal-50/40"
-    >
+    <div className="flex w-full items-stretch rounded-none border border-[var(--color-line)] bg-[var(--color-panel)] transition focus-within:ring-2 focus-within:ring-teal-600">
+      <div className="flex items-center pl-4 pr-2">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={onToggle}
+          className="h-4 w-4 cursor-pointer rounded-sm border-stone-300 text-teal-600 focus:ring-teal-600"
+        />
+      </div>
+      <button
+        type="button"
+        onClick={onEdit}
+        className="flex-1 p-4 text-left hover:bg-teal-50/40 focus:outline-none"
+      >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="font-semibold text-stone-900">{contact.contactName}</p>
@@ -88,6 +101,7 @@ function ContactRow({
         />
       </div>
     </button>
+    </div>
   );
 }
 
@@ -127,6 +141,10 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
   const [insightsOpen, setInsightsOpen] = useState(true);
   const [sortKey, setSortKey] = useState<ContactSortKey>('contactName');
   const [sortDir, setSortDir] = useState<SortDirection>('asc');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState('');
+  const [bulkUpdating, setBulkUpdating] = useState(false);
+  const [confirmBulk, setConfirmBulk] = useState(false);
 
   useEffect(() => {
     const id = window.setTimeout(() => {
@@ -224,6 +242,38 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
     } else {
       setSortKey(key);
       setSortDir(key === 'createdAt' || key === 'lastContacted' ? 'desc' : 'asc');
+    }
+  };
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (selectedIds.size === sorted.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(sorted.map((t) => t.id)));
+    }
+  };
+
+  const executeBulkUpdate = async () => {
+    if (!bulkStatus) return;
+    setBulkUpdating(true);
+    try {
+      await store.bulkUpdateContactStatus(Array.from(selectedIds), bulkStatus);
+      setSelectedIds(new Set());
+      setConfirmBulk(false);
+      setBulkStatus('');
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Failed to bulk update');
+    } finally {
+      setBulkUpdating(false);
     }
   };
 
@@ -397,6 +447,57 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
         </div>
       ) : null}
 
+      {selectedIds.size > 0 ? (
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-none border border-teal-200 bg-teal-50 px-4 py-3 shadow-sm">
+          <p className="text-sm font-medium text-teal-900">
+            {selectedIds.size} contact{selectedIds.size === 1 ? '' : 's'} selected
+          </p>
+          <div className="flex items-center gap-2">
+            <FilterDropdown
+              label="New status"
+              value={bulkStatus}
+              options={[
+                { value: '', label: 'Choose new status…' },
+                ...(contactStatuses?.map((s) => ({ value: s, label: s })) ?? []),
+              ]}
+              active={!!bulkStatus}
+              onChange={(v) => setBulkStatus(v as string)}
+            />
+            <button
+              type="button"
+              disabled={!bulkStatus}
+              onClick={() => setConfirmBulk(true)}
+              className="rounded-none bg-teal-700 px-4 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-teal-800 disabled:opacity-50 disabled:hover:bg-teal-700"
+            >
+              Apply
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      <Modal open={confirmBulk} title="Confirm bulk update" onClose={() => setConfirmBulk(false)}>
+        <p className="mb-6 text-sm text-stone-600">
+          Are you sure you want to update the status of <strong>{selectedIds.size}</strong> contact{selectedIds.size === 1 ? '' : 's'} to <strong>{bulkStatus}</strong>?
+        </p>
+        <div className="flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => setConfirmBulk(false)}
+            className="rounded-none bg-white px-4 py-2 text-sm font-medium text-stone-700 ring-1 ring-inset ring-stone-300 transition hover:bg-stone-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={executeBulkUpdate}
+            disabled={bulkUpdating}
+            className="rounded-none bg-teal-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-800 disabled:opacity-50 disabled:hover:bg-teal-700"
+          >
+            {bulkUpdating ? 'Updating…' : 'Update status'}
+          </button>
+        </div>
+      </Modal>
+
       <section
         data-testid="lead-insights"
         className="rounded-none border border-[var(--color-line)] bg-[var(--color-panel)]"
@@ -522,6 +623,8 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
               companyName={company?.companyName ?? '—'}
               stage={company?.stage ?? ''}
               onEdit={() => openContact(t)}
+              selected={selectedIds.has(t.id)}
+              onToggle={() => toggleSelection(t.id)}
             />
           );
         })}
@@ -544,6 +647,14 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
           <table className="w-full min-w-[1080px] text-left text-sm">
             <thead>
               <tr className="border-b border-[var(--color-line)] bg-stone-50/80 text-[11px] tracking-wide text-stone-500">
+                <th className="px-4 py-3 font-semibold">
+                  <input
+                    type="checkbox"
+                    checked={sorted.length > 0 && selectedIds.size === sorted.length}
+                    onChange={toggleAll}
+                    className="h-4 w-4 cursor-pointer rounded-sm border-stone-300 text-teal-600 focus:ring-teal-600"
+                  />
+                </th>
                 <SortHeader
                   label="Contact"
                   sortKey="contactName"
@@ -613,6 +724,14 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
                     tabIndex={0}
                     className="cursor-pointer border-b border-[var(--color-line)]/70 transition hover:bg-teal-50/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-teal-600"
                   >
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(t.id)}
+                        onChange={() => toggleSelection(t.id)}
+                        className="h-4 w-4 cursor-pointer rounded-sm border-stone-300 text-teal-600 focus:ring-teal-600"
+                      />
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-stone-900">{t.contactName}</span>
@@ -647,7 +766,7 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
               })}
               {sorted.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-10">
+                  <td colSpan={10} className="px-4 py-10">
                     <EmptyState
                       title={filtersActive ? 'No contacts match these filters' : 'No contacts yet'}
                       message={

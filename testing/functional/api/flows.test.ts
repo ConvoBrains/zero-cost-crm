@@ -76,6 +76,36 @@ describe('contacts CRUD', () => {
     expect(patched.status).toBe(200);
     expect(patched.data.contactStatus).toBe('Interested');
   });
+
+  it('bulk updates contact statuses', async () => {
+    const session = await loginAsCookie(SEED.founder);
+    const boot = await api<{ companies: { id: string }[] }>('/api/bootstrap', { session });
+    const companyId = boot.data.companies[0]?.id;
+
+    const suffix = Date.now();
+    const c1 = await api<{ id: string }>('/api/contacts', {
+      body: { companyId, contactName: `B1 ${suffix}`, contactStatus: 'Not Contacted' },
+      session,
+    });
+    const c2 = await api<{ id: string }>('/api/contacts', {
+      body: { companyId, contactName: `B2 ${suffix}`, contactStatus: 'Not Contacted' },
+      session,
+    });
+
+    const bulk = await api<{ updatedCount: number }>('/api/contacts/bulk-status', {
+      method: 'POST',
+      body: { contactIds: [c1.data.id, c2.data.id], contactStatus: 'Interested' },
+      session,
+    });
+    expect(bulk.status).toBe(200);
+    expect(bulk.data.updatedCount).toBe(2);
+
+    const b = await api<{ contacts: { id: string; contactStatus: string }[] }>('/api/bootstrap', { session });
+    const u1 = b.data.contacts.find((c) => c.id === c1.data.id);
+    const u2 = b.data.contacts.find((c) => c.id === c2.data.id);
+    expect(u1?.contactStatus).toBe('Interested');
+    expect(u2?.contactStatus).toBe('Interested');
+  });
 });
 
 describe('import prospects', () => {

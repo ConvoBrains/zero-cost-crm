@@ -975,6 +975,56 @@ app.post('/api/contacts', requireAuth, requireCsrf, async (req, res) => {
   res.status(201).json(mapped);
 });
 
+app.post('/api/contacts/bulk-status', requireAuth, requireCsrf, async (req, res) => {
+  const { contactIds, contactStatus } = req.body;
+  if (!Array.isArray(contactIds) || contactIds.length === 0) {
+    res.status(400).json({ error: 'No contacts selected' });
+    return;
+  }
+  const settings = await getAppSettings();
+  if (!isAllowedContactStatus(settings, contactStatus)) {
+    res.status(400).json({
+      error: `Invalid contact status. Allowed: ${settings.contactStatuses.join(', ')}.`,
+    });
+    return;
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      `UPDATE contacts SET contact_status = $1, updated_at = now() WHERE id = ANY($2::uuid[]) RETURNING id, contact_name, contact_status`,
+      [contactStatus, contactIds]
+    );
+
+    const sid = req.user!.sid;
+    const uid = req.user!.sub;
+
+    for (const contact of rows) {
+      await logActivity(
+        {
+          userId: uid,
+          sessionId: sid,
+          eventType: 'contact.status_changed',
+          entityType: 'contact',
+          entityId: String(contact.id),
+          summary: `Status: bulk updated to ${contactStatus} (${contact.contact_name})`,
+          payload: { to: contactStatus, name: contact.contact_name },
+        },
+        client
+      );
+    }
+    
+    await client.query('COMMIT');
+    res.status(200).json({ updatedCount: rows.length });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: 'Failed to update contacts' });
+  } finally {
+    client.release();
+  }
+});
+
 app.patch('/api/contacts/:id', requireAuth, requireCsrf, async (req, res) => {
   const { id } = req.params;
   const b = req.body;
