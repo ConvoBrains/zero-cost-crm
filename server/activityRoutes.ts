@@ -253,6 +253,55 @@ export function registerActivityRoutes(app: Express) {
     res.json({ targets: await getTargets() });
   });
 
+  app.get('/api/activity/export', requireAuth, requireAdmin, async (req, res) => {
+    const { start, end } = parseDateRange(req);
+    const format = String(req.query.format ?? 'csv').toLowerCase();
+
+    const query = `
+      SELECT a.created_at, u.name as user_name, a.event_type, a.entity_type, a.entity_id, a.summary, a.payload
+      FROM activity_events a
+      LEFT JOIN users u ON a.user_id = u.id
+      WHERE a.created_at >= $1 AND a.created_at <= $2
+      ORDER BY a.created_at ASC
+    `;
+    const { rows } = await pool.query(query, [start, end]);
+
+    if (format === 'json') {
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', 'attachment; filename="activity_export.json"');
+      res.json(rows);
+      return;
+    }
+
+    if (format === 'csv') {
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="activity_export.csv"');
+
+      const headers = ['created_at', 'user_name', 'event_type', 'entity_type', 'entity_id', 'summary', 'payload'];
+      const csvRows = [headers.join(',')];
+
+      for (const row of rows) {
+        const line = headers.map((header) => {
+          let val = row[header];
+          if (val instanceof Date) val = val.toISOString();
+          else if (typeof val === 'object' && val !== null) val = JSON.stringify(val);
+          else if (val === null || val === undefined) val = '';
+          else val = String(val);
+
+          if (/[",\n\r]/.test(val)) {
+            return `"${val.replace(/"/g, '""')}"`;
+          }
+          return val;
+        });
+        csvRows.push(line.join(','));
+      }
+      res.send(csvRows.join('\n'));
+      return;
+    }
+
+    res.status(400).json({ error: 'Unsupported format. Use csv or json.' });
+  });
+
   app.post('/api/activity/events', requireAuth, requireCsrf, async (req, res) => {
     const eventType = String(req.body.eventType ?? '');
     const allowed = new Set(['contact.opened', 'company.opened']);
