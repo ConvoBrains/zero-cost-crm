@@ -253,6 +253,72 @@ export function SdrActivity() {
           <button type="button" className={btnGhost} onClick={() => void load()} disabled={loading}>
             Refresh
           </button>
+          <div className="flex gap-1 border-l border-stone-200 pl-2">
+            <button
+              type="button"
+              className={btnGhost}
+              onClick={async () => {
+                try {
+                  setLoading(true);
+                  setError(null);
+                  const url = `/api/activity/export?format=csv&from=${from}&to=${to}`;
+                  const res = await fetch(url, { credentials: 'include' });
+                  if (!res.ok) {
+                    const body = await res.json().catch(() => ({}));
+                    throw new Error(body.error || 'Export failed');
+                  }
+                  const blob = await res.blob();
+                  const objUrl = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = objUrl;
+                  a.download = `activity_export.csv`;
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  URL.revokeObjectURL(objUrl);
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : 'Export failed');
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              disabled={loading}
+            >
+              CSV
+            </button>
+            <button
+              type="button"
+              className={btnGhost}
+              onClick={async () => {
+                try {
+                  setLoading(true);
+                  setError(null);
+                  const url = `/api/activity/export?format=json&from=${from}&to=${to}`;
+                  const res = await fetch(url, { credentials: 'include' });
+                  if (!res.ok) {
+                    const body = await res.json().catch(() => ({}));
+                    throw new Error(body.error || 'Export failed');
+                  }
+                  const blob = await res.blob();
+                  const objUrl = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = objUrl;
+                  a.download = `activity_export.json`;
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  URL.revokeObjectURL(objUrl);
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : 'Export failed');
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              disabled={loading}
+            >
+              JSON
+            </button>
+          </div>
         </div>
       </header>
 
