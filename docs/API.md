@@ -112,6 +112,7 @@ Requires AWS env vars. See `.env.example`.
 | `POST`  | `/api/activity/events`               | Client-side activity event                         |
 | `GET`   | `/api/activity/overview`             | Manager overview                                   |
 | `GET`   | `/api/activity/timeline`             | Event timeline                                     |
+| `GET`   | `/api/activity/export`               | Export activity (CSV/JSON), admin only, `?format=csv|json&from=&to=` |
 | `GET`   | `/api/activity/company/:id/history`  | Company progress (company + linked contact events) |
 | `GET`   | `/api/activity/lead/:entityType/:id` | Lead-centric activity                              |
 
