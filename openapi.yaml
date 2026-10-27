@@ -18,7 +18,7 @@ components:
       required: true
       description: Entity type
       schema:
-        $ref: "#/components/schemas/EntityTypeSchema"
+        $ref: '#/components/schemas/EntityTypeSchema'
 
     id:
       name: id
@@ -68,7 +68,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ErrorResponse"
+            $ref: '#/components/schemas/ErrorResponse'
     NoContent:
       description: No Content.
     NotFound:
@@ -76,43 +76,43 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ErrorResponse"
+            $ref: '#/components/schemas/ErrorResponse'
     BadRequest:
       description: Invalid request.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ErrorResponse"
+            $ref: '#/components/schemas/ErrorResponse'
     TooManyRequests:
       description: Too many requests. Please try again later.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ErrorResponse"
+            $ref: '#/components/schemas/ErrorResponse'
     Unauthorized:
       description: Missing, invalid, or expired authentication session.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ErrorResponse"
+            $ref: '#/components/schemas/ErrorResponse'
     InvalidCredentials:
       description: Invalid email or password.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ErrorResponse"
+            $ref: '#/components/schemas/ErrorResponse'
     Forbidden:
       description: Insufficient permissions.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ErrorResponse"
+            $ref: '#/components/schemas/ErrorResponse'
     CsrfRequired:
       description: Missing or invalid CSRF token. Requires the `csrfToken` cookie value to be echoed back in the `X-CSRF-Token` header.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ErrorResponse"
+            $ref: '#/components/schemas/ErrorResponse'
   securitySchemes:
     cookieAuth:
       type: apiKey
@@ -144,7 +144,7 @@ components:
           format: password
           description: Minimum length; 8 characters.
         role:
-          $ref: "#/components/schemas/UserRoles"
+          $ref: '#/components/schemas/UserRoles'
     User:
       type: object
       required:
@@ -162,7 +162,7 @@ components:
         name:
           type: string
         role:
-          $ref: "#/components/schemas/UserRoles"
+          $ref: '#/components/schemas/UserRoles'
     UserRoles:
       type: string
       enum:
@@ -187,7 +187,7 @@ components:
         name:
           type: string
         role:
-          $ref: "#/components/schemas/UserRoles"
+          $ref: '#/components/schemas/UserRoles'
         createdAt:
           type: string
           format: date-time
@@ -229,22 +229,22 @@ components:
         estimatedCallVolume:
           type:
             - integer
-            - "null"
+            - 'null'
         employeeCount:
           type:
             - integer
-            - "null"
+            - 'null'
         intent:
           type: string
 
         offeredPrice:
           type:
             - number
-            - "null"
+            - 'null'
         primaryContactId:
           type:
             - string
-            - "null"
+            - 'null'
           format: uuid
 
         assignedTo:
@@ -253,12 +253,12 @@ components:
         lastContacted:
           type:
             - string
-            - "null"
+            - 'null'
           format: date
         nextFollowUp:
           type:
             - string
-            - "null"
+            - 'null'
           format: date
         notes:
           type: string
@@ -291,31 +291,31 @@ components:
         estimatedCallVolume:
           type:
             - integer
-            - "null"
+            - 'null'
         employeeCount:
           type:
             - integer
-            - "null"
+            - 'null'
         intent:
           type: string
         offeredPrice:
           type:
             - number
-            - "null"
+            - 'null'
         primaryContactId:
           type:
             - string
-            - "null"
+            - 'null'
           format: uuid
         lastContacted:
           type:
             - string
-            - "null"
+            - 'null'
           format: date
         nextFollowUp:
           type:
             - string
-            - "null"
+            - 'null'
           format: date
         notes:
           type: string
@@ -343,31 +343,31 @@ components:
         estimatedCallVolume:
           type:
             - integer
-            - "null"
+            - 'null'
         employeeCount:
           type:
             - integer
-            - "null"
+            - 'null'
         intent:
           type: string
         offeredPrice:
           type:
             - number
-            - "null"
+            - 'null'
         primaryContactId:
           type:
             - string
-            - "null"
+            - 'null'
           format: uuid
         lastContacted:
           type:
             - string
-            - "null"
+            - 'null'
           format: date
         nextFollowUp:
           type:
             - string
-            - "null"
+            - 'null'
           format: date
         notes:
           type: string
@@ -385,19 +385,19 @@ components:
     Contact:
       type: object
       required:
-       - id
-       - contactName
-       - companyId
-       - role
-       - phone
-       - email
-       - linkedInProfile
-       - contactStatus
-       - champion
-       - lastContacted
-       - nextFollowUp
-       - notes
-       - createdAt
+        - id
+        - contactName
+        - companyId
+        - role
+        - phone
+        - email
+        - linkedInProfile
+        - contactStatus
+        - champion
+        - lastContacted
+        - nextFollowUp
+        - notes
+        - createdAt
       properties:
         id:
           type: string
@@ -407,7 +407,7 @@ components:
         companyId:
           type:
             - string
-            - "null"
+            - 'null'
           format: uuid
         role:
           type: string
@@ -425,12 +425,12 @@ components:
         lastContacted:
           type:
             - string
-            - "null"
+            - 'null'
           format: date
         nextFollowUp:
           type:
             - string
-            - "null"
+            - 'null'
           format: date
         notes:
           type: string
@@ -440,14 +440,14 @@ components:
     CreateContactRequest:
       type: object
       required:
-       - contactName
+        - contactName
       properties:
         contactName:
           type: string
         companyId:
           type:
             - string
-            - "null"
+            - 'null'
           format: uuid
         role:
           type: string
@@ -465,12 +465,12 @@ components:
         lastContacted:
           type:
             - string
-            - "null"
+            - 'null'
           format: date
         nextFollowUp:
           type:
             - string
-            - "null"
+            - 'null'
           format: date
         notes:
           type: string
@@ -482,7 +482,7 @@ components:
         companyId:
           type:
             - string
-            - "null"
+            - 'null'
           format: uuid
         role:
           type: string
@@ -500,12 +500,12 @@ components:
         lastContacted:
           type:
             - string
-            - "null"
+            - 'null'
           format: date
         nextFollowUp:
           type:
             - string
-            - "null"
+            - 'null'
           format: date
         notes:
           type: string
@@ -572,15 +572,15 @@ components:
           additionalProperties:
             type:
               - string
-              - "null"
+              - 'null'
         discoveryQuestions:
           type: array
           items:
-            $ref: "#/components/schemas/DiscoveryQuestion"
+            $ref: '#/components/schemas/DiscoveryQuestion'
         allowedEmailDomain:
           type:
             - string
-            - "null"
+            - 'null'
         allowedEmailDomains:
           type: array
           items:
@@ -611,11 +611,11 @@ components:
           additionalProperties:
             type:
               - string
-              - "null"
+              - 'null'
         discoveryQuestions:
           type: array
           items:
-            $ref: "#/components/schemas/DiscoveryQuestion"
+            $ref: '#/components/schemas/DiscoveryQuestion'
     SettingsResponse:
       type: object
       required:
@@ -647,15 +647,15 @@ components:
           additionalProperties:
             type:
               - string
-              - "null"
+              - 'null'
         discoveryQuestions:
           type: array
           items:
-            $ref: "#/components/schemas/DiscoveryQuestion"
+            $ref: '#/components/schemas/DiscoveryQuestion'
         updatedAt:
           type:
             - string
-            - "null"
+            - 'null'
 
     LoginRequest:
       type: object
@@ -679,7 +679,7 @@ components:
         - user
       properties:
         user:
-          $ref: "#/components/schemas/User"
+          $ref: '#/components/schemas/User'
     HeartBeatResponse:
       type: object
       required:
@@ -745,7 +745,7 @@ components:
         employees:
           type:
             - integer
-            - "null"
+            - 'null'
         industry:
           type: string
     ImportProspectsRequest:
@@ -756,10 +756,9 @@ components:
         rows:
           type: array
           items:
-            $ref: "#/components/schemas/Prospect"
+            $ref: '#/components/schemas/Prospect'
     ImportProspectsResponse:
-      type:
-        object
+      type: object
       required:
         - companiesCreated
         - companiesUpdated
@@ -832,7 +831,7 @@ components:
         notes:
           type:
             - string
-            - "null"
+            - 'null'
         stageAtCall:
           type: string
     ConversationsPresignResponse:
@@ -893,7 +892,7 @@ components:
         - entityId
       properties:
         eventType:
-          $ref: "#/components/schemas/EventType"
+          $ref: '#/components/schemas/EventType'
         entityId:
           type: string
           format: uuid
@@ -926,12 +925,12 @@ components:
         entityId:
           type:
             - string
-            - "null"
+            - 'null'
           format: uuid
         contactName:
           type:
             - string
-            - "null"
+            - 'null'
         summary:
           type: string
         payload:
@@ -975,14 +974,14 @@ components:
         - events
       properties:
         entityType:
-          $ref: "#/components/schemas/EntityTypeSchema"
+          $ref: '#/components/schemas/EntityTypeSchema'
         entityId:
           type: string
           format: uuid
         events:
           type: array
           items:
-            $ref: "#/components/schemas/LeadHistoryEvent"
+            $ref: '#/components/schemas/LeadHistoryEvent'
     TimelineEvent:
       type: object
       required:
@@ -1006,7 +1005,7 @@ components:
         sessionId:
           type:
             - string
-            - "null"
+            - 'null'
           format: uuid
         eventType:
           type: string
@@ -1015,7 +1014,7 @@ components:
         entityId:
           type:
             - string
-            - "null"
+            - 'null'
           format: uuid
         summary:
           type: string
@@ -1047,7 +1046,7 @@ components:
         events:
           type: array
           items:
-            $ref: "#/components/schemas/TimelineEvent"
+            $ref: '#/components/schemas/TimelineEvent'
     SessionSummary:
       type: object
       required:
@@ -1061,11 +1060,11 @@ components:
         loginTime:
           type:
             - string
-            - "null"
+            - 'null'
         logoutTime:
           type:
             - string
-            - "null"
+            - 'null'
         activeMs:
           type: integer
         idleMs:
@@ -1079,12 +1078,12 @@ components:
         firstLogin:
           type:
             - string
-            - "null"
+            - 'null'
           format: date-time
         lastActivity:
           type:
             - string
-            - "null"
+            - 'null'
           format: date-time
         endReasons:
           type: array
@@ -1185,19 +1184,19 @@ components:
         role:
           type: string
         session:
-          $ref: "#/components/schemas/SessionSummary"
+          $ref: '#/components/schemas/SessionSummary'
         metrics:
-          $ref: "#/components/schemas/CallMetrics"
+          $ref: '#/components/schemas/CallMetrics'
         productivity:
-          $ref: "#/components/schemas/ProductivityStats"
+          $ref: '#/components/schemas/ProductivityStats'
         targets:
-          $ref: "#/components/schemas/ActivityTargets"
+          $ref: '#/components/schemas/ActivityTargets'
         progress:
-          $ref: "#/components/schemas/ActivityTargets"
+          $ref: '#/components/schemas/ActivityTargets'
         alerts:
           type: array
           items:
-            $ref: "#/components/schemas/ActivityAlert"
+            $ref: '#/components/schemas/ActivityAlert'
     ActivityOverviewResponse:
       type: object
       required:
@@ -1225,25 +1224,25 @@ components:
         userId:
           type: string
         targets:
-          $ref: "#/components/schemas/ActivityTargets"
+          $ref: '#/components/schemas/ActivityTargets'
         session:
           oneOf:
-            - $ref: "#/components/schemas/SessionSummary"
-            - type: "null"
+            - $ref: '#/components/schemas/SessionSummary'
+            - type: 'null'
         metrics:
-          $ref: "#/components/schemas/CallMetrics"
+          $ref: '#/components/schemas/CallMetrics'
         productivity:
-          $ref: "#/components/schemas/ProductivityStats"
+          $ref: '#/components/schemas/ProductivityStats'
         progress:
-          $ref: "#/components/schemas/ActivityTargets"
+          $ref: '#/components/schemas/ActivityTargets'
         alerts:
           type: array
           items:
-            $ref: "#/components/schemas/ActivityAlert"
+            $ref: '#/components/schemas/ActivityAlert'
         agents:
           type: array
           items:
-            $ref: "#/components/schemas/AgentOverview"
+            $ref: '#/components/schemas/AgentOverview'
     EventType:
       type: string
       enum:
@@ -1269,7 +1268,7 @@ components:
         events:
           type: array
           items:
-            $ref: "#/components/schemas/CompanyHistoryEvent"
+            $ref: '#/components/schemas/CompanyHistoryEvent'
 
 security: #as mentioned in API.md, all endpoints require auth
   - cookieAuth: []
@@ -1281,7 +1280,7 @@ paths:
       security: []
       summary: Health check endpoint
       responses:
-        "200":
+        '200':
           description: Successful health check
           content:
             application/json:
@@ -1301,18 +1300,18 @@ paths:
       security: []
       summary: Public instance configuration
       responses:
-        "200":
+        '200':
           description: Successful config response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ConfigResponse"
-        "500":
+                $ref: '#/components/schemas/ConfigResponse'
+        '500':
           description: Failed to load config
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: '#/components/schemas/ErrorResponse'
   /api/settings:
     patch:
       operationId: updateSettings
@@ -1326,24 +1325,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SettingsPatch"
+              $ref: '#/components/schemas/SettingsPatch'
       responses:
-        "200":
+        '200':
           description: Application settings updated.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SettingsResponse"
-        "400":
+                $ref: '#/components/schemas/SettingsResponse'
+        '400':
           description: Application settings failed. (Invalid settings)
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /api/auth/login:
     post:
@@ -1355,9 +1354,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/LoginRequest"
+              $ref: '#/components/schemas/LoginRequest'
       responses:
-        "200":
+        '200':
           description: >-
             Successful user login. Sets two cookies via Set-Cookie: `token`
             (HttpOnly, SameSite=Lax, Secure in production — the session JWT,
@@ -1367,17 +1366,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LoginResponse"
-        "400":
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
           description: Email address is not allowed.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          $ref: "#/components/responses/InvalidCredentials"
-        "429":
-          $ref: "#/components/responses/TooManyRequests"
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/InvalidCredentials'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/auth/logout:
     post:
       operationId: logout
@@ -1395,29 +1394,29 @@ paths:
                     - expired
                     - manual
       responses:
-        "204":
+        '204':
           description: Successful logout.
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /api/auth/heartbeat:
     post:
       operationId: heartbeat
       summary: Touch active session.
       responses:
-        "200":
+        '200':
           description: Session is valid
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HeartBeatResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                $ref: '#/components/schemas/HeartBeatResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /api/auth/me:
     get:
       operationId: getCurrentUser
       summary: Current user
       responses:
-        "200":
+        '200':
           description: Contains current user object.
           content:
             application/json:
@@ -1427,9 +1426,9 @@ paths:
                   - user
                 properties:
                   user:
-                    $ref: "#/components/schemas/User"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
   /api/users:
     get:
@@ -1437,7 +1436,7 @@ paths:
       summary: Retrieves all users.
       description: Requires an authenticated admin user.
       responses:
-        "200":
+        '200':
           description: Returns a list of all users.
           content:
             application/json:
@@ -1449,11 +1448,11 @@ paths:
                   users:
                     type: array
                     items:
-                      $ref: "#/components/schemas/UserResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                      $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     post:
       operationId: createUser
       summary: Creates a new user.
@@ -1463,9 +1462,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateUserRequest"
+              $ref: '#/components/schemas/CreateUserRequest'
       responses:
-        "201":
+        '201':
           description: Returns the new user.
           content:
             application/json:
@@ -1475,30 +1474,30 @@ paths:
                   - user
                 properties:
                   user:
-                    $ref: "#/components/schemas/UserResponse"
-        "400":
+                    $ref: '#/components/schemas/UserResponse'
+        '400':
           description: One or more of the fields have invalid data.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "409":
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
           description: Email is already in use by another user.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/users/roles:
     get:
       operationId: listUserRoles
       summary: Allowed user roles.
       description: Requires an authenticated admin user.
       responses:
-        "200":
+        '200':
           description: Returns the list of allowed roles.
           content:
             application/json:
@@ -1510,18 +1509,18 @@ paths:
                   roles:
                     type: array
                     items:
-                      $ref: "#/components/schemas/UserRoles"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                      $ref: '#/components/schemas/UserRoles'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /api/bootstrap:
     get:
       operationId: getBootstrapData
       summary: Retrieve companies and contacts.
       responses:
-        "200":
+        '200':
           description: Returns all companies and contacts required to initialize the CRM application.
           content:
             application/json:
@@ -1534,26 +1533,26 @@ paths:
                   companies:
                     type: array
                     items:
-                      $ref: "#/components/schemas/Company"
+                      $ref: '#/components/schemas/Company'
                   contacts:
                     type: array
                     items:
-                      $ref: "#/components/schemas/Contact"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                      $ref: '#/components/schemas/Contact'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /api/metrics:
     get:
       operationId: getMetrics
       summary: Retrieves the metrics.
       responses:
-        "200":
+        '200':
           description: Metrics successfully retrieved.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Metrics"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                $ref: '#/components/schemas/Metrics'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
   /api/companies:
     post:
@@ -1564,21 +1563,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateCompanyRequest"
+              $ref: '#/components/schemas/CreateCompanyRequest'
       responses:
-        "201":
+        '201':
           description: Company created successfully.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Company"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                $ref: '#/components/schemas/Company'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /api/companies/{id}:
     parameters:
-      - $ref: "#/components/parameters/id"
+      - $ref: '#/components/parameters/id'
     patch:
       operationId: updateCompany
       summary: Update a company.
@@ -1587,33 +1586,33 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PatchCompanyRequest"
+              $ref: '#/components/schemas/PatchCompanyRequest'
       responses:
-        "200":
+        '200':
           description: Company updated successfully.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Company"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                $ref: '#/components/schemas/Company'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
     delete:
       operationId: deleteCompany
       summary: Delete a company.
       description: Requires an authorized admin user.
       responses:
-        "204":
-          $ref: "#/components/responses/NoContent"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/contacts:
     post:
       operationId: createContact
@@ -1623,21 +1622,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateContactRequest"
+              $ref: '#/components/schemas/CreateContactRequest'
       responses:
-        "201":
+        '201':
           description: Contact created successfully.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Contact"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                $ref: '#/components/schemas/Contact'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /api/contacts/{id}:
     parameters:
-      - $ref: "#/components/parameters/id"
+      - $ref: '#/components/parameters/id'
     patch:
       operationId: updateContact
       summary: Update a contact.
@@ -1646,15 +1645,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PatchContactRequest"
+              $ref: '#/components/schemas/PatchContactRequest'
       responses:
-        "200":
+        '200':
           description: Contact updated successfully.
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: "#/components/schemas/Contact"
+                  - $ref: '#/components/schemas/Contact'
                   - type: object
                     required:
                       - movedCompanyStage
@@ -1662,26 +1661,26 @@ paths:
                       movedCompanyStage:
                         type:
                           - string
-                          - "null"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "400":
-          $ref: "#/components/responses/BadRequest"
+                          - 'null'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '400':
+          $ref: '#/components/responses/BadRequest'
     delete:
       operationId: deleteContact
       summary: Delete a contact.
       description: Requires an authorized admin user.
       responses:
-        "204":
-          $ref: "#/components/responses/NoContent"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /api/import/prospects:
     post:
@@ -1692,18 +1691,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ImportProspectsRequest"
+              $ref: '#/components/schemas/ImportProspectsRequest'
       responses:
-        "200":
+        '200':
           description: Import successful.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ImportProspectsResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                $ref: '#/components/schemas/ImportProspectsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
   /api/conversations/presign:
     post:
@@ -1714,44 +1713,44 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ConversationsPresignRequest"
+              $ref: '#/components/schemas/ConversationsPresignRequest'
       responses:
-        "201":
+        '201':
           description: Started conversation upload.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ConversationsPresignResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
+                $ref: '#/components/schemas/ConversationsPresignResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /api/conversations/{id}/complete:
     parameters:
-      - $ref: "#/components/parameters/id"
+      - $ref: '#/components/parameters/id'
     post:
       operationId: completeConversationUpload
       summary: Finalize upload.
       responses:
-        "200":
+        '200':
           description: Upload successful.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Conversation"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "409":
-          $ref: "#/components/responses/DuplicateRequest"
+                $ref: '#/components/schemas/Conversation'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/DuplicateRequest'
   /api/conversations:
     get:
       operationId: listConversations
@@ -1772,24 +1771,24 @@ paths:
             format: uuid
       summary: List conversations (by contactId / companyId).
       responses:
-        "200":
+        '200':
           description: Conversation retrieval successful.
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Conversation"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                  $ref: '#/components/schemas/Conversation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /api/conversations/{id}/play:
     get:
       operationId: getConversationPlayUrl
       summary: Presigned play URL.
       parameters:
-        - $ref: "#/components/parameters/id"
+        - $ref: '#/components/parameters/id'
       responses:
-        "200":
+        '200':
           description: Presigned URL successfully retrieved.
           content:
             application/json:
@@ -1801,26 +1800,26 @@ paths:
                   playUrl:
                     type: string
                     format: uri
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /api/conversations/{id}:
     delete:
       operationId: deleteConversation
       summary: Delete a conversation.
       description: Requires an authorized admin user.
       parameters:
-        - $ref: "#/components/parameters/id"
+        - $ref: '#/components/parameters/id'
       responses:
-        "204":
-          $ref: "#/components/responses/NoContent"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /api/activity/sdrs:
     get:
@@ -1828,7 +1827,7 @@ paths:
       summary: Returns the SDR roster.
       description: Requires an authorized admin user.
       responses:
-        "200":
+        '200':
           description: SDR roster successfully retrieved.
           content:
             application/json:
@@ -1840,18 +1839,18 @@ paths:
                   sdrs:
                     type: array
                     items:
-                      $ref: "#/components/schemas/Sdr"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                      $ref: '#/components/schemas/Sdr'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/activity/targets:
     get:
       operationId: getActivityTargets
       summary: Fetches daily targets.
       description: Requires an authorized admin user.
       responses:
-        "200":
+        '200':
           description: Targets retrieved successfully.
           content:
             application/json:
@@ -1861,11 +1860,11 @@ paths:
                   - targets
                 properties:
                   targets:
-                    $ref: "#/components/schemas/ActivityTargets"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                    $ref: '#/components/schemas/ActivityTargets'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     patch:
       operationId: updateActivityTargets
       summary: Update targets.
@@ -1875,9 +1874,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ActivityTargets"
+              $ref: '#/components/schemas/ActivityTargets'
       responses:
-        "200":
+        '200':
           description: Targets updated successfully.
           content:
             application/json:
@@ -1885,13 +1884,13 @@ paths:
                 type: object
                 properties:
                   targets:
-                    $ref: "#/components/schemas/ActivityTargets"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                    $ref: '#/components/schemas/ActivityTargets'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/activity/events:
     post:
       operationId: logActivityEvent
@@ -1901,99 +1900,96 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ActivityEvent"
+              $ref: '#/components/schemas/ActivityEvent'
       responses:
-        "204":
-          $ref: "#/components/responses/NoContent"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /api/activity/company/{id}/history:
     get:
       operationId: getCompanyActivityHistory
       summary: Company progress
       parameters:
-        - $ref: "#/components/parameters/id"
+        - $ref: '#/components/parameters/id'
       responses:
-        "200":
+        '200':
           description: Event history successfully retrieved.
           content:
             application/json:
               schema:
-                  $ref: "#/components/schemas/CompanyHistoryResponse"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                $ref: '#/components/schemas/CompanyHistoryResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /api/activity/lead/{entityType}/{id}:
     get:
       operationId: getLeadActivityHistory
       parameters:
-        - $ref: "#/components/parameters/id"
-        - $ref: "#/components/parameters/entityType"
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/entityType'
       summary: Retrieves activity for a lead.
       responses:
-        "200":
+        '200':
           description: Activity retrieved successfully.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LeadHistoryResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                $ref: '#/components/schemas/LeadHistoryResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/activity/overview:
     get:
       operationId: getActivityOverview
       summary: Manager overview dashboard
       description: Requires an authorized admin user.
       parameters:
-        - $ref: "#/components/parameters/userIdQuery"
-        - $ref: "#/components/parameters/fromQuery"
-        - $ref: "#/components/parameters/toQuery"
-        - $ref: "#/components/parameters/qQuery"
+        - $ref: '#/components/parameters/userIdQuery'
+        - $ref: '#/components/parameters/fromQuery'
+        - $ref: '#/components/parameters/toQuery'
+        - $ref: '#/components/parameters/qQuery'
       responses:
-        "200":
+        '200':
           description: Activity overview metrics successfully retrieved.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ActivityOverviewResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
+                $ref: '#/components/schemas/ActivityOverviewResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /api/activity/timeline:
     get:
       operationId: getActivityTimeline
       summary: Event timeline
       description: Requires an authorized admin user.
       parameters:
-        - $ref: "#/components/parameters/userIdQuery"
-        - $ref: "#/components/parameters/fromQuery"
-        - $ref: "#/components/parameters/toQuery"
-        - $ref: "#/components/parameters/qQuery"
+        - $ref: '#/components/parameters/userIdQuery'
+        - $ref: '#/components/parameters/fromQuery'
+        - $ref: '#/components/parameters/toQuery'
+        - $ref: '#/components/parameters/qQuery'
       responses:
-        "200":
+        '200':
           description: Timeline events successfully retrieved.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ActivityTimelineResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-
-
-
+                $ref: '#/components/schemas/ActivityTimelineResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'

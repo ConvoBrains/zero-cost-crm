@@ -40,9 +40,9 @@ Authentication uses a 12-hour JWT stored in an `HttpOnly` cookie.
 
 The authentication cookie uses:
 
-* `HttpOnly` to prevent frontend JavaScript from reading the JWT
-* `Secure` in production so the cookie is only sent over HTTPS
-* `SameSite=Lax` to reduce cross-site request exposure
+- `HttpOnly` to prevent frontend JavaScript from reading the JWT
+- `Secure` in production so the cookie is only sent over HTTPS
+- `SameSite=Lax` to reduce cross-site request exposure
 
 The login API returns user information only and does not return the JWT in the response body.
 
@@ -52,8 +52,8 @@ Cookie-authenticated state-changing requests are protected using a double-submit
 
 On login, the server sets:
 
-* `token` — HttpOnly authentication cookie
-* `csrfToken` — frontend-readable CSRF cookie
+- `token` — HttpOnly authentication cookie
+- `csrfToken` — frontend-readable CSRF cookie
 
 For mutating requests, the frontend sends the CSRF value in the `X-CSRF-Token` header. The server verifies that the cookie and header values match.
 
@@ -76,4 +76,3 @@ Production deployments should use HTTPS so `Secure` cookies are enforced.
 HttpOnly cookies reduce the risk of JWT theft through JavaScript, but they do not prevent XSS.
 
 The CSRF token is intentionally readable by frontend JavaScript, so CSRF protection should not be considered protection against XSS.
-
