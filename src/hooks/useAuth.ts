@@ -4,8 +4,6 @@ import { api } from '../lib/api';
 import { useIdleSession } from './useIdleSession';
 import { useAppConfig } from './useAppConfig';
 
-
-
 export function useAuth() {
   const { config, ready: configReady, refresh: refreshConfig } = useAppConfig();
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -18,8 +16,7 @@ export function useAuth() {
       .then(({ user: u }) => {
         setUser(u);
       })
-      .catch(() => {
-      })
+      .catch(() => {})
       .finally(() => setReady(true));
   }, [configReady]);
 
@@ -63,7 +60,9 @@ export function useAuth() {
 
   const { warnSeconds } = useIdleSession({
     enabled: !!user,
-    onIdleLogout: () => { setUser(null) },
+    onIdleLogout: () => {
+      setUser(null);
+    },
   });
 
   return {

@@ -9,6 +9,7 @@ Unless noted, endpoints require `Authorization: Bearer <jwt>`.
 A complete machine-readable OpenAPI 3.1 contract is available in [`openapi.yaml`](../openapi.yaml).
 
 ### How to view the spec
+
 - **Interactive UI**: Visit `/api/docs` when running the server locally (or set `ENABLE_API_DOCS=true` in production).
 - **Redocly CLI**: Run `npx @redocly/cli build-docs openapi.yaml` to generate an interactive HTML documentation bundle (`redoc-static.html`).
 - **Swagger Editor**: Copy [`openapi.yaml`](../openapi.yaml) into [editor.swagger.io](https://editor.swagger.io).
@@ -104,17 +105,17 @@ Requires AWS env vars. See `.env.example`.
 
 ## Activity (admin / founder)
 
-| Method  | Path                                 | Description                                        |
-| ------- | ------------------------------------ | -------------------------------------------------- |
-| `GET`   | `/api/activity/sdrs`                 | SDR roster                                         |
-| `GET`   | `/api/activity/targets`              | Daily targets                                      |
-| `PATCH` | `/api/activity/targets`              | Update targets                                     |
-| `POST`  | `/api/activity/events`               | Client-side activity event                         |
-| `GET`   | `/api/activity/overview`             | Manager overview                                   |
-| `GET`   | `/api/activity/timeline`             | Event timeline                                     |
-| `GET`   | `/api/activity/export`               | Export activity (CSV/JSON), admin only, `?format=csv|json&from=&to=` |
-| `GET`   | `/api/activity/company/:id/history`  | Company progress (company + linked contact events) |
-| `GET`   | `/api/activity/lead/:entityType/:id` | Lead-centric activity                              |
+| Method  | Path                                 | Description                                          |
+| ------- | ------------------------------------ | ---------------------------------------------------- |
+| `GET`   | `/api/activity/sdrs`                 | SDR roster                                           |
+| `GET`   | `/api/activity/targets`              | Daily targets                                        |
+| `PATCH` | `/api/activity/targets`              | Update targets                                       |
+| `POST`  | `/api/activity/events`               | Client-side activity event                           |
+| `GET`   | `/api/activity/overview`             | Manager overview                                     |
+| `GET`   | `/api/activity/timeline`             | Event timeline                                       |
+| `GET`   | `/api/activity/export`               | Export activity (CSV/JSON), admin only, `?format=csv | json&from=&to=` |
+| `GET`   | `/api/activity/company/:id/history`  | Company progress (company + linked contact events)   |
+| `GET`   | `/api/activity/lead/:entityType/:id` | Lead-centric activity                                |
 
 Deep-link (SPA): `/?page=pipeline&companyId=<uuid>` opens Sales Pipeline with that company dialog.
 
