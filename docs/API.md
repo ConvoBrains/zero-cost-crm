@@ -105,17 +105,17 @@ Requires AWS env vars. See `.env.example`.
 
 ## Activity (admin / founder)
 
-| Method  | Path                                 | Description                                        |
-| ------- | ------------------------------------ | -------------------------------------------------- |
-| `GET`   | `/api/activity/sdrs`                 | SDR roster                                         |
-| `GET`   | `/api/activity/targets`              | Daily targets                                      |
-| `PATCH` | `/api/activity/targets`              | Update targets                                     |
-| `POST`  | `/api/activity/events`               | Client-side activity event                         |
-| `GET`   | `/api/activity/overview`             | Manager overview                                   |
-| `GET`   | `/api/activity/timeline`             | Event timeline                                     |
-| `GET`   | `/api/activity/export`               | Export activity (CSV/JSON), admin only, `?format=csv|json&from=&to=` |
-| `GET`   | `/api/activity/company/:id/history`  | Company progress (company + linked contact events) |
-| `GET`   | `/api/activity/lead/:entityType/:id` | Lead-centric activity                              |
+| Method  | Path                                 | Description                                          |
+| ------- | ------------------------------------ | ---------------------------------------------------- |
+| `GET`   | `/api/activity/sdrs`                 | SDR roster                                           |
+| `GET`   | `/api/activity/targets`              | Daily targets                                        |
+| `PATCH` | `/api/activity/targets`              | Update targets                                       |
+| `POST`  | `/api/activity/events`               | Client-side activity event                           |
+| `GET`   | `/api/activity/overview`             | Manager overview                                     |
+| `GET`   | `/api/activity/timeline`             | Event timeline                                       |
+| `GET`   | `/api/activity/export`               | Export activity (CSV/JSON), admin only, `?format=csv | json&from=&to=` |
+| `GET`   | `/api/activity/company/:id/history`  | Company progress (company + linked contact events)   |
+| `GET`   | `/api/activity/lead/:entityType/:id` | Lead-centric activity                                |
 
 Deep-link (SPA): `/?page=pipeline&companyId=<uuid>` opens Sales Pipeline with that company dialog.
 

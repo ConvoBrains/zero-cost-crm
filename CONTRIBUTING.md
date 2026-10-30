@@ -30,19 +30,19 @@ npm test                  # unit tests
 npm run ci                # lint + format:check + unit + build
 ```
 
-**Format:** Prettier is the project formatter (see `.prettierrc`). Run `npm run format` before you push. Local `npm run ci` includes `format:check`. GitHub Actions does not yet run `format:check` in the unit job (workflow update pending); until then, treat format check as required for local and PR readiness.
+**Format:** Prettier is the project formatter (see `.prettierrc`). Run `npm run format` before pushing. GitHub Actions runs `format:check` as part of the CI workflow. Ensure `npm run format:check` passes before submitting your pull request.
 
 ---
 
 ## Find something to work on
 
-1. Prefer **[unassigned good first issues](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22+no%3Aassignee)** so you’re not blocked on someone else’s claim.
+1. Prefer **[unassigned good first issues](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22+no%3Aassignee)** so you're not blocked on someone else's claim.
 2. Want a showcase PR? Browse the **[`fun` label](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3Afun)** (command palette, empty states, docs GIF, etc.).
 3. Or pick any [help wanted](https://github.com/ConvoBrains/zero-cost-crm/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22) ticket.
-4. **Comment on the issue** to claim it (e.g. “I’d like to take this”). We’ll assign you — usually within a day.
+4. **Comment on the issue** to claim it (e.g. "I'd like to take this"). We'll assign you — usually within a day.
 5. Prefer one focused issue at a time.
 
-If you’re new to open source, start with labels **`first-timers-only`**, **`good first issue`**, or **`easy`**. Questions welcome in [Discussions](https://github.com/ConvoBrains/zero-cost-crm/discussions).
+If you're new to open source, start with labels **`first-timers-only`**, **`good first issue`**, or **`easy`**. Questions welcome in [Discussions](https://github.com/ConvoBrains/zero-cost-crm/discussions).
 
 ---
 
@@ -87,7 +87,7 @@ git checkout -b docs/your-short-description
 | Shared helpers / pure logic | `npm test`                                              | `testing/unit/` (`src/lib` → unit tests) |
 | API or DB behavior          | `npm run test:api:prep && npm run test:api` (Docker DB) | `testing/functional/api/`                |
 | UI flows                    | `make test-e2e` (Docker + Playwright)                   | `testing/e2e/`                           |
-| Docs only                   | Note “docs-only” in the PR                              | —                                        |
+| Docs only                   | Note "docs-only" in the PR                              | —                                        |
 
 Always run at least:
 
@@ -101,7 +101,7 @@ When behavior changes, **add or update tests**. GitHub CI also runs API + e2e; l
 
 ```bash
 npm run test:api:prep && npm run test:api   # API tests (needs Docker DB)
-make test-e2e                               # UI e2e
+make test-e2e                                # UI e2e
 ```
 
 ---
@@ -113,59 +113,5 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 ```text
 feat: add CSV export for activity audit log
 fix: correct low-stock threshold in inventory API
-docs: expand CONTRIBUTING for first-time contributors
-test: cover settings PATCH validation
-chore: add Prettier config
+docs: expand CONTRIBUTING
 ```
-
-Keep the subject short; put detail in the body if needed.
-
----
-
-## Pull requests
-
-1. Push your branch and open a PR against **`ConvoBrains/zero-cost-crm` `main`**.
-2. Fill out [.github/PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md).
-3. Link the issue: `Closes #123` or `Fixes #123`.
-
-### PR checklist
-
-- [ ] PR description explains **what** and **why**
-- [ ] Linked issue
-- [ ] `npm test` (and `npm run test:api` / `make test-e2e` if API/UI flows changed)
-- [ ] New/updated tests for behavior changes (or marked docs-only)
-- [ ] `npm run lint` clean
-- [ ] `npm run format:check` clean
-- [ ] No secrets / PII
-- [ ] CI green
-
-Keep PRs focused. One issue → one PR when possible.
-
----
-
-## Issue labels (glossary)
-
-| Label                      | Meaning                                          |
-| -------------------------- | ------------------------------------------------ |
-| `good first issue`         | Good for newcomers                               |
-| `first-timers-only`        | Reserved for first-time open source contributors |
-| `help wanted`              | Maintainers want community help                  |
-| `easy` / `medium` / `hard` | Scope / difficulty                               |
-| `documentation`            | Docs-only or docs-primary work                   |
-| `frontend`                 | UI / React / Tailwind                            |
-| `backend`                  | API / Express / DB                               |
-| `testing`                  | Tests and CI quality                             |
-| `bug` / `enhancement`      | Broken behavior vs new capability                |
-| `a11y`                     | Accessibility                                    |
-| `security`                 | Security hardening (see also SECURITY.md)        |
-
-Issue templates live in [`.github/ISSUE_TEMPLATE/`](.github/ISSUE_TEMPLATE/).
-
----
-
-## Questions
-
-- Product / setup questions: open a [question](https://github.com/ConvoBrains/zero-cost-crm/issues/new?template=question.md) issue.
-- Unsure how to approach a task: comment on the issue before large changes.
-
-Welcome aboard — even small docs and test PRs help.

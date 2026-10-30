@@ -1014,7 +1014,7 @@ app.post('/api/contacts/bulk-status', requireAuth, requireCsrf, async (req, res)
         client
       );
     }
-    
+
     await client.query('COMMIT');
     res.status(200).json({ updatedCount: rows.length });
   } catch (_e) {
