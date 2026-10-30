@@ -120,21 +120,21 @@ Skip it if you need enterprise CPQ, multi-currency ERP integrations, or a full m
 | **Manager alerts**    | No login by 10:30, zero connects, missing follow-ups          |
 | **Roles**             | Founder / admin / SDR                                         |
 | **Self-hosted**       | Your Postgres, your rules                                     |
-| **Instance settings** | Brand, stages, statuses, champion auto-move map (Settings UI) |
+| **Instance settings** | Brand, stages, statuses, champion auto-move map, discovery questions (Settings UI) |
 
 ### Configuring your instance
 
 Keep the **code** generic. Put company-specific values in env or the database:
 
-| What                                                           | Where                                                                                                                                                                      |
-| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Postgres / JWT / email domain / S3 / CORS                      | Server `.env` (`DATABASE_URL`, `JWT_SECRET`, `ALLOWED_EMAIL_DOMAIN`, …)                                                                                                    |
-| Brand name, logo, pipeline stages, contact statuses            | DB `app_settings` — edit in **Settings** (founder/admin) or `PATCH /api/settings`                                                                                          |
-| Champion status → pipeline stage map (`championStatusToStage`) | DB `app_settings` — edit in **Settings** (founder/admin) or `PATCH /api/settings`                                                                                          |
-| Discovery questions on the company form (`discoveryQuestions`) | **API / SQL only** today — `PATCH /api/settings` or [`sql/examples/convobrains-settings.sql`](sql/examples/convobrains-settings.sql) (not editable in the Settings UI yet) |
-| Optional first-boot brand                                      | `BRAND_NAME`, `BRAND_TAGLINE`, `BRAND_LOGO_URL` in env (seeded once)                                                                                                       |
+| What                                                           | Where                                                                                                                                                                |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Postgres / JWT / email domain / S3 / CORS                      | Server `.env` (`DATABASE_URL`, `JWT_SECRET`, `ALLOWED_EMAIL_DOMAIN`, …)                                                                                              |
+| Brand name, logo, pipeline stages, contact statuses            | DB `app_settings` — edit in **Settings** (founder/admin) or `PATCH /api/settings`                                                                                    |
+| Champion status → pipeline stage map (`championStatusToStage`) | DB `app_settings` — edit in **Settings** (founder/admin) or `PATCH /api/settings`                                                                                    |
+| Discovery questions on the company form (`discoveryQuestions`) | DB `app_settings` — edit in **Settings** (founder/admin), `PATCH /api/settings`, or [`sql/examples/convobrains-settings.sql`](sql/examples/convobrains-settings.sql) |
+| Optional first-boot brand                                      | `BRAND_NAME`, `BRAND_TAGLINE`, `BRAND_LOGO_URL` in env (seeded once)                                                                                                 |
 
-Settings UI covers branding, stages, contact statuses, and the champion auto-move map. Discovery questions still go through the API (or the SQL example). See [`docs/API.md`](docs/API.md#settings-ui-vs-api-only) for a `PATCH` example. Keys/values in the champion map must exist in the configured status and stage lists.
+Settings UI covers branding, stages, contact statuses, the champion auto-move map, and custom discovery questions. See [`docs/API.md`](docs/API.md#settings-ui-vs-api) for a `PATCH` example. Keys/values in the champion map must exist in the configured status and stage lists.
 
 ---
 

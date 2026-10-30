@@ -20,9 +20,9 @@ A complete machine-readable OpenAPI 3.1 contract is available in [`openapi.yaml`
 | ------- | --------------- | ------------------------------------------------------------------------------------------------------------------- |
 | `GET`   | `/api/health`   | Liveness `{ ok: true }`                                                                                             |
 | `GET`   | `/api/config`   | Public instance config: email policy + branding, stages, contactStatuses, championStatusToStage, discoveryQuestions |
-| `PATCH` | `/api/settings` | Admin/founder: update branding + stages + contactStatuses + champion map (+ optional discoveryQuestions)            |
+| `PATCH` | `/api/settings` | Admin/founder: update branding + stages + contactStatuses + champion map + discoveryQuestions |
 
-### Settings UI vs API-only
+### Settings UI vs API
 
 The **Settings** page in the app can edit:
 
@@ -30,8 +30,9 @@ The **Settings** page in the app can edit:
 - `stages` (pipeline)
 - `contactStatuses`
 - `championStatusToStage` (champion contact status → pipeline stage auto-move)
+- `discoveryQuestions` (custom discovery questions on the company form)
 
-`discoveryQuestions` is **not** on that page yet (easy to miss: not broken, just API/SQL only). Extra questions on the company form use `{ id, section, prompt, input }`.
+Extra questions on the company form use `{ id, section, prompt, input }`. `input` must be one of `text`, `textarea`, or `number`. IDs must be unique and alphanumeric (letters, numbers, hyphens, and underscores).
 
 Keys in `championStatusToStage` must be configured contact statuses. Values must be a configured pipeline stage or `null` (no auto-move). Unknown pairs return `400`.
 
