@@ -30,7 +30,7 @@ npm test                  # unit tests
 npm run ci                # lint + format:check + unit + build
 ```
 
-**Format:** Prettier is the project formatter (see `.prettierrc`). Run `npm run format` before pushing. GitHub Actions runs `format:check` as part of the CI workflow. Ensure `npm run format:check` passes before submitting your pull request.
+**Format:** Prettier is the project formatter (see `.prettierrc`). Run `npm run format` before pushing. The GitHub Actions unit job also runs `npm run format:check`, so unformatted PRs fail CI. Ensure `npm run format:check` passes before submitting your pull request.
 
 ---
 
