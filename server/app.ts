@@ -221,7 +221,9 @@ app.patch('/api/settings', requireAuth, requireCsrf, requireAdmin, async (req, r
     }
     const map: Record<string, string | null> = {};
     for (const [k, v] of Object.entries(b.championStatusToStage as Record<string, unknown>)) {
-      if (v === null || typeof v === 'string') {
+      if (v === null) {
+        map[k] = null;
+      } else if (typeof v === 'string') {
         map[k] = v;
       } else {
         res.status(400).json({
@@ -233,7 +235,55 @@ app.patch('/api/settings', requireAuth, requireCsrf, requireAdmin, async (req, r
     patch.championStatusToStage = map;
   }
   if (Array.isArray(b.discoveryQuestions)) {
+    for (let i = 0; i < b.discoveryQuestions.length; i++) {
+      const q = b.discoveryQuestions[i];
+      if (!q || typeof q !== 'object' || Array.isArray(q)) {
+        res.status(400).json({ error: `Question #${i + 1} must be an object.` });
+        return;
+      }
+      const raw = q as Record<string, unknown>;
+      const id = typeof raw.id === 'string' ? raw.id.trim() : '';
+      const section = typeof raw.section === 'string' ? raw.section.trim() : '';
+      const prompt = typeof raw.prompt === 'string' ? raw.prompt.trim() : '';
+      const input = typeof raw.input === 'string' ? raw.input.trim() : '';
+      if (!id) {
+        res.status(400).json({ error: `Question #${i + 1} is missing an ID.` });
+        return;
+      }
+      if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
+        res.status(400).json({
+          error: `Question ID "${id}" is invalid. Use letters, numbers, hyphens, and underscores only.`,
+        });
+        return;
+      }
+      if (!section) {
+        res.status(400).json({ error: `Question "${id}" is missing a section.` });
+        return;
+      }
+      if (!prompt) {
+        res.status(400).json({ error: `Question "${id}" is missing a prompt.` });
+        return;
+      }
+      if (input !== 'text' && input !== 'textarea' && input !== 'number') {
+        res.status(400).json({
+          error: `Question "${id}" has an invalid input type "${input}". Must be text, textarea, or number.`,
+        });
+        return;
+      }
+    }
+    const seenIds = new Set<string>();
+    for (const q of b.discoveryQuestions as Array<{ id: string }>) {
+      const id = q.id.trim();
+      if (seenIds.has(id)) {
+        res.status(400).json({ error: `Duplicate question ID "${id}". IDs must be unique.` });
+        return;
+      }
+      seenIds.add(id);
+    }
     patch.discoveryQuestions = asDiscoveryQuestions(b.discoveryQuestions);
+  } else if (b.discoveryQuestions !== undefined) {
+    res.status(400).json({ error: 'discoveryQuestions must be an array.' });
+    return;
   }
 
   try {

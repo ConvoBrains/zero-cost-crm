@@ -16,6 +16,7 @@ import {
   type DiscoveryQuestion,
 } from '../src/defaults.js';
 import { validateChampionStatusToStage } from '../src/lib/championStatusMap.js';
+import { validateDiscoveryQuestions } from '../src/lib/discoveryQuestions.js';
 
 export interface AppSettings {
   brandName: string;
@@ -198,6 +199,9 @@ export async function updateAppSettings(patch: SettingsPatch): Promise<AppSettin
     next.stages
   );
   if (mapErr) throw new Error(mapErr);
+
+  const discoveryErr = validateDiscoveryQuestions(next.discoveryQuestions);
+  if (discoveryErr) throw new Error(discoveryErr);
 
   await ensureAppSettings();
   const { rows } = await pool.query(

@@ -7,7 +7,14 @@ import {
   validateChampionMapRows,
   type ChampionMapRow,
 } from '../lib/championStatusMap';
+import {
+  questionsToRows,
+  rowsToQuestions,
+  validateDiscoveryQuestionRows,
+  type DiscoveryQuestionRow,
+} from '../lib/discoveryQuestions';
 import { ChampionMapEditor } from './ChampionMapEditor';
+import { DiscoveryQuestionsEditor } from './DiscoveryQuestionsEditor';
 import { Field, inputClass, btnPrimary, btnGhost } from './ui';
 
 interface SettingsPageProps {
@@ -31,6 +38,9 @@ export function SettingsPage({ config, onSaved }: SettingsPageProps) {
   const [mapRows, setMapRows] = useState<ChampionMapRow[]>(() =>
     championMapToRows(config.championStatusToStage)
   );
+  const [discoveryRows, setDiscoveryRows] = useState<DiscoveryQuestionRow[]>(() =>
+    questionsToRows(config.discoveryQuestions ?? [])
+  );
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +52,7 @@ export function SettingsPage({ config, onSaved }: SettingsPageProps) {
     setStagesText(config.stages.join('\n'));
     setStatusesText(config.contactStatuses.join('\n'));
     setMapRows(championMapToRows(config.championStatusToStage));
+    setDiscoveryRows(questionsToRows(config.discoveryQuestions ?? []));
   }, [config]);
 
   const domainHint = useMemo(() => {
@@ -64,6 +75,11 @@ export function SettingsPage({ config, onSaved }: SettingsPageProps) {
         setError(mapError);
         return;
       }
+      const discoveryError = validateDiscoveryQuestionRows(discoveryRows);
+      if (discoveryError) {
+        setError(discoveryError);
+        return;
+      }
       await api('/api/settings', {
         method: 'PATCH',
         body: JSON.stringify({
@@ -73,6 +89,7 @@ export function SettingsPage({ config, onSaved }: SettingsPageProps) {
           stages: liveStages,
           contactStatuses: liveStatuses,
           championStatusToStage: championRowsToMap(mapRows),
+          discoveryQuestions: rowsToQuestions(discoveryRows),
         }),
       });
       await onSaved();
@@ -89,22 +106,9 @@ export function SettingsPage({ config, onSaved }: SettingsPageProps) {
       <div>
         <h1 className="text-xl font-semibold text-stone-900">Instance settings</h1>
         <p className="mt-1 text-sm text-stone-500">
-          Branding, pipeline lists, and champion auto-move mappings are stored in the database so
-          Zero Cost CRM stays generic. Email domain and database URL stay in server env.
-        </p>
-        <p className="mt-2 text-xs text-stone-500">
-          Discovery questions aren&apos;t on this screen yet. Update them with{' '}
-          <code className="rounded bg-stone-100 px-1 py-0.5 text-[11px]">PATCH /api/settings</code>{' '}
-          or see{' '}
-          <a
-            className="underline decoration-stone-300 underline-offset-2 hover:text-stone-700"
-            href="https://github.com/ConvoBrains/zero-cost-crm/blob/main/docs/API.md#settings-ui-vs-api-only"
-            target="_blank"
-            rel="noreferrer"
-          >
-            docs/API.md
-          </a>
-          .
+          Branding, pipeline lists, champion auto-move mappings, and discovery questions are stored
+          in the database so Zero Cost CRM stays generic. Email domain and database URL stay in
+          server env.
         </p>
       </div>
 
@@ -159,6 +163,8 @@ export function SettingsPage({ config, onSaved }: SettingsPageProps) {
           onChange={setMapRows}
         />
 
+        <DiscoveryQuestionsEditor rows={discoveryRows} onChange={setDiscoveryRows} />
+
         <p className="text-xs text-stone-500">Login email policy: {domainHint}</p>
 
         {error ? (
@@ -182,6 +188,7 @@ export function SettingsPage({ config, onSaved }: SettingsPageProps) {
               setStagesText(config.stages.join('\n'));
               setStatusesText(config.contactStatuses.join('\n'));
               setMapRows(championMapToRows(config.championStatusToStage));
+              setDiscoveryRows(questionsToRows(config.discoveryQuestions ?? []));
               setError(null);
               setMessage(null);
             }}

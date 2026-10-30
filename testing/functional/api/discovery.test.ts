@@ -80,4 +80,63 @@ describe('discovery questions + answers', () => {
 
     await api(`/api/companies/${created.data.id}`, { method: 'DELETE', session });
   });
+
+  it('rejects invalid discoveryQuestions shapes on PATCH /api/settings', async () => {
+    const session = await loginAsCookie(SEED.founder);
+
+    const nonArray = await api('/api/settings', {
+      method: 'PATCH',
+      session,
+      body: { discoveryQuestions: 'invalid' },
+    });
+    expect(nonArray.status).toBe(400);
+    expect(nonArray.data.error).toContain('discoveryQuestions must be an array');
+
+    const missingId = await api('/api/settings', {
+      method: 'PATCH',
+      session,
+      body: {
+        discoveryQuestions: [{ id: '', section: 'Discovery', prompt: 'Prompt', input: 'text' }],
+      },
+    });
+    expect(missingId.status).toBe(400);
+    expect(missingId.data.error).toContain('missing an ID');
+
+    const invalidId = await api('/api/settings', {
+      method: 'PATCH',
+      session,
+      body: {
+        discoveryQuestions: [
+          { id: 'bad id with spaces', section: 'Discovery', prompt: 'Prompt', input: 'text' },
+        ],
+      },
+    });
+    expect(invalidId.status).toBe(400);
+    expect(invalidId.data.error).toContain('letters, numbers, hyphens, and underscores only');
+
+    const duplicateId = await api('/api/settings', {
+      method: 'PATCH',
+      session,
+      body: {
+        discoveryQuestions: [
+          { id: 'budget', section: 'Discovery', prompt: 'Prompt 1', input: 'text' },
+          { id: 'budget', section: 'General', prompt: 'Prompt 2', input: 'number' },
+        ],
+      },
+    });
+    expect(duplicateId.status).toBe(400);
+    expect(duplicateId.data.error).toContain('Duplicate question ID');
+
+    const invalidInput = await api('/api/settings', {
+      method: 'PATCH',
+      session,
+      body: {
+        discoveryQuestions: [
+          { id: 'budget', section: 'Discovery', prompt: 'Prompt', input: 'invalid_type' },
+        ],
+      },
+    });
+    expect(invalidInput.status).toBe(400);
+    expect(invalidInput.data.error).toContain('invalid input type');
+  });
 });
