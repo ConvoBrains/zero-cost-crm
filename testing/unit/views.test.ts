@@ -4,8 +4,11 @@ import {
   applyPipelineFilters,
   buildContactInsights,
   buildPipelineInsights,
+  DEFAULT_CONTACT_FILTERS,
   dateRangeStartIso,
   filterCompanies,
+  loadContactFilters,
+  saveContactFilters,
   isoDateOffset,
   startOfMonthIso,
   startOfWeekIso,
@@ -59,6 +62,7 @@ const baseFilters = (): ContactFilters => ({
   search: '',
   queue: 'all',
   statuses: [],
+  statusMatch: 'current',
   companyId: null,
   stages: [],
   championOnly: false,
@@ -434,5 +438,51 @@ describe('buildPipelineInsights', () => {
     expect(insights.contactTotal).toBe(2);
     expect(insights.champions).toBe(1);
     expect(insights.stageCounts[0]).toEqual({ stage: 'Lead Added', count: 1 });
+  });
+});
+
+describe('contact status match + filter persistence', () => {
+  const contacts: Contact[] = [
+    {
+      id: 'a',
+      contactName: 'Was connected',
+      companyId: null,
+      role: '',
+      phone: '',
+      email: '',
+      linkedInProfile: '',
+      contactStatus: "Didn't Pick",
+      champion: false,
+      lastContacted: null,
+      nextFollowUp: null,
+      notes: '',
+      createdAt: '2026-01-01',
+      statusHistory: ['Not Contacted', 'Connected', "Didn't Pick"],
+    },
+  ];
+
+  it('matches past statuses only when statusMatch is ever', () => {
+    const current = { ...baseFilters(), statuses: ['Connected'] };
+    expect(applyContactFilters(contacts, [], current)).toHaveLength(0);
+    expect(applyContactFilters(contacts, [], { ...current, statusMatch: 'ever' })).toHaveLength(1);
+  });
+
+  it('defaults the queue to All', () => {
+    expect(DEFAULT_CONTACT_FILTERS.queue).toBe('all');
+  });
+
+  it('round-trips filters through storage and falls back on bad data', () => {
+    const store = new Map<string, string>();
+    const storage = {
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => void store.set(k, v),
+    };
+    const saved = { ...baseFilters(), queue: 'overdue' as const, statuses: ['Connected'] };
+    saveContactFilters(storage, saved);
+    expect(loadContactFilters(storage)).toEqual(saved);
+
+    store.set('zcc.contactFilters', '{not json');
+    expect(loadContactFilters(storage)).toEqual(DEFAULT_CONTACT_FILTERS);
+    expect(loadContactFilters(null)).toEqual(DEFAULT_CONTACT_FILTERS);
   });
 });

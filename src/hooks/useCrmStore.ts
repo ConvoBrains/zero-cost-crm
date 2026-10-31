@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { resolveAutoMoveStage } from '../lib/championSync';
+import { carryStatusHistory } from '../lib/callLog';
 import { canDeleteRecords } from '../types';
 import type { Company, Contact, ContactStatus, ImportResult, ProspectRow, Stage } from '../types';
 
@@ -203,12 +204,13 @@ export function useCrmStore(enabled: boolean, userRole?: string) {
 
   const updateContact = useCallback(
     async (id: string, patch: Partial<Contact>) => {
-      const { movedCompanyStage, ...contact } = await api<UpdateContactResponse>(
+      const { movedCompanyStage, ...updated } = await api<UpdateContactResponse>(
         `/api/contacts/${id}`,
         { method: 'PATCH', body: JSON.stringify(patch) }
       );
       setState((s) => {
         const prev = s.contacts.find((t) => t.id === id);
+        const contact = carryStatusHistory(prev, updated);
         let companies = s.companies;
         const contacts = s.contacts.map((t) => (t.id === id ? contact : t));
         if (patch.champion === true && contact.companyId) {
@@ -240,7 +242,7 @@ export function useCrmStore(enabled: boolean, userRole?: string) {
       });
       setState((s) => {
         const contacts = s.contacts.map((t) =>
-          contactIds.includes(t.id) ? { ...t, contactStatus } : t
+          contactIds.includes(t.id) ? carryStatusHistory(t, { ...t, contactStatus }) : t
         );
         return { ...s, contacts };
       });

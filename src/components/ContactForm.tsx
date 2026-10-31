@@ -5,6 +5,7 @@ import type { CrmStore } from '../hooks/useCrmStore';
 import { normalizeOptionalUrl } from '../lib/urls';
 import { Field, inputClass, btnPrimary, btnGhost } from './ui';
 import { ConversationPanel } from './ConversationPanel';
+import { ContactCallLog } from './ContactCallLog';
 
 interface ContactFormProps {
   store: CrmStore;
@@ -236,6 +237,8 @@ export function ContactForm({
           </span>
         </label>
       </div>
+
+      {initial ? <ContactCallLog contactId={initial.id} /> : null}
 
       {initial ? (
         <ConversationPanel

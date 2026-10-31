@@ -48,7 +48,7 @@ export async function navTo(page: Page, label: string) {
 }
 
 /**
- * Contacts page defaults to Queue = "To Call Today". Select Queue → All so the
+ * Contacts page defaults to Queue = All (filters persist per tab). Select Queue → All so the
  * full table is visible (replaces the old "All Contacts" tab).
  */
 export async function showAllContacts(page: Page) {

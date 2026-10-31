@@ -4,10 +4,13 @@ import type { CrmStore } from '../hooks/useCrmStore';
 import {
   CONTACT_DATE_RANGE_OPTIONS,
   CONTACT_QUEUE_OPTIONS,
+  CONTACT_STATUS_MATCH_OPTIONS,
   DEFAULT_CONTACT_FILTERS,
   applyContactFilters,
   buildContactInsights,
   contactFiltersAreActive,
+  loadContactFilters,
+  saveContactFilters,
   statusColor,
 } from '../lib/views';
 import { logViewEvent } from '../lib/activity';
@@ -134,8 +137,10 @@ function SortHeader({
 }
 
 export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
-  const [filters, setFilters] = useState<ContactFilters>(DEFAULT_CONTACT_FILTERS);
-  const [searchDraft, setSearchDraft] = useState('');
+  const [filters, setFilters] = useState<ContactFilters>(() =>
+    loadContactFilters(sessionStorageOrNull())
+  );
+  const [searchDraft, setSearchDraft] = useState(filters.search);
   const [editing, setEditing] = useState<Contact | null>(null);
   const [creating, setCreating] = useState(false);
   const [insightsOpen, setInsightsOpen] = useState(true);
@@ -153,6 +158,10 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
     return () => window.clearTimeout(id);
   }, [searchDraft]);
 
+  useEffect(() => {
+    saveContactFilters(sessionStorageOrNull(), filters);
+  }, [filters]);
+
   const openContact = (c: Contact) => {
     setEditing(c);
     logViewEvent('contact.opened', c.id, c.contactName);
@@ -164,7 +173,7 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
 
   const clearFilters = () => {
     setSearchDraft('');
-    setFilters({ ...DEFAULT_CONTACT_FILTERS, queue: 'all' });
+    setFilters(DEFAULT_CONTACT_FILTERS);
   };
 
   const statusOptions = useMemo(
@@ -349,6 +358,16 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
           active={filters.statuses.length > 0}
           onChange={(v) => patchFilters({ statuses: v as string[] })}
         />
+        {filters.statuses.length > 0 ? (
+          <FilterDropdown
+            data-testid="contact-filter-status-match"
+            label="Match"
+            value={filters.statusMatch}
+            options={CONTACT_STATUS_MATCH_OPTIONS}
+            active={filters.statusMatch !== 'current'}
+            onChange={(v) => patchFilters({ statusMatch: v as ContactFilters['statusMatch'] })}
+          />
+        ) : null}
         <FilterDropdown
           data-testid="contact-filter-company"
           label="Company"
@@ -401,7 +420,7 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
           {filters.statuses.map((s) => (
             <FilterChip
               key={s}
-              label={`Status: ${s}`}
+              label={`Status${filters.statusMatch === 'ever' ? ' (incl. past)' : ''}: ${s}`}
               onClear={() => patchFilters({ statuses: filters.statuses.filter((x) => x !== s) })}
             />
           ))}
@@ -813,4 +832,12 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
       </Modal>
     </div>
   );
+}
+
+function sessionStorageOrNull(): Storage | null {
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
 }
