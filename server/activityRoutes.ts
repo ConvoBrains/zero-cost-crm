@@ -570,6 +570,53 @@ export function registerActivityRoutes(app: Express) {
     });
   });
 
+  // Date-wise call log for one contact — every status / follow-up / note update is kept,
+  // so earlier outcomes stay visible after the status is overwritten.
+  app.get('/api/contacts/:id/call-log', requireAuth, async (req: Request, res: Response) => {
+    const id = String(req.params.id);
+    const { rows: contactRows } = await pool.query(
+      `SELECT id, contact_name FROM contacts WHERE id = $1`,
+      [id]
+    );
+    if (!contactRows[0]) {
+      res.status(404).json({ error: 'Contact not found' });
+      return;
+    }
+    const { rows } = await pool.query(
+      `
+        SELECT ae.*, u.name AS user_name
+        FROM activity_events ae
+        JOIN users u ON u.id = ae.user_id
+        WHERE
+          (
+            ae.entity_type = 'contact'
+            AND ae.entity_id = $1
+            AND ae.event_type IN (
+              'contact.created',
+              'contact.status_changed',
+              'contact.follow_up_set',
+              'contact.note_added'
+            )
+          )
+          OR (ae.event_type = 'conversation.uploaded' AND (ae.payload->>'contactId') = $1::text)
+        ORDER BY ae.created_at ASC
+        LIMIT 500
+      `,
+      [id]
+    );
+    res.json({
+      contactId: id,
+      contactName: String(contactRows[0].contact_name),
+      events: rows.map((e) => ({
+        id: String(e.id),
+        userName: String(e.user_name),
+        eventType: String(e.event_type),
+        payload: e.payload ?? {},
+        createdAt: new Date(String(e.created_at)).toISOString(),
+      })),
+    });
+  });
+
   app.get(
     '/api/activity/lead/:entityType/:id',
     requireAuth,

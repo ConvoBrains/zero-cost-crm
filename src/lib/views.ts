@@ -4,6 +4,7 @@ import type {
   ContactStatus,
   ContactFilters,
   ContactDateRange,
+  ContactStatusMatch,
   PipelineFilters,
   PipelineDateRange,
   Company,
@@ -95,8 +96,9 @@ export function filterCompanies(companies: Company[], view: PipelineView): Compa
 
 export const DEFAULT_CONTACT_FILTERS: ContactFilters = {
   search: '',
-  queue: 'to-call-today',
+  queue: 'all',
   statuses: [],
+  statusMatch: 'current',
   companyId: null,
   stages: [],
   championOnly: false,
@@ -110,6 +112,11 @@ export const CONTACT_QUEUE_OPTIONS: { value: ContactFilters['queue']; label: str
   { value: 'follow-up-today', label: 'Follow-up Today' },
   { value: 'overdue', label: 'Overdue' },
   { value: 'didnt-pick-yesterday', label: "Didn't Pick Yesterday" },
+];
+
+export const CONTACT_STATUS_MATCH_OPTIONS: { value: ContactStatusMatch; label: string }[] = [
+  { value: 'current', label: 'Current status' },
+  { value: 'ever', label: 'Current or past status' },
 ];
 
 export const CONTACT_DATE_RANGE_OPTIONS: { value: ContactDateRange; label: string }[] = [
@@ -186,6 +193,12 @@ function matchesQueue(contact: Contact, queue: ContactFilters['queue']): boolean
   }
 }
 
+function matchesStatus(contact: Contact, filters: ContactFilters): boolean {
+  if (filters.statuses.includes(contact.contactStatus)) return true;
+  if (filters.statusMatch !== 'ever') return false;
+  return (contact.statusHistory ?? []).some((s) => filters.statuses.includes(s));
+}
+
 /**
  * Composable Contacts-page filter (search + queue + status + company + stage +
  * champion + createdAt + lastContacted date ranges). Companies are required for
@@ -204,9 +217,7 @@ export function applyContactFilters(
   return contacts.filter((contact) => {
     if (!matchesQueue(contact, filters.queue)) return false;
 
-    if (filters.statuses.length > 0 && !filters.statuses.includes(contact.contactStatus)) {
-      return false;
-    }
+    if (filters.statuses.length > 0 && !matchesStatus(contact, filters)) return false;
 
     if (filters.companyId && contact.companyId !== filters.companyId) return false;
 
@@ -566,4 +577,38 @@ export function stageAccent(stage: Stage): string {
   if (stage === 'Lead Added') return 'border-t-sky-400';
   if (stage === 'Follow-up') return 'border-t-amber-500';
   return 'border-t-teal-600';
+}
+
+const CONTACT_FILTERS_KEY = 'zcc.contactFilters';
+
+/**
+ * Contacts filters survive switching pages (and reloads) within a browser tab.
+ * Anything unreadable falls back to the defaults.
+ */
+export function loadContactFilters(storage: Pick<Storage, 'getItem'> | null): ContactFilters {
+  try {
+    const raw = storage?.getItem(CONTACT_FILTERS_KEY);
+    if (!raw) return DEFAULT_CONTACT_FILTERS;
+    const saved = JSON.parse(raw) as Partial<ContactFilters>;
+    if (!saved || typeof saved !== 'object') return DEFAULT_CONTACT_FILTERS;
+    const merged = { ...DEFAULT_CONTACT_FILTERS, ...saved };
+    return {
+      ...merged,
+      statuses: Array.isArray(merged.statuses) ? merged.statuses : [],
+      stages: Array.isArray(merged.stages) ? merged.stages : [],
+    };
+  } catch {
+    return DEFAULT_CONTACT_FILTERS;
+  }
+}
+
+export function saveContactFilters(
+  storage: Pick<Storage, 'setItem'> | null,
+  filters: ContactFilters
+): void {
+  try {
+    storage?.setItem(CONTACT_FILTERS_KEY, JSON.stringify(filters));
+  } catch {
+    // Storage blocked or full; filters just won't persist.
+  }
 }

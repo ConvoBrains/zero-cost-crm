@@ -70,6 +70,10 @@ export interface Contact {
   nextFollowUp: string | null;
   notes: string;
   createdAt: string;
+  /** Every status this contact has held (from the activity log), including the current one. */
+  statusHistory?: string[];
+  /** When the contact first moved off its initial status, i.e. the first logged call. */
+  firstContactedAt?: string | null;
 }
 
 export type Page =
@@ -93,6 +97,8 @@ export type PipelineView =
 export type ContactQueue =
   'all' | 'to-call-today' | 'follow-up-today' | 'overdue' | 'didnt-pick-yesterday';
 
+export type ContactStatusMatch = 'current' | 'ever';
+
 /** Time window applied to `contact.createdAt` / `contact.lastContacted` for Contacts filters. */
 export type ContactDateRange = 'all' | 'this-week' | 'this-month' | 'last-30-days';
 
@@ -112,6 +118,8 @@ export interface ContactFilters {
   search: string;
   queue: ContactQueue;
   statuses: string[];
+  /** `current` matches today's status; `ever` also matches statuses the contact held earlier. */
+  statusMatch: ContactStatusMatch;
   companyId: string | null;
   stages: string[];
   championOnly: boolean;

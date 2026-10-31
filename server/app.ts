@@ -496,13 +496,45 @@ app.post('/api/users', requireAuth, requireCsrf, requireAdmin, async (req, res) 
 // ─── Bootstrap ──────────────────────────────────────────────────────────────
 
 app.get('/api/bootstrap', requireAuth, async (_req, res) => {
-  const [companies, contacts] = await Promise.all([
+  const [companies, contacts, history] = await Promise.all([
     pool.query(`${COMPANY_SELECT} ORDER BY c.created_at DESC`),
     pool.query('SELECT * FROM contacts ORDER BY created_at DESC'),
+    // Statuses each contact has held + when it was first worked, from the activity log.
+    pool.query(`
+      SELECT
+        entity_id::text AS id,
+        array_remove(
+          array_agg(DISTINCT s.status) FILTER (WHERE s.status IS NOT NULL AND s.status <> ''),
+          NULL
+        ) AS statuses,
+        MIN(ae.created_at) FILTER (WHERE ae.event_type = 'contact.status_changed')
+          AS first_contacted_at
+      FROM activity_events ae
+      CROSS JOIN LATERAL (
+        VALUES (ae.payload->>'from'), (ae.payload->>'to'), (ae.payload->>'status')
+      ) AS s(status)
+      WHERE ae.entity_type = 'contact'
+        AND ae.entity_id IS NOT NULL
+        AND ae.event_type IN ('contact.status_changed', 'contact.created')
+      GROUP BY ae.entity_id
+    `),
   ]);
+  const historyById = new Map(history.rows.map((r) => [String(r.id), r]));
   res.json({
     companies: companies.rows.map(mapCompany),
-    contacts: contacts.rows.map(mapContact),
+    contacts: contacts.rows.map((row) => {
+      const contact = mapContact(row);
+      const h = historyById.get(contact.id);
+      const statuses = new Set<string>((h?.statuses as string[] | undefined) ?? []);
+      statuses.add(contact.contactStatus);
+      return {
+        ...contact,
+        statusHistory: [...statuses],
+        firstContactedAt: h?.first_contacted_at
+          ? new Date(String(h.first_contacted_at)).toISOString()
+          : null,
+      };
+    }),
   });
 });
 
