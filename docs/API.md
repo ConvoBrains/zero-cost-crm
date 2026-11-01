@@ -30,6 +30,7 @@ The **Settings** page in the app can edit:
 - `stages` (pipeline)
 - `contactStatuses`
 - `championStatusToStage` (champion contact status → pipeline stage auto-move)
+- `stageAutoMoveScope`: `champion` (default) or `any_contact`. With `any_contact`, every contact's status change can move the company, so it sits at the furthest stage any contact has reached. Moves are forward-only and stop at Demo Scheduled. `npm run stage:backfill` applies the rules once to existing companies (dry run unless `--apply`).
 
 `discoveryQuestions` is **not** on that page yet (easy to miss: not broken, just API/SQL only). Extra questions on the company form use `{ id, section, prompt, input }`.
 

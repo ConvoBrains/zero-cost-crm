@@ -8,6 +8,8 @@ import {
   DEFAULT_DISCOVERY_QUESTIONS,
   DEFAULT_LOGO_URL,
   DEFAULT_STAGES,
+  DEFAULT_STAGE_AUTO_MOVE_SCOPE,
+  asStageAutoMoveScope,
 } from '../defaults';
 import { api } from '../lib/api';
 
@@ -18,6 +20,7 @@ const FALLBACK: AppConfig = {
   stages: [...DEFAULT_STAGES],
   contactStatuses: [...DEFAULT_CONTACT_STATUSES],
   championStatusToStage: { ...DEFAULT_CHAMPION_STATUS_TO_STAGE },
+  stageAutoMoveScope: DEFAULT_STAGE_AUTO_MOVE_SCOPE,
   discoveryQuestions: [...DEFAULT_DISCOVERY_QUESTIONS],
   allowedEmailDomain: null,
   allowedEmailDomains: ['*'],
@@ -42,6 +45,7 @@ export function useAppConfig() {
         championStatusToStage: cfg.championStatusToStage ?? {
           ...DEFAULT_CHAMPION_STATUS_TO_STAGE,
         },
+        stageAutoMoveScope: asStageAutoMoveScope(cfg.stageAutoMoveScope),
         discoveryQuestions: Array.isArray(cfg.discoveryQuestions)
           ? cfg.discoveryQuestions
           : [...DEFAULT_DISCOVERY_QUESTIONS],

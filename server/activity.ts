@@ -274,7 +274,13 @@ export function accumulateCallMetrics(
     }
   }
   if (eventType === 'contact.follow_up_set') metrics.followUps += 1;
-  if (eventType === 'company.stage_changed' && payload.source !== 'champion_contact') {
+  // Automatic moves mirror a contact status that was already counted above.
+  if (
+    eventType === 'company.stage_changed' &&
+    payload.source !== 'champion_contact' &&
+    payload.source !== 'contact_status' &&
+    payload.source !== 'backfill'
+  ) {
     const to = String(payload.to ?? '');
     if (to === 'Demo Scheduled') metrics.demo += 1;
     if (to === 'Closed Won') metrics.converted += 1;

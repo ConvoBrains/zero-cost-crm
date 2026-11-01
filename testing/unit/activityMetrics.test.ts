@@ -91,3 +91,15 @@ describe('accumulateCallMetrics — WhatsApp', () => {
     expect(metrics.callsMade).toBe(0);
   });
 });
+
+describe('accumulateCallMetrics — automatic stage moves', () => {
+  it('skips contact_status and backfill moves', () => {
+    const metrics = emptyCallMetrics();
+    for (const source of ['contact_status', 'backfill']) {
+      accumulateCallMetrics(metrics, 'company.stage_changed', { to: 'Demo Scheduled', source });
+      accumulateCallMetrics(metrics, 'company.stage_changed', { to: 'Not Interested', source });
+    }
+    expect(metrics.demo).toBe(0);
+    expect(metrics.notInterested).toBe(0);
+  });
+});

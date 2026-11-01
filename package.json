@@ -20,6 +20,7 @@
     "test:e2e:install": "playwright install chromium",
     "ci": "npm run lint && npm run format:check && npm run test && npm run build",
     "db:migrate": "node scripts/db-migrate.mjs",
+    "stage:backfill": "tsx scripts/stage-auto-move-backfill.ts",
     "start": "NODE_ENV=production tsx server/index.ts"
   },
   "dependencies": {

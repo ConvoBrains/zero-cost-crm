@@ -65,6 +65,29 @@ describe('resolveAutoMoveStage', () => {
     expect(resolveAutoMoveStage('Closed Lost', 'Rejected')).toBeNull();
   });
 
+  it('leaves companies at Demo Scheduled or later to manual moves', () => {
+    expect(resolveAutoMoveStage('Demo Scheduled', 'Rejected')).toBeNull();
+    expect(resolveAutoMoveStage('Commercial Proposal Shared', 'Rejected')).toBeNull();
+    // Without a "Demo Scheduled" stage the guard does not apply.
+    expect(
+      resolveAutoMoveStage('Qualified', 'Rejected', ['New', 'Qualified', 'Lost'], {
+        Rejected: 'Lost',
+      })
+    ).toBe('Lost');
+  });
+
+  it('puts a company at the furthest stage whatever order the calls happen in', () => {
+    const stages = ['Lead Added', "Dialed - Didn't Pick", 'Follow-up', 'Demo Scheduled'];
+    const map = { "Didn't Pick": "Dialed - Didn't Pick", 'Follow-up Required': 'Follow-up' };
+    expect(resolveAutoMoveStage('Lead Added', "Didn't Pick", stages, map)).toBe(
+      "Dialed - Didn't Pick"
+    );
+    expect(resolveAutoMoveStage("Dialed - Didn't Pick", 'Follow-up Required', stages, map)).toBe(
+      'Follow-up'
+    );
+    expect(resolveAutoMoveStage('Follow-up', "Didn't Pick", stages, map)).toBeNull();
+  });
+
   it('moves Rejected → Not Interested from an active mid stage', () => {
     expect(resolveAutoMoveStage('Follow-up', 'Rejected')).toBe('Not Interested');
   });

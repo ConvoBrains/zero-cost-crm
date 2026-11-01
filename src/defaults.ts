@@ -38,6 +38,18 @@ export const DEFAULT_CONTACT_STATUSES = [
   'Rejected',
 ] as const;
 
+/**
+ * Whose status change auto-moves the company: only the champion, or any contact
+ * (the company then sits at the furthest stage any of its contacts has reached).
+ */
+export type StageAutoMoveScope = 'champion' | 'any_contact';
+
+export const DEFAULT_STAGE_AUTO_MOVE_SCOPE: StageAutoMoveScope = 'champion';
+
+export function asStageAutoMoveScope(value: unknown): StageAutoMoveScope {
+  return value === 'any_contact' ? 'any_contact' : 'champion';
+}
+
 /** Champion contact status → pipeline stage (forward-only auto-move). */
 export const DEFAULT_CHAMPION_STATUS_TO_STAGE: Record<string, string | null> = {
   'Not Contacted': null,

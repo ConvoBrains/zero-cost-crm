@@ -230,6 +230,7 @@ export interface AppConfig {
   stages: string[];
   contactStatuses: string[];
   championStatusToStage: Record<string, string | null>;
+  stageAutoMoveScope: import('./defaults.js').StageAutoMoveScope;
   discoveryQuestions: import('./defaults.js').DiscoveryQuestion[];
   allowedEmailDomain: string | null;
   allowedEmailDomains: string[];
