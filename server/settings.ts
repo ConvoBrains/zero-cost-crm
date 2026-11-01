@@ -12,7 +12,10 @@ import {
   DEFAULT_DISCOVERY_QUESTIONS,
   DEFAULT_LOGO_URL,
   DEFAULT_STAGES,
+  DEFAULT_STAGE_AUTO_MOVE_SCOPE,
+  asStageAutoMoveScope,
   type DiscoveryInputType,
+  type StageAutoMoveScope,
   type DiscoveryQuestion,
 } from '../src/defaults.js';
 import { validateChampionStatusToStage } from '../src/lib/championStatusMap.js';
@@ -24,6 +27,7 @@ export interface AppSettings {
   stages: string[];
   contactStatuses: string[];
   championStatusToStage: Record<string, string | null>;
+  stageAutoMoveScope: StageAutoMoveScope;
   discoveryQuestions: DiscoveryQuestion[];
   updatedAt: string | null;
 }
@@ -87,6 +91,7 @@ function rowToSettings(row: Record<string, unknown>): AppSettings {
     stages: asStringArray(row.stages, DEFAULT_STAGES),
     contactStatuses: asStringArray(row.contact_statuses, DEFAULT_CONTACT_STATUSES),
     championStatusToStage: asChampionMap(row.champion_status_to_stage),
+    stageAutoMoveScope: asStageAutoMoveScope(row.stage_auto_move_scope),
     discoveryQuestions: asDiscoveryQuestions(row.discovery_questions),
     updatedAt: row.updated_at ? String(row.updated_at) : null,
   };
@@ -100,6 +105,7 @@ function defaultSettingsFromEnv(): AppSettings {
     stages: [...DEFAULT_STAGES],
     contactStatuses: [...DEFAULT_CONTACT_STATUSES],
     championStatusToStage: { ...DEFAULT_CHAMPION_STATUS_TO_STAGE },
+    stageAutoMoveScope: DEFAULT_STAGE_AUTO_MOVE_SCOPE,
     discoveryQuestions: [...DEFAULT_DISCOVERY_QUESTIONS],
     updatedAt: null,
   };
@@ -162,6 +168,7 @@ export interface SettingsPatch {
   stages?: string[];
   contactStatuses?: string[];
   championStatusToStage?: Record<string, string | null>;
+  stageAutoMoveScope?: StageAutoMoveScope;
   discoveryQuestions?: DiscoveryQuestion[];
 }
 
@@ -183,6 +190,7 @@ export async function updateAppSettings(patch: SettingsPatch): Promise<AppSettin
     stages: patch.stages ?? current.stages,
     contactStatuses: patch.contactStatuses ?? current.contactStatuses,
     championStatusToStage: patch.championStatusToStage ?? current.championStatusToStage,
+    stageAutoMoveScope: patch.stageAutoMoveScope ?? current.stageAutoMoveScope,
     discoveryQuestions: patch.discoveryQuestions ?? current.discoveryQuestions,
     updatedAt: current.updatedAt,
   };
@@ -210,6 +218,7 @@ export async function updateAppSettings(patch: SettingsPatch): Promise<AppSettin
       contact_statuses = $5::jsonb,
       champion_status_to_stage = $6::jsonb,
       discovery_questions = $7::jsonb,
+      stage_auto_move_scope = $8,
       updated_at = now()
     WHERE id = 1
     RETURNING *
@@ -222,6 +231,7 @@ export async function updateAppSettings(patch: SettingsPatch): Promise<AppSettin
       JSON.stringify(next.contactStatuses),
       JSON.stringify(next.championStatusToStage),
       JSON.stringify(next.discoveryQuestions),
+      next.stageAutoMoveScope,
     ]
   );
 

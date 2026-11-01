@@ -582,6 +582,10 @@ components:
             type:
               - string
               - "null"
+        stageAutoMoveScope:
+          type: string
+          enum: [champion, any_contact]
+          description: Whose status change moves the company stage. Default champion.
         discoveryQuestions:
           type: array
           items:
@@ -621,6 +625,10 @@ components:
             type:
               - string
               - "null"
+        stageAutoMoveScope:
+          type: string
+          enum: [champion, any_contact]
+          description: Whose status change moves the company stage. Default champion.
         discoveryQuestions:
           type: array
           items:
@@ -657,6 +665,10 @@ components:
             type:
               - string
               - "null"
+        stageAutoMoveScope:
+          type: string
+          enum: [champion, any_contact]
+          description: Whose status change moves the company stage. Default champion.
         discoveryQuestions:
           type: array
           items:

@@ -9,7 +9,7 @@ test.describe('Settings champion status → stage map (issue #52)', () => {
     const editor = page.getByTestId('champion-map-editor');
     await expect(editor).toBeVisible();
     await expect(
-      page.getByRole('heading', { name: 'Champion status → pipeline stage' })
+      page.getByRole('heading', { name: 'Contact status → pipeline stage' })
     ).toBeVisible();
     await expect(editor.getByText(/never move backward/i)).toBeVisible();
 

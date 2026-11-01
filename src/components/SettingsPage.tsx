@@ -31,6 +31,7 @@ export function SettingsPage({ config, onSaved }: SettingsPageProps) {
   const [mapRows, setMapRows] = useState<ChampionMapRow[]>(() =>
     championMapToRows(config.championStatusToStage)
   );
+  const [autoMoveScope, setAutoMoveScope] = useState(config.stageAutoMoveScope);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +43,7 @@ export function SettingsPage({ config, onSaved }: SettingsPageProps) {
     setStagesText(config.stages.join('\n'));
     setStatusesText(config.contactStatuses.join('\n'));
     setMapRows(championMapToRows(config.championStatusToStage));
+    setAutoMoveScope(config.stageAutoMoveScope);
   }, [config]);
 
   const domainHint = useMemo(() => {
@@ -73,6 +75,7 @@ export function SettingsPage({ config, onSaved }: SettingsPageProps) {
           stages: liveStages,
           contactStatuses: liveStatuses,
           championStatusToStage: championRowsToMap(mapRows),
+          stageAutoMoveScope: autoMoveScope,
         }),
       });
       await onSaved();
@@ -157,6 +160,8 @@ export function SettingsPage({ config, onSaved }: SettingsPageProps) {
           contactStatuses={liveStatuses}
           stages={liveStages}
           onChange={setMapRows}
+          scope={autoMoveScope}
+          onScopeChange={setAutoMoveScope}
         />
 
         <p className="text-xs text-stone-500">Login email policy: {domainHint}</p>

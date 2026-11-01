@@ -236,15 +236,19 @@ export function useCrmStore(enabled: boolean, userRole?: string) {
 
   const bulkUpdateContactStatus = useCallback(
     async (contactIds: string[], contactStatus: string) => {
-      await api('/api/contacts/bulk-status', {
-        method: 'POST',
-        body: JSON.stringify({ contactIds, contactStatus }),
-      });
+      const res = await api<{ movedCompanies?: Array<{ companyId: string; stage: string }> }>(
+        '/api/contacts/bulk-status',
+        { method: 'POST', body: JSON.stringify({ contactIds, contactStatus }) }
+      );
+      const moved = new Map((res?.movedCompanies ?? []).map((m) => [m.companyId, m.stage]));
       setState((s) => {
         const contacts = s.contacts.map((t) =>
           contactIds.includes(t.id) ? carryStatusHistory(t, { ...t, contactStatus }) : t
         );
-        return { ...s, contacts };
+        const companies = moved.size
+          ? s.companies.map((c) => (moved.has(c.id) ? { ...c, stage: moved.get(c.id)! } : c))
+          : s.companies;
+        return { ...s, companies, contacts };
       });
       await refreshMetrics();
     },

@@ -32,9 +32,11 @@ import {
   formatFieldChangeSummary,
   noteSnippet,
   normalizeActivityValue,
+  type ActivityExecutor,
 } from './activity.js';
 import { resolveAutoMoveStage } from '../src/lib/championSync.js';
 import {
+  type AppSettings,
   getAppSettings,
   isAllowedContactStatus,
   isAllowedStage,
@@ -170,6 +172,64 @@ function sqlUpdateBuilder() {
   };
 }
 
+/**
+ * Moves the contact's company forward when its new status maps to a later stage.
+ * Only the champion counts unless `stageAutoMoveScope` is 'any_contact'. Logged as a
+ * company.stage_changed (source champion_contact / contact_status) so SDR metrics skip it.
+ */
+async function autoMoveCompanyForContact(
+  executor: ActivityExecutor,
+  contact: Record<string, unknown>,
+  settings: AppSettings,
+  actor: { userId: string; sessionId?: string }
+): Promise<string | null> {
+  if (!contact.company_id) return null;
+  const isChampion = Boolean(contact.champion);
+  if (!isChampion && settings.stageAutoMoveScope !== 'any_contact') return null;
+
+  const { rows } = await executor.query(
+    'SELECT stage, company_name FROM companies WHERE id = $1',
+    [contact.company_id]
+  );
+  const company = rows[0];
+  if (!company) return null;
+  const target = resolveAutoMoveStage(
+    company.stage,
+    String(contact.contact_status),
+    settings.stages,
+    settings.championStatusToStage
+  );
+  if (!target) return null;
+
+  await executor.query('UPDATE companies SET stage = $1, updated_at = now() WHERE id = $2', [
+    target,
+    contact.company_id,
+  ]);
+  const companyName = String(company.company_name);
+  const contactName = String(contact.contact_name ?? '');
+  await logActivity(
+    {
+      userId: actor.userId,
+      sessionId: actor.sessionId,
+      eventType: 'company.stage_changed',
+      entityType: 'company',
+      entityId: String(contact.company_id),
+      summary: `Stage → ${target} (${companyName}), from ${contactName}: ${contact.contact_status}`,
+      payload: {
+        from: company.stage,
+        to: target,
+        name: companyName,
+        source: isChampion ? 'champion_contact' : 'contact_status',
+        contactId: String(contact.id),
+        contactName,
+        contactStatus: contact.contact_status,
+      },
+    },
+    executor
+  );
+  return target;
+}
+
 // ─── Public config (no auth) ────────────────────────────────────────────────
 
 app.get('/api/config', async (_req, res) => {
@@ -182,6 +242,7 @@ app.get('/api/config', async (_req, res) => {
       stages: settings.stages,
       contactStatuses: settings.contactStatuses,
       championStatusToStage: settings.championStatusToStage,
+      stageAutoMoveScope: settings.stageAutoMoveScope,
       discoveryQuestions: settings.discoveryQuestions,
       allowedEmailDomain: config.primaryEmailDomain,
       allowedEmailDomains: config.allowedEmailAny ? ['*'] : config.allowedEmailDomains,
@@ -235,6 +296,13 @@ app.patch('/api/settings', requireAuth, requireCsrf, requireAdmin, async (req, r
   if (Array.isArray(b.discoveryQuestions)) {
     patch.discoveryQuestions = asDiscoveryQuestions(b.discoveryQuestions);
   }
+  if (b.stageAutoMoveScope !== undefined) {
+    if (b.stageAutoMoveScope !== 'champion' && b.stageAutoMoveScope !== 'any_contact') {
+      res.status(400).json({ error: "stageAutoMoveScope must be 'champion' or 'any_contact'." });
+      return;
+    }
+    patch.stageAutoMoveScope = b.stageAutoMoveScope;
+  }
 
   try {
     const settings = await updateAppSettings(patch);
@@ -245,6 +313,7 @@ app.patch('/api/settings', requireAuth, requireCsrf, requireAdmin, async (req, r
       stages: settings.stages,
       contactStatuses: settings.contactStatuses,
       championStatusToStage: settings.championStatusToStage,
+      stageAutoMoveScope: settings.stageAutoMoveScope,
       discoveryQuestions: settings.discoveryQuestions,
       updatedAt: settings.updatedAt,
     });
@@ -1026,7 +1095,9 @@ app.post('/api/contacts/bulk-status', requireAuth, requireCsrf, async (req, res)
   try {
     await client.query('BEGIN');
     const { rows } = await client.query(
-      `UPDATE contacts SET contact_status = $1, updated_at = now() WHERE id = ANY($2::uuid[]) RETURNING id, contact_name, contact_status`,
+      `UPDATE contacts SET contact_status = $1, updated_at = now()
+       WHERE id = ANY($2::uuid[])
+       RETURNING id, contact_name, contact_status, company_id, champion`,
       [contactStatus, contactIds]
     );
 
@@ -1048,8 +1119,22 @@ app.post('/api/contacts/bulk-status', requireAuth, requireCsrf, async (req, res)
       );
     }
     
+    // Same rule as a single edit; each move re-reads the stage, so a company with
+    // several selected contacts still ends at the furthest stage.
+    const movedCompanies = new Map<string, string>();
+    for (const contact of rows) {
+      const stage = await autoMoveCompanyForContact(client, contact, settings, {
+        userId: uid,
+        sessionId: sid,
+      });
+      if (stage) movedCompanies.set(String(contact.company_id), stage);
+    }
+
     await client.query('COMMIT');
-    res.status(200).json({ updatedCount: rows.length });
+    res.status(200).json({
+      updatedCount: rows.length,
+      movedCompanies: [...movedCompanies].map(([companyId, stage]) => ({ companyId, stage })),
+    });
   } catch (_e) {
     await client.query('ROLLBACK');
     res.status(500).json({ error: 'Failed to update contacts' });
@@ -1344,51 +1429,13 @@ app.patch('/api/contacts/:id', requireAuth, requireCsrf, async (req, res) => {
       );
     }
 
-    if (
-      b.contactStatus !== undefined &&
-      b.contactStatus !== before.contact_status &&
-      contact.champion &&
-      contact.company_id
-    ) {
-      const { rows: companyRows } = await client.query(
-        'SELECT stage, company_name FROM companies WHERE id = $1',
-        [contact.company_id]
+    if (b.contactStatus !== undefined && b.contactStatus !== before.contact_status) {
+      movedCompanyStage = await autoMoveCompanyForContact(
+        client,
+        contact,
+        await getAppSettings(),
+        { userId: uid, sessionId: sid }
       );
-      const company = companyRows[0];
-      if (company) {
-        const settings = await getAppSettings();
-        const target = resolveAutoMoveStage(
-          company.stage,
-          contact.contact_status,
-          settings.stages,
-          settings.championStatusToStage
-        );
-        if (target) {
-          await client.query('UPDATE companies SET stage = $1, updated_at = now() WHERE id = $2', [
-            target,
-            contact.company_id,
-          ]);
-          movedCompanyStage = target;
-          const companyName = String(company.company_name);
-          await logActivity(
-            {
-              userId: uid,
-              sessionId: sid,
-              eventType: 'company.stage_changed',
-              entityType: 'company',
-              entityId: String(contact.company_id),
-              summary: `Stage → ${target} (${companyName})`,
-              payload: {
-                from: company.stage,
-                to: target,
-                name: companyName,
-                source: 'champion_contact',
-              },
-            },
-            client
-          );
-        }
-      }
     }
 
     await client.query('COMMIT');
