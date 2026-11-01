@@ -81,3 +81,13 @@ describe('accumulateCallMetrics — champion auto-move is not double-counted', (
     expect(direct.demo).toBe(1);
   });
 });
+
+describe('accumulateCallMetrics — WhatsApp', () => {
+  it('counts WhatsApp marked sent, not unmarked', () => {
+    const metrics = emptyCallMetrics();
+    accumulateCallMetrics(metrics, 'contact.whatsapp_sent', { sent: true });
+    accumulateCallMetrics(metrics, 'contact.whatsapp_sent', { sent: false });
+    expect(metrics.whatsappSent).toBe(1);
+    expect(metrics.callsMade).toBe(0);
+  });
+});

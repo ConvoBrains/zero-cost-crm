@@ -16,6 +16,20 @@ const ev = (
 });
 
 describe('buildCallLog', () => {
+  it('records the WhatsApp message on the day it was marked', () => {
+    const log = buildCallLog([
+      ev('2026-10-29T06:00:00Z', 'contact.status_changed', {
+        from: 'Not Contacted',
+        to: "Didn't Pick",
+      }),
+      ev('2026-10-29T06:05:00Z', 'contact.whatsapp_sent', { sent: true }),
+      ev('2026-10-30T06:05:00Z', 'contact.whatsapp_sent', { sent: false }),
+    ]);
+    expect(log.days.map((d) => d.whatsappSent)).toEqual([true, false]);
+    // Marking WhatsApp alone is not a call.
+    expect(log.callDays).toBe(1);
+  });
+
   it('keeps each day separate so the first call survives a later status', () => {
     const log = buildCallLog([
       ev('2026-10-28T05:00:00Z', 'contact.created', { status: 'Not Contacted' }),

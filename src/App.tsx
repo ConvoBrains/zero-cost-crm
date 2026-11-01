@@ -363,6 +363,7 @@ export default function App() {
               <Pipeline
                 store={store}
                 stages={config.stages}
+                contactStatuses={config.contactStatuses}
                 discoveryQuestions={config.discoveryQuestions}
                 openCompanyId={openCompanyId}
                 onOpenCompanyIdConsumed={() => setOpenCompanyId(null)}

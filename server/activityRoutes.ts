@@ -595,7 +595,8 @@ export function registerActivityRoutes(app: Express) {
               'contact.created',
               'contact.status_changed',
               'contact.follow_up_set',
-              'contact.note_added'
+              'contact.note_added',
+              'contact.whatsapp_sent'
             )
           )
           OR (ae.event_type = 'conversation.uploaded' AND (ae.payload->>'contactId') = $1::text)

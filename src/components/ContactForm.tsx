@@ -6,6 +6,7 @@ import { normalizeOptionalUrl } from '../lib/urls';
 import { Field, inputClass, btnPrimary, btnGhost } from './ui';
 import { ConversationPanel } from './ConversationPanel';
 import { ContactCallLog } from './ContactCallLog';
+import { needsWhatsApp } from '../lib/progress';
 
 interface ContactFormProps {
   store: CrmStore;
@@ -36,6 +37,7 @@ export function ContactForm({
     lastContacted: initial?.lastContacted ?? '',
     nextFollowUp: initial?.nextFollowUp ?? '',
     notes: initial?.notes ?? '',
+    whatsappSent: !!initial?.whatsappSentAt,
   });
   const [stageBusy, setStageBusy] = useState(false);
 
@@ -73,6 +75,7 @@ export function ContactForm({
       lastContacted: form.lastContacted || null,
       nextFollowUp: form.nextFollowUp || null,
       notes: form.notes,
+      ...(initial ? { whatsappSent: form.whatsappSent } : {}),
     };
 
     if (initial) {
@@ -236,6 +239,34 @@ export function ContactForm({
             </span>
           </span>
         </label>
+
+        {initial ? (
+          <label className="flex flex-wrap items-center gap-2 text-sm sm:col-span-2">
+            <input
+              type="checkbox"
+              data-testid="contact-whatsapp-sent"
+              checked={form.whatsappSent}
+              onChange={(e) => set('whatsappSent', e.target.checked)}
+              className="h-4 w-4 rounded-none border-stone-300 text-emerald-700 focus:ring-emerald-600"
+            />
+            <span className="font-medium text-stone-700">WhatsApp message sent</span>
+            {form.whatsappSent && initial.whatsappSentAt ? (
+              <span className="text-xs text-stone-500">
+                on{' '}
+                {new Date(initial.whatsappSentAt).toLocaleDateString('en-IN', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                })}
+              </span>
+            ) : !form.whatsappSent &&
+              needsWhatsApp({ ...initial, contactStatus: form.contactStatus }) ? (
+              <span className="text-xs font-semibold text-rose-700" data-testid="whatsapp-hint">
+                Dialed — send the WhatsApp message
+              </span>
+            ) : null}
+          </label>
+        ) : null}
       </div>
 
       {initial ? <ContactCallLog contactId={initial.id} /> : null}

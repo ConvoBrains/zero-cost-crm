@@ -378,13 +378,14 @@ export function SdrActivity() {
 
           <section className="space-y-3">
             <h2 className="text-sm font-semibold text-stone-800">Calls</h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
               <Metric label="Made" value={m.callsMade} />
               <Metric label="Connected" value={m.connected} />
               <Metric label="Didn't pick" value={m.didntPick} />
               <Metric label="Interested" value={m.interested} />
               <Metric label="Follow-ups" value={m.followUps} />
               <Metric label="Demo" value={m.demo} />
+              <Metric label="WhatsApp sent" value={m.whatsappSent ?? 0} />
             </div>
           </section>
 

@@ -139,10 +139,15 @@ describe('buildCardBadges', () => {
     expect(buildCardBadges(co, contacts, TODAY).followUpDueToday).toBe(true);
   });
 
-  it('does not flag follow-up-due-today for a non-champion contact follow-up', () => {
+  it('flags follow-up-due-today for a non-champion contact follow-up', () => {
     const contacts = [
       contact({ id: 'c1', companyId: 'co-1', champion: false, nextFollowUp: TODAY }),
     ];
+    expect(buildCardBadges(co, contacts, TODAY).followUpDueToday).toBe(true);
+  });
+
+  it('ignores follow-ups on contacts of other companies', () => {
+    const contacts = [contact({ id: 'c1', companyId: 'co-2', nextFollowUp: TODAY })];
     expect(buildCardBadges(co, contacts, TODAY).followUpDueToday).toBe(false);
   });
 

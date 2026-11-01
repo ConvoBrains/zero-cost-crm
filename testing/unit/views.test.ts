@@ -8,7 +8,10 @@ import {
   dateRangeStartIso,
   filterCompanies,
   loadContactFilters,
+  loadPipelineState,
   saveContactFilters,
+  savePipelineState,
+  DEFAULT_PIPELINE_FILTERS,
   isoDateOffset,
   startOfMonthIso,
   startOfWeekIso,
@@ -66,6 +69,7 @@ const baseFilters = (): ContactFilters => ({
   companyId: null,
   stages: [],
   championOnly: false,
+  whatsapp: 'any',
   dateRange: 'all',
   lastContactedRange: 'all',
 });
@@ -314,11 +318,7 @@ describe('buildContactInsights', () => {
 });
 
 describe('applyPipelineFilters', () => {
-  const base: PipelineFilters = {
-    dateRange: 'all',
-    customFrom: null,
-    customTo: null,
-  };
+  const base: PipelineFilters = DEFAULT_PIPELINE_FILTERS;
 
   const midCreated = isoDateOffset(-10);
   const companies = [
@@ -356,6 +356,7 @@ describe('applyPipelineFilters', () => {
   it('applies custom inclusive date bounds', () => {
     expect(
       applyPipelineFilters(companies, 'All Companies', {
+        ...base,
         dateRange: 'custom',
         customFrom: midCreated,
         customTo: midCreated,
@@ -365,6 +366,7 @@ describe('applyPipelineFilters', () => {
     // Custom with no dates yet → unrestricted
     expect(
       applyPipelineFilters(companies, 'All Companies', {
+        ...base,
         dateRange: 'custom',
         customFrom: null,
         customTo: null,
@@ -484,5 +486,137 @@ describe('contact status match + filter persistence', () => {
     store.set('zcc.contactFilters', '{not json');
     expect(loadContactFilters(storage)).toEqual(DEFAULT_CONTACT_FILTERS);
     expect(loadContactFilters(null)).toEqual(DEFAULT_CONTACT_FILTERS);
+  });
+});
+
+describe('applyPipelineFilters: calling progress and WhatsApp', () => {
+  const stages = ['Lead Added', 'Follow-up', 'Demo Scheduled', 'Demo Delivered', 'Closed Won'];
+  const companies = [
+    company({ id: 'untouched', companyName: 'Untouched', stage: 'Lead Added' }),
+    company({ id: 'noanswer', companyName: 'No Answer Co', stage: 'Lead Added' }),
+    company({ id: 'fu', companyName: 'Follow Co', stage: 'Lead Added' }),
+    company({ id: 'demo', companyName: 'Demo Co', stage: 'Demo Scheduled' }),
+  ];
+  const contacts = [
+    contact({
+      id: 'a',
+      companyId: 'untouched',
+      contactName: 'A',
+      contactStatus: 'Not Contacted',
+    }),
+    contact({ id: 'b', companyId: 'noanswer', contactName: 'B', contactStatus: "Didn't Pick" }),
+    contact({
+      id: 'c',
+      companyId: 'fu',
+      contactName: 'C',
+      contactStatus: 'Connected - Future Follow-up',
+      nextFollowUp: '2026-11-05',
+      whatsappSentAt: '2026-11-02T06:00:00.000Z',
+    }),
+  ];
+  const ctx = { contacts, stages };
+
+  it('ignores progress filters when no contact context is passed', () => {
+    expect(
+      applyPipelineFilters(companies, 'All Companies', {
+        ...DEFAULT_PIPELINE_FILTERS,
+        progress: 'not_started',
+      })
+    ).toHaveLength(4);
+  });
+
+  it('filters by progress bucket', () => {
+    const ids = (progress: PipelineFilters['progress']) =>
+      applyPipelineFilters(
+        companies,
+        'All Companies',
+        { ...DEFAULT_PIPELINE_FILTERS, progress },
+        undefined,
+        ctx
+      ).map((c) => c.id);
+    expect(ids('not_started')).toEqual(['untouched']);
+    expect(ids('didnt_pick')).toEqual(['noanswer']);
+    expect(ids('follow_up')).toEqual(['fu']);
+    expect(ids('demo_scheduled')).toEqual(['demo']);
+    expect(ids('all')).toHaveLength(4);
+  });
+
+  it('keeps only companies with a dialed contact still waiting for WhatsApp', () => {
+    expect(
+      applyPipelineFilters(
+        companies,
+        'All Companies',
+        { ...DEFAULT_PIPELINE_FILTERS, whatsappPending: true },
+        undefined,
+        ctx
+      ).map((c) => c.id)
+    ).toEqual(['noanswer']);
+  });
+});
+
+describe('contact WhatsApp filter and insights', () => {
+  const companies = [company({ id: 'co', companyName: 'Co', stage: 'Lead Added' })];
+  const contacts = [
+    contact({ id: 'new', companyId: 'co', contactName: 'New', contactStatus: 'Not Contacted' }),
+    contact({ id: 'dialed', companyId: 'co', contactName: 'Dialed', contactStatus: "Didn't Pick" }),
+    contact({
+      id: 'sent',
+      companyId: 'co',
+      contactName: 'Sent',
+      contactStatus: 'Connected - Not Right Person',
+      whatsappSentAt: '2026-11-02T06:00:00.000Z',
+    }),
+    contact({ id: 'bad', companyId: 'co', contactName: 'Bad', contactStatus: 'Wrong/Bad Number' }),
+  ];
+
+  it('filters sent and pending', () => {
+    const ids = (whatsapp: ContactFilters['whatsapp']) =>
+      applyContactFilters(contacts, companies, { ...baseFilters(), whatsapp }).map((t) => t.id);
+    expect(ids('any')).toHaveLength(4);
+    expect(ids('sent')).toEqual(['sent']);
+    expect(ids('pending')).toEqual(['dialed']);
+  });
+
+  it('counts contacts due and pending', () => {
+    const insights = buildContactInsights(contacts, companies);
+    expect(insights.whatsappDue).toBe(2);
+    expect(insights.whatsappPending).toBe(1);
+  });
+});
+
+describe('loadPipelineState / savePipelineState', () => {
+  const memory = () => {
+    const data = new Map<string, string>();
+    return {
+      getItem: (k: string) => data.get(k) ?? null,
+      setItem: (k: string, v: string) => void data.set(k, v),
+    };
+  };
+
+  it('round-trips view and filters', () => {
+    const storage = memory();
+    savePipelineState(storage, {
+      view: 'Closed Won',
+      filters: { ...DEFAULT_PIPELINE_FILTERS, progress: 'follow_up', whatsappPending: true },
+    });
+    expect(loadPipelineState(storage)).toEqual({
+      view: 'Closed Won',
+      filters: { ...DEFAULT_PIPELINE_FILTERS, progress: 'follow_up', whatsappPending: true },
+    });
+  });
+
+  it('falls back to defaults for missing, unknown or broken state', () => {
+    expect(loadPipelineState(null)).toEqual({
+      view: 'All Companies',
+      filters: DEFAULT_PIPELINE_FILTERS,
+    });
+    const storage = memory();
+    storage.setItem('zcc.pipelineFilters', '{"view":"Nope","filters":{"dateRange":"this-week"}}');
+    expect(loadPipelineState(storage)).toEqual({
+      view: 'All Companies',
+      filters: { ...DEFAULT_PIPELINE_FILTERS, dateRange: 'this-week' },
+    });
+    storage.setItem('zcc.pipelineFilters', 'not json');
+    expect(loadPipelineState(storage).filters).toEqual(DEFAULT_PIPELINE_FILTERS);
   });
 });

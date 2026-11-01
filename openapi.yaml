@@ -434,6 +434,12 @@ components:
           format: date
         notes:
           type: string
+        whatsappSentAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: When the WhatsApp message was sent to this contact; null if not sent.
         createdAt:
           type: string
           format: date
@@ -497,6 +503,9 @@ components:
           type: string
         champion:
           type: boolean
+        whatsappSent:
+          type: boolean
+          description: Mark the WhatsApp message as sent (keeps the first sent time) or clear it.
         lastContacted:
           type:
             - string
@@ -1631,6 +1640,40 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Contact"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/contacts/bulk-whatsapp:
+    post:
+      operationId: bulkSetContactWhatsApp
+      summary: Mark or unmark the WhatsApp message as sent for many contacts.
+      description: Contacts already in the requested state are left unchanged.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [contactIds, sent]
+              properties:
+                contactIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                sent:
+                  type: boolean
+      responses:
+        "200":
+          description: Number of contacts changed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updatedCount:
+                    type: integer
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":

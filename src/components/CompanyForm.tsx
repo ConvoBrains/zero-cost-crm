@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import type { Company, DiscoveryQuestion } from '../types';
+import type { Company, Contact, DiscoveryQuestion } from '../types';
 import { INDUSTRIES, INTENTS } from '../types';
 import { DEFAULT_STAGES } from '../defaults';
 import type { CrmStore } from '../hooks/useCrmStore';
@@ -11,6 +11,10 @@ import {
   type CompanyHistoryEvent,
 } from '../lib/activity';
 import { normalizeOptionalUrl } from '../lib/urls';
+import { CompanyContacts } from './CompanyContacts';
+
+/** "Opened company/contact" view events are kept for SDR metrics but hidden here by default. */
+const VIEW_EVENT_TYPES = new Set(['company.opened', 'contact.opened']);
 
 interface CompanyFormProps {
   store: CrmStore;
@@ -18,6 +22,8 @@ interface CompanyFormProps {
   discoveryQuestions?: DiscoveryQuestion[];
   initial?: Company | null;
   onDone: () => void;
+  /** Opens one of this company's contacts (full contact form + call log). */
+  onOpenContact?: (contact: Contact) => void;
 }
 
 function formatEventTime(iso: string): string {
@@ -52,6 +58,7 @@ export function CompanyForm({
   discoveryQuestions = [],
   initial,
   onDone,
+  onOpenContact,
 }: CompanyFormProps) {
   const contactOptions = initial ? store.contacts.filter((t) => t.companyId === initial.id) : [];
 
@@ -79,6 +86,11 @@ export function CompanyForm({
   const [history, setHistory] = useState<CompanyHistoryEvent[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const [showViews, setShowViews] = useState(false);
+  const hiddenViews = history.filter((ev) => VIEW_EVENT_TYPES.has(ev.eventType)).length;
+  const visibleHistory = showViews
+    ? history
+    : history.filter((ev) => !VIEW_EVENT_TYPES.has(ev.eventType));
   const historyEndRef = useRef<HTMLDivElement | null>(null);
 
   const discoverySections = useMemo(() => groupQuestions(discoveryQuestions), [discoveryQuestions]);
@@ -371,11 +383,29 @@ export function CompanyForm({
       ) : null}
 
       {initial ? (
+        <CompanyContacts store={store} companyId={initial.id} onOpenContact={onOpenContact} />
+      ) : null}
+
+      {initial ? (
         <section
           className="space-y-2 border-t border-[var(--color-line)] pt-4"
           aria-label="Company progress history"
         >
-          <h3 className="text-sm font-semibold text-stone-800">Progress</h3>
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h3 className="text-sm font-semibold text-stone-800">Progress</h3>
+            {hiddenViews > 0 || showViews ? (
+              <label className="flex items-center gap-1.5 text-xs text-stone-500">
+                <input
+                  type="checkbox"
+                  data-testid="history-show-views"
+                  checked={showViews}
+                  onChange={(e) => setShowViews(e.target.checked)}
+                  className="h-3.5 w-3.5 rounded-none border-stone-300"
+                />
+                Show views ({hiddenViews})
+              </label>
+            ) : null}
+          </div>
           <p className="text-xs text-stone-500">
             Chronological activity for this company and its contacts.
           </p>
@@ -383,13 +413,13 @@ export function CompanyForm({
             <p className="text-sm text-stone-500">Loading history…</p>
           ) : historyError ? (
             <p className="text-sm text-rose-600">{historyError}</p>
-          ) : history.length === 0 ? (
+          ) : visibleHistory.length === 0 ? (
             <p className="rounded-none border border-dashed border-stone-300 px-3 py-2 text-xs text-stone-500">
               No activity yet.
             </p>
           ) : (
             <ol className="max-h-64 space-y-2 overflow-y-auto border border-stone-200 bg-stone-50/80 p-3">
-              {history.map((ev) => {
+              {visibleHistory.map((ev) => {
                 const details = activityDetailLines(ev);
                 return (
                   <li key={ev.id} className="text-sm text-stone-700">
