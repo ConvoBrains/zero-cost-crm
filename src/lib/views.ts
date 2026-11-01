@@ -5,11 +5,18 @@ import type {
   ContactFilters,
   ContactDateRange,
   ContactStatusMatch,
+  ContactWhatsAppFilter,
   PipelineFilters,
   PipelineDateRange,
   Company,
   Contact,
 } from '../types';
+import {
+  companyProgress,
+  groupContactsByCompany,
+  needsWhatsApp,
+  whatsAppPending,
+} from './progress';
 
 const POC_STAGES: Stage[] = ['POC Kickoff', 'Client Data Received', 'POC Delivered'];
 
@@ -102,9 +109,16 @@ export const DEFAULT_CONTACT_FILTERS: ContactFilters = {
   companyId: null,
   stages: [],
   championOnly: false,
+  whatsapp: 'any',
   dateRange: 'all',
   lastContactedRange: 'all',
 };
+
+export const CONTACT_WHATSAPP_OPTIONS: { value: ContactWhatsAppFilter; label: string }[] = [
+  { value: 'any', label: 'Any' },
+  { value: 'pending', label: 'Pending (dialed, not sent)' },
+  { value: 'sent', label: 'Sent' },
+];
 
 export const CONTACT_QUEUE_OPTIONS: { value: ContactFilters['queue']; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -223,6 +237,9 @@ export function applyContactFilters(
 
     if (filters.championOnly && !contact.champion) return false;
 
+    if (filters.whatsapp === 'sent' && !contact.whatsappSentAt) return false;
+    if (filters.whatsapp === 'pending' && !whatsAppPending(contact)) return false;
+
     if (dateStart && createdAtDate(contact.createdAt) < dateStart) return false;
 
     if (lastContactedStart) {
@@ -258,6 +275,9 @@ export interface ContactInsights {
   notReachable: number;
   discoveriesBooked: number;
   demos: number;
+  /** Dialed contacts that should get the WhatsApp message, and how many still haven't. */
+  whatsappDue: number;
+  whatsappPending: number;
   statusCounts: { status: string; count: number }[];
   uniqueCompanies: number;
   companyStageCounts: { stage: string; count: number }[];
@@ -283,8 +303,14 @@ export function buildContactInsights(contacts: Contact[], companies: Company[]):
   let notReachable = 0;
   let discoveriesBooked = 0;
   let demos = 0;
+  let whatsappDue = 0;
+  let whatsappPending = 0;
 
   for (const c of contacts) {
+    if (needsWhatsApp(c)) {
+      whatsappDue += 1;
+      if (!c.whatsappSentAt) whatsappPending += 1;
+    }
     statusMap.set(c.contactStatus, (statusMap.get(c.contactStatus) ?? 0) + 1);
 
     if (c.contactStatus === 'Not Contacted') notContacted += 1;
@@ -318,6 +344,8 @@ export function buildContactInsights(contacts: Contact[], companies: Company[]):
     notReachable,
     discoveriesBooked,
     demos,
+    whatsappDue,
+    whatsappPending,
     statusCounts,
     uniqueCompanies: seenCompanies.size,
     companyStageCounts,
@@ -332,6 +360,7 @@ export function contactFiltersAreActive(filters: ContactFilters): boolean {
     filters.companyId !== null ||
     filters.stages.length > 0 ||
     filters.championOnly ||
+    filters.whatsapp !== 'any' ||
     filters.dateRange !== 'all' ||
     filters.lastContactedRange !== 'all'
   );
@@ -341,6 +370,8 @@ export const DEFAULT_PIPELINE_FILTERS: PipelineFilters = {
   dateRange: 'all',
   customFrom: null,
   customTo: null,
+  progress: 'all',
+  whatsappPending: false,
 };
 
 export const PIPELINE_DATE_RANGE_OPTIONS: { value: PipelineDateRange; label: string }[] = [
@@ -376,17 +407,39 @@ function companyInDateBounds(
   return true;
 }
 
-/** Pipeline view filter ∩ company.createdAt date window. */
+/** What the progress and WhatsApp filters need to classify a company. */
+export interface PipelineProgressContext {
+  contacts: Contact[];
+  stages: readonly string[];
+  /** Pass a prebuilt map when filtering repeatedly; built from `contacts` otherwise. */
+  byCompany?: Map<string, Contact[]>;
+}
+
+/**
+ * Pipeline view filter ∩ company.createdAt date window ∩ calling progress ∩ WhatsApp pending.
+ * The progress and WhatsApp filters only apply when `ctx` is given.
+ */
 export function applyPipelineFilters(
   companies: Company[],
   view: PipelineView,
   filters: PipelineFilters,
-  now = new Date()
+  now = new Date(),
+  ctx?: PipelineProgressContext
 ): Company[] {
-  const byView = filterCompanies(companies, view);
+  let result = filterCompanies(companies, view);
   const bounds = pipelineDateBounds(filters, now);
-  if (!bounds.start && !bounds.end) return byView;
-  return byView.filter((c) => companyInDateBounds(c, bounds));
+  if (bounds.start || bounds.end) result = result.filter((c) => companyInDateBounds(c, bounds));
+  if (!ctx || (filters.progress === 'all' && !filters.whatsappPending)) return result;
+
+  const byCompany = ctx.byCompany ?? groupContactsByCompany(ctx.contacts);
+  return result.filter((c) => {
+    const people = byCompany.get(c.id) ?? [];
+    if (filters.progress !== 'all' && companyProgress(c, people, ctx.stages) !== filters.progress) {
+      return false;
+    }
+    if (filters.whatsappPending && !people.some(whatsAppPending)) return false;
+    return true;
+  });
 }
 
 export interface PipelineInsights {
@@ -520,6 +573,7 @@ export function buildPipelineInsights(
 }
 
 export function pipelineFiltersAreActive(filters: PipelineFilters): boolean {
+  if (filters.progress !== 'all' || filters.whatsappPending) return true;
   if (filters.dateRange === 'all') return false;
   if (filters.dateRange === 'custom') {
     return !!(filters.customFrom?.trim() || filters.customTo?.trim());
@@ -608,6 +662,44 @@ export function saveContactFilters(
 ): void {
   try {
     storage?.setItem(CONTACT_FILTERS_KEY, JSON.stringify(filters));
+  } catch {
+    // Storage blocked or full; filters just won't persist.
+  }
+}
+
+const PIPELINE_FILTERS_KEY = 'zcc.pipelineFilters';
+
+export interface SavedPipelineState {
+  view: PipelineView;
+  filters: PipelineFilters;
+}
+
+/** Sales Pipeline view + filters survive switching pages within a browser tab. */
+export function loadPipelineState(storage: Pick<Storage, 'getItem'> | null): SavedPipelineState {
+  const fallback: SavedPipelineState = {
+    view: 'All Companies',
+    filters: DEFAULT_PIPELINE_FILTERS,
+  };
+  try {
+    const raw = storage?.getItem(PIPELINE_FILTERS_KEY);
+    if (!raw) return fallback;
+    const saved = JSON.parse(raw) as Partial<SavedPipelineState>;
+    if (!saved || typeof saved !== 'object') return fallback;
+    const view = PIPELINE_VIEWS.includes(saved.view as PipelineView)
+      ? (saved.view as PipelineView)
+      : fallback.view;
+    return { view, filters: { ...DEFAULT_PIPELINE_FILTERS, ...(saved.filters ?? {}) } };
+  } catch {
+    return fallback;
+  }
+}
+
+export function savePipelineState(
+  storage: Pick<Storage, 'setItem'> | null,
+  state: SavedPipelineState
+): void {
+  try {
+    storage?.setItem(PIPELINE_FILTERS_KEY, JSON.stringify(state));
   } catch {
     // Storage blocked or full; filters just won't persist.
   }

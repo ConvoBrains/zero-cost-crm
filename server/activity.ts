@@ -234,6 +234,7 @@ export function emptyCallMetrics() {
     demo: 0,
     notInterested: 0,
     converted: 0,
+    whatsappSent: 0,
   };
 }
 
@@ -280,6 +281,7 @@ export function accumulateCallMetrics(
     if (to === 'Not Interested') metrics.notInterested += 1;
   }
   if (eventType === 'conversation.uploaded') metrics.callsMade += 1;
+  if (eventType === 'contact.whatsapp_sent' && payload.sent === true) metrics.whatsappSent += 1;
 }
 
 export function buildAlerts(input: {

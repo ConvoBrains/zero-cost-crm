@@ -13,7 +13,14 @@ import {
 } from '@dnd-kit/core';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
-import type { Company, Contact, PipelineFilters, PipelineView, Stage } from '../types';
+import type {
+  Company,
+  CompanyProgress,
+  Contact,
+  PipelineFilters,
+  PipelineView,
+  Stage,
+} from '../types';
 import type { CrmStore } from '../hooks/useCrmStore';
 import {
   DEFAULT_PIPELINE_FILTERS,
@@ -22,13 +29,25 @@ import {
   applyPipelineFilters,
   buildPipelineInsights,
   intentColor,
+  loadPipelineState,
   pipelineFiltersAreActive,
+  savePipelineState,
   stageAccent,
   statusColor,
 } from '../lib/views';
+import {
+  COMPANY_PROGRESS_OPTIONS,
+  companyContactSummary,
+  companyProgress,
+  companyProgressLabel,
+  countCompanyProgress,
+  groupContactsByCompany,
+  whatsAppPending,
+} from '../lib/progress';
 import { buildCardBadges, buildChampionTrail, findChampion, istToday } from '../lib/championCard';
 import { logViewEvent } from '../lib/activity';
 import { CompanyForm } from './CompanyForm';
+import { ContactForm } from './ContactForm';
 import {
   EmptyState,
   FilterChip,
@@ -43,6 +62,7 @@ import {
 interface PipelineProps {
   store: CrmStore;
   stages: string[];
+  contactStatuses?: string[];
   discoveryQuestions?: import('../types').DiscoveryQuestion[];
   openCompanyId?: string | null;
   onOpenCompanyIdConsumed?: () => void;
@@ -60,21 +80,44 @@ function resolveDropStage(
   return target?.stage ?? null;
 }
 
+function sessionStorageOrNull(): Storage | null {
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
+const PROGRESS_TONE: Record<CompanyProgress, string> = {
+  not_started: 'bg-stone-100 text-stone-600',
+  didnt_pick: 'bg-stone-200 text-stone-700',
+  connected: 'bg-sky-50 text-sky-800',
+  follow_up: 'bg-amber-50 text-amber-800',
+  demo_scheduled: 'bg-teal-50 text-teal-800',
+  demo_delivered: 'bg-teal-100 text-teal-900',
+  later: 'bg-violet-50 text-violet-800',
+};
+
+/** `contacts` are this company's contacts only. */
 function CompanyCard({
   company,
   contacts,
+  stages,
   today,
   dragging,
   onOpen,
 }: {
   company: Company;
   contacts: Contact[];
+  stages: readonly string[];
   today: string;
   dragging?: boolean;
   onOpen?: () => void;
 }) {
   const badges = buildCardBadges(company, contacts, today);
   const trail = buildChampionTrail(findChampion(contacts, company.id));
+  const progress = companyProgress(company, contacts, stages);
+  const summary = companyContactSummary(contacts);
 
   return (
     <div
@@ -117,6 +160,28 @@ function CompanyCard({
               </span>
             ) : null}
           </div>
+          <p
+            data-testid="card-progress"
+            data-company-id={company.id}
+            className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] text-stone-500"
+          >
+            <span className={`rounded-none px-1.5 py-0.5 font-semibold ${PROGRESS_TONE[progress]}`}>
+              {companyProgressLabel(progress)}
+            </span>
+            {summary.total > 0 ? (
+              <span>
+                {summary.dialed}/{summary.total} dialed
+              </span>
+            ) : null}
+            {summary.whatsappDue > 0 ? (
+              <span
+                className={summary.whatsappPending > 0 ? 'font-semibold text-rose-700' : ''}
+                title="WhatsApp sent / dialed contacts that should get it"
+              >
+                · WA {summary.whatsappSent}/{summary.whatsappDue}
+              </span>
+            ) : null}
+          </p>
           {trail ? (
             <div
               data-testid="champion-trail"
@@ -162,11 +227,13 @@ function CompanyCard({
 function DraggableCard({
   company,
   contacts,
+  stages,
   today,
   onOpen,
 }: {
   company: Company;
   contacts: Contact[];
+  stages: readonly string[];
   today: string;
   onOpen: () => void;
 }) {
@@ -190,6 +257,7 @@ function DraggableCard({
       <CompanyCard
         company={company}
         contacts={contacts}
+        stages={stages}
         today={today}
         dragging={isDragging}
         onOpen={onOpen}
@@ -201,13 +269,15 @@ function DraggableCard({
 function KanbanColumn({
   stage,
   companies,
-  store,
+  byCompany,
+  stages,
   today,
   onOpen,
 }: {
   stage: Stage;
   companies: Company[];
-  store: CrmStore;
+  byCompany: Map<string, Contact[]>;
+  stages: readonly string[];
   today: string;
   onOpen: (c: Company) => void;
 }) {
@@ -231,7 +301,8 @@ function KanbanColumn({
           <DraggableCard
             key={c.id}
             company={c}
-            contacts={store.contacts}
+            contacts={byCompany.get(c.id) ?? []}
+            stages={stages}
             today={today}
             onOpen={() => onOpen(c)}
           />
@@ -247,19 +318,23 @@ function KanbanColumn({
 export function Pipeline({
   store,
   stages,
+  contactStatuses,
   discoveryQuestions = [],
   openCompanyId = null,
   onOpenCompanyIdConsumed,
   onEditingCompanyChange,
 }: PipelineProps) {
-  const [view, setView] = useState<PipelineView>('All Companies');
-  const [filters, setFilters] = useState<PipelineFilters>(DEFAULT_PIPELINE_FILTERS);
+  const [saved] = useState(() => loadPipelineState(sessionStorageOrNull()));
+  const [view, setView] = useState<PipelineView>(saved.view);
+  const [filters, setFilters] = useState<PipelineFilters>(saved.filters);
   const [searchDraft, setSearchDraft] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestOpen, setSuggestOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
   const [insightsOpen, setInsightsOpen] = useState(true);
   const [editing, setEditing] = useState<Company | null>(null);
+  // A contact opened from the company modal; the company modal comes back when it closes.
+  const [openContact, setOpenContact] = useState<Contact | null>(null);
   const [creating, setCreating] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const searchWrapRef = useRef<HTMLDivElement>(null);
@@ -289,6 +364,10 @@ export function Pipeline({
   }, [openCompanyId, store.companies, onOpenCompanyIdConsumed]);
 
   useEffect(() => {
+    savePipelineState(sessionStorageOrNull(), { view, filters });
+  }, [view, filters]);
+
+  useEffect(() => {
     const id = window.setTimeout(() => setSearchQuery(searchDraft), 200);
     return () => window.clearTimeout(id);
   }, [searchDraft]);
@@ -310,9 +389,39 @@ export function Pipeline({
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 8 } })
   );
 
+  const byCompany = useMemo(() => groupContactsByCompany(store.contacts), [store.contacts]);
+  const progressCtx = useMemo(
+    () => ({ contacts: store.contacts, stages, byCompany }),
+    [store.contacts, stages, byCompany]
+  );
+
   const filtered = useMemo(
-    () => applyPipelineFilters(store.companies, view, filters),
-    [store.companies, view, filters]
+    () => applyPipelineFilters(store.companies, view, filters, undefined, progressCtx),
+    [store.companies, view, filters, progressCtx]
+  );
+
+  // Chip counts ignore their own filter so each chip shows what clicking it would give.
+  const progressCounts = useMemo(() => {
+    const base = applyPipelineFilters(
+      store.companies,
+      view,
+      { ...filters, progress: 'all' },
+      undefined,
+      progressCtx
+    );
+    return { all: base.length, ...countCompanyProgress(base, byCompany, stages) };
+  }, [store.companies, view, filters, progressCtx, byCompany, stages]);
+
+  const whatsappPendingCompanies = useMemo(
+    () =>
+      applyPipelineFilters(
+        store.companies,
+        view,
+        { ...filters, whatsappPending: true },
+        undefined,
+        progressCtx
+      ).length,
+    [store.companies, view, filters, progressCtx]
   );
 
   const suggestions = useMemo(() => {
@@ -351,6 +460,12 @@ export function Pipeline({
     [filtered, store.contacts, stages]
   );
 
+  const whatsappPendingContacts = useMemo(
+    () =>
+      filtered.reduce((n, c) => n + (byCompany.get(c.id) ?? []).filter(whatsAppPending).length, 0),
+    [filtered, byCompany]
+  );
+
   const activeCompany = activeId ? (store.companies.find((c) => c.id === activeId) ?? null) : null;
 
   const today = istToday();
@@ -362,10 +477,10 @@ export function Pipeline({
   const viewCounts = useMemo(() => {
     const map = new Map<PipelineView, number>();
     for (const v of PIPELINE_VIEWS) {
-      map.set(v, applyPipelineFilters(store.companies, v, filters).length);
+      map.set(v, applyPipelineFilters(store.companies, v, filters, undefined, progressCtx).length);
     }
     return map;
-  }, [store.companies, filters]);
+  }, [store.companies, filters, progressCtx]);
 
   const onDragStart = (e: DragStartEvent) => setActiveId(String(e.active.id));
 
@@ -419,7 +534,8 @@ export function Pipeline({
             Sales Pipeline
           </h1>
           <p className="mt-1 text-sm text-stone-500">
-            Search companies, filter by when they were added, and track pipeline progress.
+            Search companies, filter by calling progress or when they were added, and track the
+            pipeline.
           </p>
         </div>
         <button type="button" className={btnPrimary} onClick={() => setCreating(true)}>
@@ -529,23 +645,91 @@ export function Pipeline({
         </div>
       </div>
 
+      <div
+        data-testid="pipeline-progress"
+        className="flex flex-wrap items-center gap-1.5"
+        role="group"
+        aria-label="Calling progress"
+      >
+        <span className="mr-1 text-[10px] font-semibold tracking-wide text-stone-400 uppercase">
+          Calling progress
+        </span>
+        {[
+          { value: 'all' as const, label: 'All', hint: 'Every company' },
+          ...COMPANY_PROGRESS_OPTIONS,
+        ].map((o) => {
+          const selected = filters.progress === o.value;
+          return (
+            <button
+              key={o.value}
+              type="button"
+              data-testid={`pipeline-progress-${o.value}`}
+              aria-pressed={selected}
+              title={o.hint}
+              onClick={() => setFilters((f) => ({ ...f, progress: o.value }))}
+              className={`shrink-0 rounded-none px-2.5 py-1 text-xs font-medium transition ${
+                selected
+                  ? 'bg-stone-800 text-white'
+                  : 'bg-white text-stone-600 ring-1 ring-[var(--color-line)] hover:bg-stone-50'
+              }`}
+            >
+              {o.label}
+              <span className="ml-1.5 opacity-70" data-testid="pipeline-progress-count">
+                {progressCounts[o.value]}
+              </span>
+            </button>
+          );
+        })}
+        <button
+          type="button"
+          data-testid="pipeline-whatsapp-pending"
+          aria-pressed={filters.whatsappPending}
+          title="Companies with a dialed contact who hasn't been sent the WhatsApp message"
+          onClick={() => setFilters((f) => ({ ...f, whatsappPending: !f.whatsappPending }))}
+          className={`ml-1 shrink-0 rounded-none px-2.5 py-1 text-xs font-medium transition ${
+            filters.whatsappPending
+              ? 'bg-emerald-700 text-white'
+              : 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200 hover:bg-emerald-100'
+          }`}
+        >
+          WhatsApp pending
+          <span className="ml-1.5 opacity-70">{whatsappPendingCompanies}</span>
+        </button>
+      </div>
+
       {filtersActive ? (
         <div className="flex flex-wrap items-center gap-2">
-          <FilterChip
-            label={`Added: ${dateLabel}${
-              filters.dateRange === 'custom'
-                ? ` ${filters.customFrom ?? '…'} → ${filters.customTo ?? '…'}`
-                : ''
-            }`}
-            onClear={() => setFilters(DEFAULT_PIPELINE_FILTERS)}
-          />
+          {filters.progress !== 'all' ? (
+            <FilterChip
+              label={`Progress: ${companyProgressLabel(filters.progress)}`}
+              onClear={() => setFilters((f) => ({ ...f, progress: 'all' }))}
+            />
+          ) : null}
+          {filters.whatsappPending ? (
+            <FilterChip
+              label="WhatsApp pending"
+              onClear={() => setFilters((f) => ({ ...f, whatsappPending: false }))}
+            />
+          ) : null}
+          {filters.dateRange !== 'all' ? (
+            <FilterChip
+              label={`Added: ${dateLabel}${
+                filters.dateRange === 'custom'
+                  ? ` ${filters.customFrom ?? '…'} → ${filters.customTo ?? '…'}`
+                  : ''
+              }`}
+              onClear={() =>
+                setFilters((f) => ({ ...f, dateRange: 'all', customFrom: null, customTo: null }))
+              }
+            />
+          ) : null}
           <button
             type="button"
             data-testid="pipeline-clear-filters"
             onClick={() => setFilters(DEFAULT_PIPELINE_FILTERS)}
             className="text-xs font-medium text-teal-800 underline-offset-2 hover:underline"
           >
-            Clear date filter
+            Clear filters
           </button>
         </div>
       ) : null}
@@ -661,6 +845,12 @@ export function Pipeline({
                 <span className="rounded-none bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">
                   {insights.champions} champions
                 </span>
+                <span
+                  data-testid="pipeline-insight-whatsapp-pending"
+                  className="rounded-none bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-800"
+                >
+                  {whatsappPendingContacts} WhatsApp pending
+                </span>
                 {insights.statusCounts.slice(0, 5).map(({ status, count }) => (
                   <span
                     key={status}
@@ -680,7 +870,7 @@ export function Pipeline({
           title={isNarrowedDown ? 'No companies match this view' : 'No companies yet'}
           message={
             isNarrowedDown
-              ? 'Try a different view or clear the date filter to see more companies.'
+              ? 'Try a different view or clear the filters to see more companies.'
               : 'Add your first company to start building your pipeline.'
           }
           ctaLabel={isNarrowedDown ? 'Show all companies' : '+ Add company'}
@@ -708,7 +898,8 @@ export function Pipeline({
                 key={stage}
                 stage={stage}
                 companies={byStage.get(stage) ?? []}
-                store={store}
+                byCompany={byCompany}
+                stages={stages}
                 today={today}
                 onOpen={openCompany}
               />
@@ -717,7 +908,12 @@ export function Pipeline({
           <DragOverlay>
             {activeCompany ? (
               <div className="w-[min(72vw,16rem)] rotate-1 sm:w-64">
-                <CompanyCard company={activeCompany} contacts={store.contacts} today={today} />
+                <CompanyCard
+                  company={activeCompany}
+                  contacts={byCompany.get(activeCompany.id) ?? []}
+                  stages={stages}
+                  today={today}
+                />
               </div>
             ) : null}
           </DragOverlay>
@@ -734,7 +930,7 @@ export function Pipeline({
       </Modal>
 
       <Modal
-        open={!!editing}
+        open={!!editing && !openContact}
         title={editing?.companyName ?? 'Edit company'}
         onClose={closeEditing}
         wide
@@ -747,6 +943,28 @@ export function Pipeline({
             discoveryQuestions={discoveryQuestions}
             initial={editing}
             onDone={closeEditing}
+            onOpenContact={(contact) => {
+              setOpenContact(contact);
+              logViewEvent('contact.opened', contact.id, contact.contactName);
+            }}
+          />
+        ) : null}
+      </Modal>
+
+      <Modal
+        open={!!openContact}
+        title={openContact?.contactName ?? 'Contact'}
+        onClose={() => setOpenContact(null)}
+        wide
+      >
+        {openContact ? (
+          <ContactForm
+            key={openContact.id}
+            store={store}
+            contactStatuses={contactStatuses}
+            stages={stages}
+            initial={store.contacts.find((t) => t.id === openContact.id) ?? openContact}
+            onDone={() => setOpenContact(null)}
           />
         ) : null}
       </Modal>

@@ -69,6 +69,8 @@ export interface Contact {
   lastContacted: string | null;
   nextFollowUp: string | null;
   notes: string;
+  /** When the WhatsApp message was sent to this contact; null/absent means not sent yet. */
+  whatsappSentAt?: string | null;
   createdAt: string;
   /** Every status this contact has held (from the activity log), including the current one. */
   statusHistory?: string[];
@@ -99,6 +101,22 @@ export type ContactQueue =
 
 export type ContactStatusMatch = 'current' | 'ever';
 
+/**
+ * Calling progress for a company, worked out from its contacts and stage (src/lib/progress.ts).
+ * Each company is in exactly one bucket.
+ */
+export type CompanyProgress =
+  | 'not_started'
+  | 'didnt_pick'
+  | 'connected'
+  | 'follow_up'
+  | 'demo_scheduled'
+  | 'demo_delivered'
+  | 'later';
+
+/** `pending` = dialed contacts that should get the WhatsApp message but haven't yet. */
+export type ContactWhatsAppFilter = 'any' | 'sent' | 'pending';
+
 /** Time window applied to `contact.createdAt` / `contact.lastContacted` for Contacts filters. */
 export type ContactDateRange = 'all' | 'this-week' | 'this-month' | 'last-30-days';
 
@@ -123,6 +141,7 @@ export interface ContactFilters {
   companyId: string | null;
   stages: string[];
   championOnly: boolean;
+  whatsapp: ContactWhatsAppFilter;
   /** Filters on `contact.createdAt` (Added date). */
   dateRange: ContactDateRange;
   /** Filters on `contact.lastContacted`. Null dates are excluded when not `'all'`. */
@@ -138,6 +157,10 @@ export interface PipelineFilters {
   customFrom: string | null;
   /** Inclusive YYYY-MM-DD when dateRange === 'custom'. */
   customTo: string | null;
+  /** Calling-progress bucket (see src/lib/progress.ts), or 'all'. */
+  progress: CompanyProgress | 'all';
+  /** Only companies with at least one dialed contact still waiting for the WhatsApp message. */
+  whatsappPending: boolean;
 }
 
 /** One row from the daily prospect paste (Excel / Sheets / LinkedIn export). */

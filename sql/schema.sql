@@ -74,6 +74,8 @@ CREATE INDEX IF NOT EXISTS contacts_status_idx ON contacts (contact_status);
 CREATE INDEX IF NOT EXISTS contacts_champion_idx ON contacts (champion) WHERE champion = TRUE;
 
 ALTER TABLE contacts ADD COLUMN IF NOT EXISTS next_follow_up DATE;
+-- When the follow-up WhatsApp message was sent to this contact (NULL = not sent).
+ALTER TABLE contacts ADD COLUMN IF NOT EXISTS whatsapp_sent_at TIMESTAMPTZ;
 
 CREATE INDEX IF NOT EXISTS contacts_next_follow_up_idx ON contacts (next_follow_up);
 

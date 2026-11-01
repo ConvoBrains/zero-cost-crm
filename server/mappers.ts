@@ -61,6 +61,7 @@ export function mapContact(row: Record<string, unknown>): Contact {
     lastContacted: pgDateToIso(row.last_contacted),
     nextFollowUp: pgDateToIso(row.next_follow_up),
     notes: String(row.notes ?? ''),
+    whatsappSentAt: pgTimestampToIso(row.whatsapp_sent_at),
     createdAt: pgDateToIso(row.created_at) ?? '',
   };
 }

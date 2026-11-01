@@ -965,8 +965,8 @@ app.post('/api/contacts', requireAuth, requireCsrf, async (req, res) => {
     `
     INSERT INTO contacts (
       contact_name, company_id, role, phone, email, linkedin_profile,
-      contact_status, champion, last_contacted, next_follow_up, notes
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      contact_status, champion, last_contacted, next_follow_up, notes, whatsapp_sent_at
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
     RETURNING *
     `,
     [
@@ -981,6 +981,7 @@ app.post('/api/contacts', requireAuth, requireCsrf, async (req, res) => {
       b.lastContacted ?? null,
       b.nextFollowUp ?? null,
       b.notes ?? '',
+      b.whatsappSent === true ? new Date() : null,
     ]
   );
   const contact = rows[0];
@@ -1057,6 +1058,63 @@ app.post('/api/contacts/bulk-status', requireAuth, requireCsrf, async (req, res)
   }
 });
 
+/**
+ * Mark (or unmark) the WhatsApp message as sent for many contacts at once.
+ * Contacts already in the requested state are left alone, so the first sent time is kept.
+ */
+app.post('/api/contacts/bulk-whatsapp', requireAuth, requireCsrf, async (req, res) => {
+  const { contactIds, sent } = req.body;
+  if (!Array.isArray(contactIds) || contactIds.length === 0) {
+    res.status(400).json({ error: 'No contacts selected' });
+    return;
+  }
+  if (typeof sent !== 'boolean') {
+    res.status(400).json({ error: '`sent` must be true or false' });
+    return;
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      sent
+        ? `UPDATE contacts SET whatsapp_sent_at = now(), updated_at = now()
+           WHERE id = ANY($1::uuid[]) AND whatsapp_sent_at IS NULL
+           RETURNING id, contact_name, whatsapp_sent_at`
+        : `UPDATE contacts SET whatsapp_sent_at = NULL, updated_at = now()
+           WHERE id = ANY($1::uuid[]) AND whatsapp_sent_at IS NOT NULL
+           RETURNING id, contact_name, whatsapp_sent_at`,
+      [contactIds]
+    );
+
+    for (const contact of rows) {
+      await logActivity(
+        {
+          userId: req.user!.sub,
+          sessionId: req.user!.sid,
+          eventType: 'contact.whatsapp_sent',
+          entityType: 'contact',
+          entityId: String(contact.id),
+          summary: `WhatsApp ${sent ? 'sent' : 'unmarked'} (${contact.contact_name})`,
+          payload: { sent, name: contact.contact_name },
+        },
+        client
+      );
+    }
+
+    await client.query('COMMIT');
+    res.status(200).json({
+      updatedCount: rows.length,
+      whatsappSentAt: sent && rows[0] ? mapContact(rows[0]).whatsappSentAt : null,
+    });
+  } catch {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: 'Failed to update contacts' });
+  } finally {
+    client.release();
+  }
+});
+
 app.patch('/api/contacts/:id', requireAuth, requireCsrf, async (req, res) => {
   const { id } = req.params;
   const b = req.body;
@@ -1089,6 +1147,19 @@ app.patch('/api/contacts/:id', requireAuth, requireCsrf, async (req, res) => {
   if (b.lastContacted !== undefined) update.set('last_contacted', b.lastContacted);
   if (b.nextFollowUp !== undefined) update.set('next_follow_up', b.nextFollowUp);
   if (b.notes !== undefined) update.set('notes', b.notes);
+  // Re-marking keeps the first sent time; unmarking clears it.
+  const wasWhatsAppSent = before.whatsapp_sent_at != null;
+  if (b.whatsappSent !== undefined) {
+    if (typeof b.whatsappSent !== 'boolean') {
+      res.status(400).json({ error: '`whatsappSent` must be true or false' });
+      return;
+    }
+    update.set(
+      'whatsapp_sent_at',
+      b.whatsappSent ? (before.whatsapp_sent_at ?? new Date()) : null,
+      'timestamptz'
+    );
+  }
 
   if (update.isEmpty) {
     res.status(400).json({ error: 'No fields to update' });
@@ -1180,6 +1251,21 @@ app.patch('/api/contacts/:id', requireAuth, requireCsrf, async (req, res) => {
           entityId: String(id),
           summary: snippet ? `Note updated on ${name}: "${snippet}"` : `Note cleared on ${name}`,
           payload: { name, from, to, note: to },
+        },
+        client
+      );
+    }
+
+    if (b.whatsappSent !== undefined && b.whatsappSent !== wasWhatsAppSent) {
+      await logActivity(
+        {
+          userId: uid,
+          sessionId: sid,
+          eventType: 'contact.whatsapp_sent',
+          entityType: 'contact',
+          entityId: String(id),
+          summary: `WhatsApp ${b.whatsappSent ? 'sent' : 'unmarked'} (${name})`,
+          payload: { sent: b.whatsappSent, name },
         },
         client
       );

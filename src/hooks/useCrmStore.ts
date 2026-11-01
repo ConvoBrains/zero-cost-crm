@@ -203,7 +203,7 @@ export function useCrmStore(enabled: boolean, userRole?: string) {
   );
 
   const updateContact = useCallback(
-    async (id: string, patch: Partial<Contact>) => {
+    async (id: string, patch: Partial<Contact> & { whatsappSent?: boolean }) => {
       const { movedCompanyStage, ...updated } = await api<UpdateContactResponse>(
         `/api/contacts/${id}`,
         { method: 'PATCH', body: JSON.stringify(patch) }
@@ -250,6 +250,22 @@ export function useCrmStore(enabled: boolean, userRole?: string) {
     },
     [refreshMetrics]
   );
+
+  const bulkSetWhatsApp = useCallback(async (contactIds: string[], sent: boolean) => {
+    await api('/api/contacts/bulk-whatsapp', {
+      method: 'POST',
+      body: JSON.stringify({ contactIds, sent }),
+    });
+    const now = new Date().toISOString();
+    setState((s) => ({
+      ...s,
+      contacts: s.contacts.map((t) =>
+        contactIds.includes(t.id)
+          ? { ...t, whatsappSentAt: sent ? (t.whatsappSentAt ?? now) : null }
+          : t
+      ),
+    }));
+  }, []);
 
   const deleteContact = useCallback(
     async (id: string) => {
@@ -303,6 +319,7 @@ export function useCrmStore(enabled: boolean, userRole?: string) {
     addContact,
     updateContact,
     bulkUpdateContactStatus,
+    bulkSetWhatsApp,
     deleteContact,
     importProspects,
     getContact,

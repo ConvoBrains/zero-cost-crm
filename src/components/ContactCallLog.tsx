@@ -94,6 +94,9 @@ export function ContactCallLog({ contactId }: { contactId: string }) {
                     </p>
                   ))}
                   {day.followUp ? <p>Next follow-up: {formatDay(day.followUp)}</p> : null}
+                  {day.whatsappSent !== null ? (
+                    <p>{day.whatsappSent ? 'WhatsApp sent' : 'WhatsApp unmarked'}</p>
+                  ) : null}
                   {day.recordings > 0 ? (
                     <p>
                       {day.recordings} recording{day.recordings === 1 ? '' : 's'} uploaded

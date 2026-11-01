@@ -5,6 +5,7 @@ import {
   CONTACT_DATE_RANGE_OPTIONS,
   CONTACT_QUEUE_OPTIONS,
   CONTACT_STATUS_MATCH_OPTIONS,
+  CONTACT_WHATSAPP_OPTIONS,
   DEFAULT_CONTACT_FILTERS,
   applyContactFilters,
   buildContactInsights,
@@ -14,6 +15,7 @@ import {
   statusColor,
 } from '../lib/views';
 import { logViewEvent } from '../lib/activity';
+import { whatsAppPending } from '../lib/progress';
 import { ContactForm } from './ContactForm';
 import {
   EmptyState,
@@ -87,6 +89,11 @@ function ContactRow({
           {contact.contactStatus}
         </span>
         {contact.phone ? <span className="text-xs text-stone-500">{contact.phone}</span> : null}
+        {contact.whatsappSentAt ? (
+          <span className="text-xs text-emerald-700">WhatsApp sent</span>
+        ) : whatsAppPending(contact) ? (
+          <span className="text-xs font-semibold text-rose-700">WhatsApp pending</span>
+        ) : null}
         {contact.nextFollowUp ? (
           <span className="text-xs text-amber-700">Follow-up {contact.nextFollowUp}</span>
         ) : null}
@@ -150,6 +157,10 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
   const [bulkStatus, setBulkStatus] = useState('');
   const [bulkUpdating, setBulkUpdating] = useState(false);
   const [confirmBulk, setConfirmBulk] = useState(false);
+  // The tick shows straight away; it reverts if the save fails.
+  const [whatsappSaving, setWhatsappSaving] = useState<{ id: string; sent: boolean } | null>(
+    null
+  );
 
   useEffect(() => {
     const id = window.setTimeout(() => {
@@ -286,6 +297,29 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
     }
   };
 
+  const markBulkWhatsApp = async () => {
+    setBulkUpdating(true);
+    try {
+      await store.bulkSetWhatsApp(Array.from(selectedIds), true);
+      setSelectedIds(new Set());
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Failed to mark WhatsApp sent');
+    } finally {
+      setBulkUpdating(false);
+    }
+  };
+
+  const toggleWhatsApp = async (contact: Contact, sent: boolean) => {
+    setWhatsappSaving({ id: contact.id, sent });
+    try {
+      await store.updateContact(contact.id, { whatsappSent: sent });
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Failed to update WhatsApp status');
+    } finally {
+      setWhatsappSaving(null);
+    }
+  };
+
   const queueLabel = CONTACT_QUEUE_OPTIONS.find((o) => o.value === filters.queue)?.label ?? 'All';
   const dateLabel =
     CONTACT_DATE_RANGE_OPTIONS.find((o) => o.value === filters.dateRange)?.label ?? 'All Time';
@@ -386,6 +420,14 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
           active={filters.stages.length > 0}
           onChange={(v) => patchFilters({ stages: v as string[] })}
         />
+        <FilterDropdown
+          data-testid="contact-filter-whatsapp"
+          label="WhatsApp"
+          value={filters.whatsapp}
+          options={CONTACT_WHATSAPP_OPTIONS}
+          active={filters.whatsapp !== 'any'}
+          onChange={(v) => patchFilters({ whatsapp: v as ContactFilters['whatsapp'] })}
+        />
         <button
           type="button"
           data-testid="contact-filter-champion"
@@ -437,6 +479,14 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
               onClear={() => patchFilters({ stages: filters.stages.filter((x) => x !== s) })}
             />
           ))}
+          {filters.whatsapp !== 'any' ? (
+            <FilterChip
+              label={`WhatsApp: ${
+                CONTACT_WHATSAPP_OPTIONS.find((o) => o.value === filters.whatsapp)?.label ?? ''
+              }`}
+              onClear={() => patchFilters({ whatsapp: 'any' })}
+            />
+          ) : null}
           {filters.championOnly ? (
             <FilterChip
               label="Champion only"
@@ -489,6 +539,15 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
               className="rounded-none bg-teal-700 px-4 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-teal-800 disabled:opacity-50 disabled:hover:bg-teal-700"
             >
               Apply
+            </button>
+            <button
+              type="button"
+              data-testid="bulk-whatsapp-sent"
+              disabled={bulkUpdating}
+              onClick={() => void markBulkWhatsApp()}
+              className="rounded-none bg-emerald-700 px-4 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-800 disabled:opacity-50"
+            >
+              Mark WhatsApp sent
             </button>
           </div>
         </div>
@@ -581,6 +640,15 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
               >
                 {insights.demos} demos
               </span>
+              <button
+                type="button"
+                data-testid="insight-whatsapp-pending"
+                onClick={() => patchFilters({ whatsapp: 'pending' })}
+                title="Dialed contacts who haven't been sent the WhatsApp message. Click to list them."
+                className="rounded-none bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-800 hover:bg-emerald-100"
+              >
+                {insights.whatsappPending} WhatsApp pending
+              </button>
             </div>
 
             {insights.statusCounts.length > 0 ? (
@@ -663,7 +731,7 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
 
       <div className="hidden overflow-hidden rounded-none border border-[var(--color-line)] bg-[var(--color-panel)] md:block">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1080px] text-left text-sm">
+          <table className="w-full min-w-[1160px] text-left text-sm">
             <thead>
               <tr className="border-b border-[var(--color-line)] bg-stone-50/80 text-[11px] tracking-wide text-stone-500">
                 <th className="px-4 py-3 font-semibold">
@@ -696,6 +764,7 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
                   direction={sortDir}
                   onSort={onSort}
                 />
+                <th className="px-4 py-3 font-semibold uppercase">WhatsApp</th>
                 <SortHeader
                   label="Stage"
                   sortKey="stage"
@@ -730,6 +799,9 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
             <tbody>
               {sorted.map((t) => {
                 const company = store.getCompany(t.companyId);
+                const waSent =
+                  whatsappSaving?.id === t.id ? whatsappSaving.sent : !!t.whatsappSentAt;
+                const waPending = !waSent && whatsAppPending(t);
                 return (
                   <tr
                     key={t.id}
@@ -771,6 +843,24 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
                         {t.contactStatus}
                       </span>
                     </td>
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      <label
+                        className={`flex items-center gap-1.5 text-xs ${
+                          waPending ? 'font-semibold text-rose-700' : 'text-stone-500'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          data-testid="contact-row-whatsapp"
+                          checked={waSent}
+                          disabled={whatsappSaving?.id === t.id}
+                          onChange={(e) => void toggleWhatsApp(t, e.target.checked)}
+                          className="h-4 w-4 cursor-pointer rounded-sm border-stone-300 text-emerald-700 focus:ring-emerald-600"
+                          aria-label={`WhatsApp sent to ${t.contactName}`}
+                        />
+                        {waSent ? 'Sent' : waPending ? 'Pending' : ''}
+                      </label>
+                    </td>
                     <td className="px-4 py-3 text-stone-600">{company?.stage ?? '—'}</td>
                     <td className="px-4 py-3 text-stone-600">{t.phone || '—'}</td>
                     <td className="px-4 py-3 text-stone-500">{t.nextFollowUp || '—'}</td>
@@ -785,7 +875,7 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
               })}
               {sorted.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-4 py-10">
+                  <td colSpan={11} className="px-4 py-10">
                     <EmptyState
                       title={filtersActive ? 'No contacts match these filters' : 'No contacts yet'}
                       message={

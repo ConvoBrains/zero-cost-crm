@@ -42,7 +42,9 @@ export function buildCardBadges(
   return {
     contactCount: companyContacts.length,
     hasChampion: champion !== null,
-    followUpDueToday: company.nextFollowUp === today || champion?.nextFollowUp === today,
+    // Any contact's follow-up counts: calls are worked per company, not just via the champion.
+    followUpDueToday:
+      company.nextFollowUp === today || companyContacts.some((c) => c.nextFollowUp === today),
   };
 }
 

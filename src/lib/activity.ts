@@ -17,6 +17,7 @@ export interface CallMetrics {
   demo: number;
   notInterested: number;
   converted: number;
+  whatsappSent: number;
 }
 
 export interface SessionBlock {
@@ -169,6 +170,7 @@ export function eventTypeLabel(eventType: string): string {
     'contact.note_added': 'Contact note',
     'contact.updated': 'Contact updated',
     'contact.opened': 'Opened contact',
+    'contact.whatsapp_sent': 'WhatsApp',
     'conversation.uploaded': 'Call uploaded',
     'conversation.deleted': 'Recording deleted',
     'leads.imported': 'Leads imported',

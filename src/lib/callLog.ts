@@ -26,6 +26,8 @@ export interface CallLogDay {
   /** Each distinct note text saved that day, in order. */
   notes: string[];
   recordings: number;
+  /** True / false when the WhatsApp message was marked sent / unmarked that day; null otherwise. */
+  whatsappSent: boolean | null;
   created: boolean;
   /** True when the status changed or a recording was uploaded that day. */
   called: boolean;
@@ -76,6 +78,7 @@ export function buildCallLog(events: CallLogEvent[]): CallLogSummary {
         followUp: null,
         notes: [],
         recordings: 0,
+        whatsappSent: null,
         created: false,
         called: false,
         people: [],
@@ -105,6 +108,9 @@ export function buildCallLog(events: CallLogEvent[]): CallLogSummary {
           const note = str(ev.payload.note) ?? str(ev.payload.to);
           if (note && day.notes.at(-1) !== note) day.notes.push(note);
         }
+        break;
+      case 'contact.whatsapp_sent':
+        day.whatsappSent = ev.payload.sent === true;
         break;
       case 'conversation.uploaded':
         day.recordings += 1;
