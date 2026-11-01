@@ -277,7 +277,15 @@ export function registerActivityRoutes(app: Express) {
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Content-Disposition', 'attachment; filename="activity_export.csv"');
 
-      const headers = ['created_at', 'user_name', 'event_type', 'entity_type', 'entity_id', 'summary', 'payload'];
+      const headers = [
+        'created_at',
+        'user_name',
+        'event_type',
+        'entity_type',
+        'entity_id',
+        'summary',
+        'payload',
+      ];
       const csvRows = [headers.join(',')];
 
       for (const row of rows) {

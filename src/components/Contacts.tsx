@@ -61,49 +61,49 @@ function ContactRow({
         onClick={onEdit}
         className="flex-1 p-4 text-left hover:bg-teal-50/40 focus:outline-none"
       >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="font-semibold text-stone-900">{contact.contactName}</p>
-          {contact.email ? (
-            <p className="truncate text-xs text-stone-400">{contact.email}</p>
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="font-semibold text-stone-900">{contact.contactName}</p>
+            {contact.email ? (
+              <p className="truncate text-xs text-stone-400">{contact.email}</p>
+            ) : null}
+          </div>
+          {contact.champion ? (
+            <span className="shrink-0 rounded-none bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+              <span aria-hidden="true">★</span>
+              <span className="sr-only">Champion</span>
+            </span>
           ) : null}
         </div>
-        {contact.champion ? (
-          <span className="shrink-0 rounded-none bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
-            <span aria-hidden="true">★</span>
-            <span className="sr-only">Champion</span>
+        <div className="mt-2 flex flex-wrap gap-2 text-xs text-stone-600">
+          <span>{companyName}</span>
+          {contact.role ? <span>· {contact.role}</span> : null}
+          {stage ? <span>· {stage}</span> : null}
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <span
+            className={`rounded-none px-2 py-0.5 text-[11px] font-medium ${statusColor(contact.contactStatus)}`}
+          >
+            {contact.contactStatus}
           </span>
-        ) : null}
-      </div>
-      <div className="mt-2 flex flex-wrap gap-2 text-xs text-stone-600">
-        <span>{companyName}</span>
-        {contact.role ? <span>· {contact.role}</span> : null}
-        {stage ? <span>· {stage}</span> : null}
-      </div>
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        <span
-          className={`rounded-none px-2 py-0.5 text-[11px] font-medium ${statusColor(contact.contactStatus)}`}
-        >
-          {contact.contactStatus}
-        </span>
-        {contact.phone ? <span className="text-xs text-stone-500">{contact.phone}</span> : null}
-        {contact.nextFollowUp ? (
-          <span className="text-xs text-amber-700">Follow-up {contact.nextFollowUp}</span>
-        ) : null}
-        {contact.lastContacted ? (
+          {contact.phone ? <span className="text-xs text-stone-500">{contact.phone}</span> : null}
+          {contact.nextFollowUp ? (
+            <span className="text-xs text-amber-700">Follow-up {contact.nextFollowUp}</span>
+          ) : null}
+          {contact.lastContacted ? (
+            <RelativeTimestamp
+              value={contact.lastContacted}
+              prefix="Last "
+              className="text-xs text-stone-500"
+            />
+          ) : null}
           <RelativeTimestamp
-            value={contact.lastContacted}
-            prefix="Last "
-            className="text-xs text-stone-500"
+            value={contact.createdAt}
+            prefix="Added "
+            className="text-xs text-stone-400"
           />
-        ) : null}
-        <RelativeTimestamp
-          value={contact.createdAt}
-          prefix="Added "
-          className="text-xs text-stone-400"
-        />
-      </div>
-    </button>
+        </div>
+      </button>
     </div>
   );
 }
@@ -496,7 +496,8 @@ export function Contacts({ store, contactStatuses, stages }: ContactsProps) {
 
       <Modal open={confirmBulk} title="Confirm bulk update" onClose={() => setConfirmBulk(false)}>
         <p className="mb-6 text-sm text-stone-600">
-          Are you sure you want to update the status of <strong>{selectedIds.size}</strong> contact{selectedIds.size === 1 ? '' : 's'} to <strong>{bulkStatus}</strong>?
+          Are you sure you want to update the status of <strong>{selectedIds.size}</strong> contact
+          {selectedIds.size === 1 ? '' : 's'} to <strong>{bulkStatus}</strong>?
         </p>
         <div className="flex justify-end gap-3">
           <button

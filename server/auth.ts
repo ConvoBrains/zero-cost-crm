@@ -1,8 +1,8 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { allowedEmailError, config, isAllowedEmail } from './config.js';
-import * as cookie from "cookie";
-import crypto from "node:crypto"
+import * as cookie from 'cookie';
+import crypto from 'node:crypto';
 
 function verifyCsrfToken(
   cookieToken: string | undefined,
@@ -50,7 +50,7 @@ export function verifyToken(token: string): AuthPayload {
 }
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
-  const cookies = cookie.parseCookie(req.headers.cookie || "");
+  const cookies = cookie.parseCookie(req.headers.cookie || '');
   const token = cookies.token;
   if (!token) {
     res.status(401).json({ error: 'Unauthorized' });
@@ -72,21 +72,13 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-export function requireCsrf(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-
+export function requireCsrf(req: Request, res: Response, next: NextFunction) {
   const cookies = cookie.parseCookie(req.headers.cookie || '');
 
   const cookieToken = cookies.csrfToken;
 
   const headerValue = req.headers['x-csrf-token'];
-  const headerToken =
-    typeof headerValue === 'string'
-      ? headerValue
-      : undefined;
+  const headerToken = typeof headerValue === 'string' ? headerValue : undefined;
 
   if (!cookieToken || !headerToken) {
     res.status(403).json({ error: 'CSRF token required' });
@@ -108,5 +100,3 @@ declare global {
     }
   }
 }
-
-

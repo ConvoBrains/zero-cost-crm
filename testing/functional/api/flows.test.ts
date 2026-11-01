@@ -100,7 +100,9 @@ describe('contacts CRUD', () => {
     expect(bulk.status).toBe(200);
     expect(bulk.data.updatedCount).toBe(2);
 
-    const b = await api<{ contacts: { id: string; contactStatus: string }[] }>('/api/bootstrap', { session });
+    const b = await api<{ contacts: { id: string; contactStatus: string }[] }>('/api/bootstrap', {
+      session,
+    });
     const u1 = b.data.contacts.find((c) => c.id === c1.data.id);
     const u2 = b.data.contacts.find((c) => c.id === c2.data.id);
     expect(u1?.contactStatus).toBe('Interested');
